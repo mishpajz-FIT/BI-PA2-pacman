@@ -12,6 +12,10 @@
 using namespace std;
 #endif /* __PROGTEST__ */
 
+/**
+ * @brief Class representing person entity
+ * 
+ */
 class Person {
     public:
         string name;
@@ -25,6 +29,19 @@ class Person {
         }
 };
 
+/**
+ * @brief Reads person entries from file and performs search on their name or surname
+ * 
+ * Each person needs to be on one line, with name, surname and number in succesion.
+ * After empty line requests follow.
+ * Request is one word to look for (either name or surname).
+ * Output is each entry that matches specified request and number of entries that match
+ * 
+ * @param fileName File to look in
+ * @param out Stream to output to
+ * @return true All requests have been fulfilled
+ * @return false Failed, either wrong file, or error in file formatting 
+ */
 bool report (const string & fileName, ostream & out) {
     
     fstream filestream(fileName, ios::in);
@@ -47,8 +64,8 @@ bool report (const string & fileName, ostream & out) {
 
         string buffer;
 
-        if (readingData) {
-            if (line.empty()) {
+        if (readingData) { /* Read persons from file and add them to vector */
+            if (line.empty()) { /* If found empty line, switch to request mode */
                 readingData = false;
                 continue;
             }
@@ -62,27 +79,27 @@ bool report (const string & fileName, ostream & out) {
             if (!(linestream >> name >> surname >> number)
             || number < 100000000 
             || number > 999999999
-                || linestream >> buffer) {
+                || linestream >> buffer) { /* Check if input is valid */
                 break;
             }
 
             Person newPerson(name, surname, number);
             personArray.push_back(newPerson);
-        } else {
+        } else { /* Fulfull search requests */
             linestream << line;
 
             string query;
-            if (!(linestream >> query)) {
+            if (!(linestream >> query)) { /* Check for empty line */
                 out << "-> 0" << endl;
                 continue;
             }
-            if (linestream >> buffer) {
+            if (linestream >> buffer) { /* Check for valid input */
                 break;
             }
 
             int matches = 0;
 
-            for(Person & person : personArray) {
+            for(Person & person : personArray) { /* Iterate through vector and print matches */
                 if (person.name == query || person.surname == query) {
                     out << person.name << " " << person.surname << " " << person.number << endl;
                     matches++;
