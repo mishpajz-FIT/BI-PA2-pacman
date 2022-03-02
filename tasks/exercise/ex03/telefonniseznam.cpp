@@ -36,7 +36,7 @@ bool report (const string & fileName, ostream & out) {
     bool readingData = true;
 
 	while(true) {
-        if (filestream.eof()) {
+        if (filestream.peek() == EOF) {
             filestream.close();
             return true;
         }
@@ -73,6 +73,7 @@ bool report (const string & fileName, ostream & out) {
 
             string query;
             if (!(linestream >> query)) {
+                out << "-> 0" << endl;
                 continue;
             }
             if (linestream >> buffer) {
