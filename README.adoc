@@ -2,3 +2,61 @@
 
 Programming and algorithmization 2
 https://courses.fit.cvut.cz/BI-PA2/
+
+## Points earned
+#### Homeworks
+[cols="1,1"]
+|===
+|hw |points
+
+|hw01
+|
+
+|hw02
+|
+
+|hw03
+|
+
+|hw04
+|
+
+|hw05
+|
+
+|hw06
+|
+
+|hw07
+|
+
+|hw08
+|
+|===
+
+#### Exercises
+[cols="1,1"]
+|===
+|ex |points
+
+|ex03
+|0.1/0.1
+
+|ex04
+|
+
+|ex05
+|
+
+|ex06
+|
+
+|ex07
+|
+
+|ex08
+|
+
+|ex09
+|
+|===
