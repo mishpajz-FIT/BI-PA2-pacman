@@ -26,51 +26,69 @@ class Person {
 };
 
 bool report (const string & fileName, ostream & out) {
+    
     fstream filestream(fileName, ios::in);
-
     if (filestream.fail()) {
         return false;
     }
 
     vector<Person> personArray;
-
     bool readingData = true;
 
 	while(true) {
-        if (readingData) {
-            string line;
-            getline(filestream, line);
+        if (filestream.eof()) {
+            filestream.close();
+            return true;
+        }
 
+        string line;
+        getline(filestream, line);
+        stringstream linestream;
+
+        string buffer;
+
+        if (readingData) {
             if (line.empty()) {
                 readingData = false;
                 continue;
             }
 
-            stringstream ss;
-            ss << line;
+            linestream << line;
 
             string name;
             string surname;
             unsigned long number;
 
-            string buffer;
-
-            if (!(ss >> name >> surname >> number) 
+            if (!(linestream >> name >> surname >> number)
             || number < 100000000 
             || number > 999999999
-            || ss >> buffer) {
+                || linestream >> buffer) {
                 break;
             }
 
             Person newPerson(name, surname, number);
             personArray.push_back(newPerson);
         } else {
-            for(Person & person : personArray) {
-                cout << person.name << " " << person.surname << " " << person.number << endl;
-            }
-            break;
-        }
+            linestream << line;
 
+            string query;
+            if (!(linestream >> query)) {
+                continue;
+            }
+            if (linestream >> buffer) {
+                break;
+            }
+
+            int matches = 0;
+
+            for(Person & person : personArray) {
+                if (person.name == query || person.surname == query) {
+                    out << person.name << " " << person.surname << " " << person.number << endl;
+                    matches++;
+                }
+            }
+            out << "-> " << matches << endl;
+        }
     }
     filestream.close();
     return false;
@@ -78,9 +96,6 @@ bool report (const string & fileName, ostream & out) {
 
 #ifndef __PROGTEST__
 int main() {
-    ostringstream oss;
-    report("tests/test0_in.txt", oss);
-    /*
     ostringstream oss;
     oss.str("");
     assert(report("tests/test0_in.txt", oss) == true);
@@ -96,7 +111,6 @@ int main() {
 	    "-> 1\n");
     oss.str("");
     assert(report("tests/test1_in.txt", oss) == false);
-    */
     return 0;
 }
 #endif /* __PROGTEST__ */
