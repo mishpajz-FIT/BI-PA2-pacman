@@ -1,0 +1,4 @@
+# BI-PA2
+
+Programming and algorithmization 2
+https://courses.fit.cvut.cz/BI-PA2/
