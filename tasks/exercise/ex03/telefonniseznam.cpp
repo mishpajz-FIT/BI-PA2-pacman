@@ -22,10 +22,18 @@ class Person {
         string surname;
         unsigned long number;
 
-        Person(string newName, string newSurname, long newNumber) {
-            name = newName;
-            surname = newSurname;
-            number = newNumber;
+        Person(string newName, string newSurname, long newNumber)
+        : name(newName), 
+          surname(newSurname), 
+          number(newNumber) { }
+
+        /**
+         * @brief Print attributes to stream
+         * 
+         * @param out Stream to print to
+         */
+        void print(ostream & out) const {
+            out << name << " " << surname << " " << number << endl;
         }
 };
 
@@ -83,8 +91,7 @@ bool report (const string & fileName, ostream & out) {
                 break;
             }
 
-            Person newPerson(name, surname, number);
-            personArray.push_back(newPerson);
+            personArray.emplace_back(name, surname, number);
         } else { /* Fulfull search requests */
             linestream << line;
 
@@ -101,7 +108,7 @@ bool report (const string & fileName, ostream & out) {
 
             for(Person & person : personArray) { /* Iterate through vector and print matches */
                 if (person.name == query || person.surname == query) {
-                    out << person.name << " " << person.surname << " " << person.number << endl;
+                    person.print(out);
                     matches++;
                 }
             }
