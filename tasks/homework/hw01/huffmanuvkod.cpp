@@ -18,6 +18,7 @@
 #include <memory>
 #include <functional>
 #include <stdexcept>
+#include <bitset>
 using namespace std;
 #endif /* __PROGTEST__ */
 
@@ -33,71 +34,139 @@ struct Node {
 	}
 };
 
-void insertNode(Node * at, queue<char> & positions, queue<char> & characters) {
-	if (positions.front() == 0) {
-		at->left = new Node;
-		positions.pop();
-		insertNode(at->left, positions, characters);
-	} else {
-		at->left = new Node(characters.front());
-		positions.pop();
-		characters.pop();
+class EncodeTree {
+	Node * root;
+	size_t size;
+
+	queue<bool> creationPositions;
+	queue<char> creationCharacters;
+
+	void createNode(Node* at) {
+		if (creationPositions.front() == false) {
+			at->left = new Node;
+			size++;
+			creationPositions.pop();
+			createNode(at->left);
+		}
+		else {
+			at->left = new Node(creationCharacters.front());
+			size++;
+			creationPositions.pop();
+			creationCharacters.pop();
+		}
+
+		if (creationPositions.front() == false) {
+			at->right = new Node;
+			size++;
+			creationPositions.pop();
+			createNode(at->right);
+		}
+		else {
+			at->right = new Node(creationCharacters.front());
+			size++;
+			creationPositions.pop();
+			creationCharacters.pop();
+		}
 	}
 
-	if (positions.front() == 0) {
-		at->right = new Node;
-		positions.pop();
-		insertNode(at->right, positions, characters);
-	} else {
-		at->right = new Node(characters.front());
-		positions.pop();
-		characters.pop();
+	void printRec(Node * from) {
+		if (from->right != nullptr) {
+			printRec(from->right);
+		}
+
+		if (from->left != nullptr) {
+			printRec(from->left);
+		}
+
+		if (from->data != 0) {
+			cout << from->data << endl;
+		}
+	}
+
+	public:
+	void createNewTree(queue<bool> & positions, queue<char> & characters) {
+		root = new Node;
+		if (positions.front() == true) {
+			root->data = characters.front();
+			return;
+		} else {
+			positions.pop();
+
+			creationPositions = positions;
+			creationCharacters = characters;
+
+			createNode(root);
+		}
+	}
+
+	void printTree() {
+		printRec(root);
+	}
+};
+
+void readBits(const fstream & from, queue<bool> to) {
+	from.get(c);
+
+	for (int i = 7; i >= 0; i--) {
+		to.push((c >> i) & 1 ? true : false);
 	}
 }
 
-void printTree(Node * from) {
-
-	if (from->right != nullptr) {
-		printTree(from->right);
-	}
-
-	if (from->left != nullptr) {
-		printTree(from->left);
-	}
-
-	if (from->data != 0) {
-		cout << from->data;
-	}
-}
-
-void test() {
-	Node * root = new Node;
-	queue<char> positions;
-	queue<char> characters;
-
-	positions.push(1);
-	positions.push(0);
-	positions.push(0);
-	positions.push(1);
-	positions.push(1);
-	positions.push(0);
-	positions.push(1);
-	positions.push(1);
-
-	characters.push('o');
-	characters.push('t');
-	characters.push('c');
-	characters.push('K');
-	characters.push('l');
-
-	insertNode(root, positions, characters);
-
-	printTree(root);
-	cout << endl;
+void readTree() {
+	
 }
 
 bool decompressFile(const char * inFileName, const char * outFileName) {
-	// todo
+
+	fstream ifilestream(inFileName, ios::in | ios::binary);
+
+	if (ifilestream.fail()) {
+		return false;
+	}
+
+	bool readingChars = false;
+	int numberOfNodes = 0;
+	int numberOfLists = 0;
+	queue<bool> positions;
+	queue<char> characters;
+
+	queue<bool> bits;
+
+	char c;
+	while(numberOfLists != numberOfNodes + 1) {
+		if (bits.size() < 8) {
+			ifilestream.get(c);
+
+			for (int i = 7; i >= 0; i--) {
+				bits.push((c >> i) & 1 ? true : false);
+			}
+		}
+		if (readingChars && bits.size() >= 8) {
+			bitset<8> byte;
+			for (int i = 7; i >= 0; i--) {
+				byte[i] = bits.front();
+				bits.pop();
+			}
+			characters.push(static_cast<char>(byte.to_ulong()));
+			readingChars = false;
+		} else if (!readingChars) {
+			positions.push(bits.front());	
+			bits.pop();
+			if (positions.back() == false) {
+				numberOfNodes++;
+			} else {
+				numberOfLists++;
+				readingChars = true;
+			}
+		}
+	}
+	characters.push('h');
+	
+	EncodeTree tree;
+
+	tree.createNewTree(positions, characters);
+	tree.printTree();
+
 	return false;
 }
 
@@ -114,7 +183,7 @@ bool identicalFiles(const char * fileName1, const char * fileName2) {
 
 int main(void) {
 
-	test();
+	decompressFile("tests/test0.huf", "tempfile");
 
 	/*
 	assert(decompressFile("tests/test0.huf", "tempfile"));
