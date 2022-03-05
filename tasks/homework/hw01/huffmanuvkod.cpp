@@ -273,14 +273,43 @@ bool compressFile(const char * inFileName, const char * outFileName) {
 
 #ifndef __PROGTEST__
 bool identicalFiles(const char * fileName1, const char * fileName2) {
-	// todo
-	return false;
+
+	ifstream ifs1(fileName1, ios::in | ios::binary);
+	ifstream ifs2(fileName2, ios::in | ios::binary);
+
+	while(true) {
+		bool eof;
+		if ((eof = ifs1.eof()) != ifs2.eof()) {
+			ifs1.close();
+			ifs2.close();
+			return false;
+		}
+
+		if(eof) {
+			break;
+		}
+
+		char c1, c2;
+		ifs1.get(c1);
+		ifs2.get(c2);
+		if (c1 != c2) {
+			ifs1.close();
+			ifs2.close();
+			return false;
+		}
+
+	}
+
+
+	ifs1.close();
+	ifs2.close();
+	return true;
 }
 
 int main(void) {
 
 	assert(decompressFile("tests/test0.huf", "tempfile"));
-	/*assert(identicalFiles("tests/test0.orig", "tempfile"));*/
+	assert(identicalFiles("tests/test0.orig", "tempfile"));
 
 	/*
 	assert(decompressFile("tests/test1.huf", "tempfile"));
