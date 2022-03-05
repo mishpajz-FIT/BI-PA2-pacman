@@ -1,3 +1,6 @@
+// TODO: Implement UTF-8 storage and conversion
+// TODE: Implement compressing
+
 #ifndef __PROGTEST__
 #include <cstring>
 #include <cstdlib>
@@ -41,7 +44,7 @@ struct Node {
 	}
 };
 
-class EncodeTree {
+class CodeTree {
 	Node * root;
 	size_t size;
 
@@ -124,12 +127,12 @@ class EncodeTree {
 
 			if (bits.at(bitIter) == true) {
 				if (nodeIter->right == nullptr) {
-					return false;
+					throw "Error in encoding";
 				}
 				nodeIter = nodeIter->right;
 			} else {
 				if (nodeIter->left == nullptr) {
-					return false;
+					throw "Error in encoding";
 				}
 				nodeIter = nodeIter->left;
 			}
@@ -142,128 +145,207 @@ class EncodeTree {
 	}
 };
 
-void readBits(ifstream& from, deque<bool>& to) {
-	char c;
+class Decompresser {
+	private:
 
-	from.get(c);
+	ifstream ifilestream;
+	ofstream ofilestream;
 
-	for (int i = 7; i >= 0; i--) {
-		to.push_back((c >> i) & 1 ? true : false);
-	}
-}
-
-void readTreeFromFile(EncodeTree& tree, ifstream& from, deque<bool>& bits) {
-	int numberOfNodes = 0;
-	int numberOfLists = 0;
-
-	queue<bool> positions;
-	queue<char> characters;
-
-	bool readingChars = false;
-
-	while (true) {
-		if (bits.size() < 8) {
-			readBits(from, bits);
-		}
-		if (readingChars && bits.size() >= 8) {
-			bitset<8> byte;
-			for (int i = 7; i >= 0; i--) {
-				byte[i] = bits.front();
-				bits.pop_front();
-			}
-			characters.push(static_cast<char>(byte.to_ulong()));
-			readingChars = false;
-
-			if (numberOfLists == numberOfNodes + 1) {
-				break;
-			}
-		}
-		else if (!readingChars) {
-			positions.push(bits.front());
-			bits.pop_front();
-			if (positions.back() == false) {
-				numberOfNodes++;
-			}
-			else {
-				numberOfLists++;
-				readingChars = true;
-			}
-		}
-	}
-	tree.createNewTree(positions, characters);
-}
-
-bool readCharsFromFile(const EncodeTree& tree, ifstream& from, ofstream& to, deque<bool>& bits) {
-	unsigned long remainingToRead = 0;
-	bool lastChunk = false;
-
-	while (true) {
-
-		if (remainingToRead == 0) {
-			if (lastChunk) {
-				break;
-			}
-
-			if (bits.size() < 8) {
-				readBits(from, bits);
-			}
-			if (bits.front() == 1) {
-				bits.pop_front();
-				remainingToRead = 4096;
-			}
-			else {
-				bits.pop_front();
-				while (bits.size() < 12) {
-					readBits(from, bits);
-				}
-
-				bitset<12> number;
-				for (int i = 11; i >= 0; i--) {
-					number[i] = bits.front();
-					bits.pop_front();
-				}
-				remainingToRead = number.to_ulong();
-				lastChunk = true;
-			}
-		}
-
-		if (bits.size() < 8) {
-			readBits(from, bits);
-		}
-
-		char c;
-		if (!tree.extractCharFromTree(bits, c)) {
-			readBits(from, bits);
-			continue;
-		}
-		cout << c;
-		to << c;
-		remainingToRead--;
-	}
-
-	return true;
-}
-
-bool decompressFile(const char * inFileName, const char * outFileName) {
-
-	ifstream ifilestream(inFileName, ios::in | ios::binary);
-	ofstream ofilestream(outFileName, ios::out);
-
-	if (ifilestream.fail() || ofilestream.fail()) {
-		return false;
-	}
+	CodeTree tree;
 
 	deque<bool> bits;
 
-	EncodeTree tree;
-	readTreeFromFile(tree, ifilestream, bits);
+	void readBits() {
+		char c;
 
-	readCharsFromFile(tree, ifilestream, ofilestream, bits);
+		if (ifilestream.eof()) {
+			throw "Trying to read when EOF";
+		}
 
-	ifilestream.close();
-	ofilestream.close();
+		try {
+			ifilestream.get(c);
+		}
+		catch (...) {
+			throw "Could not read from file";
+		}
 
-	return true;
+		if (ifilestream.fail() && !ifilestream.eof()) {
+			throw "Error reading from file";
+		}
+
+		for (int i = 7; i >= 0; i--) {
+			bits.push_back((c >> i) & 1 ? true : false);
+		}
+	}
+
+	bool readHeader() {
+		int numberOfNodes = 0;
+		int numberOfLists = 0;
+
+		queue<bool> positions;
+		queue<char> characters;
+
+		bool readingChars = false;
+
+		while (true) {
+			if (bits.size() < 8) {
+				try {
+					readBits();
+				}
+				catch (...) {
+					return false;
+				}
+			}
+			if (readingChars && bits.size() >= 8) {
+				bitset<8> byte;
+				for (int i = 7; i >= 0; i--) {
+					byte[i] = bits.front();
+					bits.pop_front();
+				}
+				characters.push(static_cast<char>(byte.to_ulong()));
+				readingChars = false;
+
+				if (numberOfLists == numberOfNodes + 1) {
+					break;
+				}
+			}
+			else if (!readingChars) {
+				positions.push(bits.front());
+				bits.pop_front();
+				if (positions.back() == false) {
+					numberOfNodes++;
+				}
+				else {
+					numberOfLists++;
+					readingChars = true;
+				}
+			}
+		}
+		tree.createNewTree(positions, characters);
+		return true;
+	}
+
+	bool readChars() {
+		unsigned long remainingToRead = 0;
+		bool lastChunk = false;
+
+		while (true) {
+
+			if (remainingToRead == 0) {
+				if (lastChunk) {
+					// TODO: Check if file is trurly empty...
+					break;
+				}
+
+				if (bits.size() < 8) {
+					try {
+						readBits();
+					}
+					catch (...) {
+						return false;
+					}
+				}
+				if (bits.front() == 1) {
+					bits.pop_front();
+					remainingToRead = 4096;
+				}
+				else {
+					bits.pop_front();
+					while (bits.size() < 12) {
+						try {
+							readBits();
+						}
+						catch (...) {
+							return false;
+						}
+					}
+
+					bitset<12> number;
+					for (int i = 11; i >= 0; i--) {
+						number[i] = bits.front();
+						bits.pop_front();
+					}
+					remainingToRead = number.to_ulong();
+					lastChunk = true;
+				}
+			}
+
+			if (bits.size() < 8) {
+				try {
+					readBits();
+				}
+				catch (...) {
+					return false;
+				}
+			}
+
+			char c;
+			try {
+				if (!tree.extractCharFromTree(bits, c)) {
+					try {
+						readBits();
+					}
+					catch (...) {
+						return false;
+					}
+					continue;
+				}
+			}
+			catch (...) {
+				return false;
+			}
+			ofilestream << c;
+			remainingToRead--;
+		}
+
+		return true;
+	}
+
+	public:
+	Decompresser(const char* inFileName, const char* outFileName) {
+		tree = CodeTree();
+
+		ifilestream.open(inFileName, ios::in | ios::binary);
+		ofilestream.open(outFileName, ios::out);
+
+		if (ifilestream.fail() || ofilestream.fail()) {
+			throw "Error opening file";
+		}
+	}
+
+	~Decompresser() {
+		if (ifilestream.is_open()) {
+			ifilestream.close();
+		}
+
+		if (ofilestream.is_open()) {
+			ofilestream.close();
+		}
+	}
+
+	bool decode() {
+
+		if (!readHeader()) {
+			return false;
+		}
+		
+		if (!readChars()) {
+			return false;
+		}
+
+		return true;
+	}
+};
+
+bool decompressFile(const char * inFileName, const char * outFileName) {
+
+	try {
+		Decompresser decompresser(inFileName, outFileName);
+		return decompresser.decode();
+	} catch (...) {
+		return false;
+	}
+	return false;
 }
 
 bool compressFile(const char * inFileName, const char * outFileName) {
@@ -297,9 +379,7 @@ bool identicalFiles(const char * fileName1, const char * fileName2) {
 			ifs2.close();
 			return false;
 		}
-
 	}
-
 
 	ifs1.close();
 	ifs2.close();
@@ -311,7 +391,6 @@ int main(void) {
 	assert(decompressFile("tests/test0.huf", "tempfile"));
 	assert(identicalFiles("tests/test0.orig", "tempfile"));
 
-	/*
 	assert(decompressFile("tests/test1.huf", "tempfile"));
 	assert(identicalFiles("tests/test1.orig", "tempfile"));
 
@@ -324,6 +403,7 @@ int main(void) {
 	assert(decompressFile("tests/test4.huf", "tempfile"));
 	assert(identicalFiles("tests/test4.orig", "tempfile"));
 
+	/*
 	assert(!decompressFile("tests/test5.huf", "tempfile"));
 
 
