@@ -225,33 +225,37 @@ class Decompresser {
                 string charString;
                 char newChar = readChar();
                 charString.push_back(newChar);
-                if ((newChar & 0x80) != 0) {
-                    unsigned long remainingChars = 0;
-                    if ((newChar & 0xF8) == 0xF0) {
-                        remainingChars = 3;
-                    } else if ((newChar & 0xF0) == 0xE0) {
-                        remainingChars = 2;
-                    } else if ((newChar & 0xE0) == 0xC0) {
-                        remainingChars = 1;
-                    }
 
-                    while (bits.size() < remainingChars * 8) {
-                        try {
-                            readBits();
-                        }
-                        catch (...) {
-                            return false;
-                        }
-                    }
+                unsigned long remainingChars = 0;
+                if ((newChar & 0xF8) == 0xF0) {
+                    remainingChars = 3;
+                } else if ((newChar & 0xF0) == 0xE0) {
+                    remainingChars = 2;
+                } else if ((newChar & 0xE0) == 0xC0) {
+                    remainingChars = 1;
+                } else if ((newChar & 0x80) == 0) {
+                    remainingChars = 0;
+                } else {
+                    return false;
+                }
 
-                    for (unsigned long i = 0; i < remainingChars; i++) {
-                        newChar = readChar();
-                        if ((newChar & 0xC0) != 0x80) {
-                            return false;
-                        }
-                        charString.push_back(newChar);
+                while (bits.size() < remainingChars * 8) {
+                    try {
+                        readBits();
+                    }
+                    catch (...) {
+                        return false;
                     }
                 }
+
+                for (unsigned long i = 0; i < remainingChars; i++) {
+                    newChar = readChar();
+                    if ((newChar & 0xC0) != 0x80) {
+                        return false;
+                    }
+                    charString.push_back(newChar);
+                }
+
 
                 characters.push(charString);
                 readingChars = false;
@@ -343,6 +347,11 @@ class Decompresser {
             catch (...) {
                 return false;
             }
+
+            if (ofilestream.fail()) {
+                return false;
+            }
+
             ofilestream << c;
             remainingToRead--;
         }
@@ -410,7 +419,12 @@ bool identicalFiles(const char * fileName1, const char * fileName2) {
 
     while(true) {
         bool eof;
-        if ((eof = ifs1.eof()) != ifs2.eof()) {
+
+        char c1 = 0, c2 = 0;
+        ifs1.get(c1);
+        ifs2.get(c2);
+
+        if ((eof = ifs1.fail()) != ifs2.fail()) {
             ifs1.close();
             ifs2.close();
             return false;
@@ -420,9 +434,6 @@ bool identicalFiles(const char * fileName1, const char * fileName2) {
             break;
         }
 
-        char c1, c2;
-        ifs1.get(c1);
-        ifs2.get(c2);
         if (c1 != c2) {
             ifs1.close();
             ifs2.close();
@@ -460,6 +471,8 @@ int main(void) {
     assert(!decompressFile("tests/test8.huf", "tempfile"));
 
     assert(!decompressFile("tests/test9.huf", "tempfile"));
+
+    assert(!decompressFile("tests/test10.huf", "tempfile"));
 
     assert(decompressFile("tests/extra0.huf", "tempfile"));
     assert(identicalFiles("tests/extra0.orig", "tempfile"));
