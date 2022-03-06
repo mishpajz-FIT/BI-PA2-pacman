@@ -1,5 +1,4 @@
-// TODO: Implement UTF-8 storage and conversion
-// TODE: Implement compressing
+// TODO: Implement compressing
 
 #ifndef __PROGTEST__
 #include <cstring>
@@ -21,22 +20,21 @@
 #include <memory>
 #include <functional>
 #include <stdexcept>
-#include <bitset>
 using namespace std;
 #endif /* __PROGTEST__ */
 
 struct Node {
-    char data;
+    string data;
     Node * left;
     Node * right;
 
-    Node(char newData = 0) {
+    Node(string newData = "") {
         data = newData;
         left = nullptr;
         right = nullptr;
     }
 
-    bool hasData() {
+    bool shouldHaveData() {
         if (left == nullptr && right == nullptr) {
             return true;
         }
@@ -49,7 +47,7 @@ class CodeTree {
     size_t size;
 
     queue<bool> creationPositions;
-    queue<char> creationCharacters;
+    queue<string> creationCharacters;
 
     void createNode(Node* at) {
         if (creationPositions.front() == false) {
@@ -79,22 +77,26 @@ class CodeTree {
         }
     }
 
-    void printRec(Node * from) {
+    void printRec(Node * from, string path) {
+        string newPath = path;
         if (from->right != nullptr) {
-            printRec(from->right);
+            newPath.push_back('1');
+            printRec(from->right, newPath);
         }
 
+        newPath = path;
         if (from->left != nullptr) {
-            printRec(from->left);
+            newPath.push_back('0');
+            printRec(from->left, newPath);
         }
 
-        if (from->data != 0) {
-            cout << from->data << endl;
+        if ((from->shouldHaveData())) {
+            cout << from->data << " : " << path << endl;
         }
     }
 
     public:
-    void createNewTree(queue<bool> & positions, queue<char> & characters) {
+    void createNewTree(queue<bool> & positions, queue<string> & characters) {
         root = new Node;
         if (positions.front() == true) {
             root->data = characters.front();
@@ -109,20 +111,21 @@ class CodeTree {
         }
     }
 
-    bool extractCharFromTree(deque<bool>& bits, char & to) const {
+    bool extractCharFromTree(deque<bool>& bits, string & to) const {
         size_t bitIter = 0;
         Node * nodeIter = root;
         while (true) {
-            if (bits.size() < bitIter + 1) {
-                return false;
-            }
 
-            if (nodeIter->hasData()) {
+            if (nodeIter->shouldHaveData()) {
                 to = nodeIter->data;
                 for (size_t i = 0; i < bitIter; i++) {
                     bits.pop_front();
                 }
                 return true;
+            }
+
+            if (bits.size() <= bitIter) {
+                return false;
             }
 
             if (bits.at(bitIter) == true) {
@@ -141,7 +144,8 @@ class CodeTree {
     }
 
     void printTree() {
-        printRec(root);
+        string path = "";
+        printRec(root, path);
     }
 };
 
@@ -158,10 +162,6 @@ class Decompresser {
     void readBits() {
         char c;
 
-        if (ifilestream.eof()) {
-            throw "Trying to read when EOF";
-        }
-
         try {
             ifilestream.get(c);
         }
@@ -169,7 +169,7 @@ class Decompresser {
             throw "Could not read from file";
         }
 
-        if (ifilestream.fail() && !ifilestream.eof()) {
+        if (ifilestream.fail()) {
             throw "Error reading from file";
         }
 
@@ -178,12 +178,24 @@ class Decompresser {
         }
     }
 
+    char readChar() {
+        char newChar = 0;
+        for (int i = 7; i >= 0; i--) {
+            newChar = newChar << 1;
+            if (bits.front() == true) {
+                newChar = (newChar | 1);
+            }
+            bits.pop_front();
+        }
+        return newChar;
+    }
+
     bool readHeader() {
         int numberOfNodes = 0;
         int numberOfLists = 0;
 
         queue<bool> positions;
-        queue<char> characters;
+        queue<string> characters;
 
         bool readingChars = false;
 
@@ -197,12 +209,38 @@ class Decompresser {
                 }
             }
             if (readingChars && bits.size() >= 8) {
-                bitset<8> byte;
-                for (int i = 7; i >= 0; i--) {
-                    byte[i] = bits.front();
-                    bits.pop_front();
+                string charString;
+                char newChar = readChar();
+                charString.push_back(newChar);
+                if ((newChar & 0x80) != 0) {
+                    unsigned long remainingChars = 0;
+                    if ((newChar & 0xF8) == 0xF0) {
+                        remainingChars = 3;
+                    } else if ((newChar & 0xF0) == 0xE0) {
+                        remainingChars = 2;
+                    } else if ((newChar & 0xE0) == 0xC0) {
+                        remainingChars = 1;
+                    }
+
+                    while (bits.size() < remainingChars * 8) {
+                        try {
+                            readBits();
+                        }
+                        catch (...) {
+                            return false;
+                        }
+                    }
+
+                    for (unsigned long i = 0; i < remainingChars; i++) {
+                        newChar = readChar();
+                        if ((newChar & 0xC0) != 0x80) {
+                            return false;
+                        }
+                        charString.push_back(newChar);
+                    }
                 }
-                characters.push(static_cast<char>(byte.to_ulong()));
+
+                characters.push(charString);
                 readingChars = false;
 
                 if (numberOfLists == numberOfNodes + 1) {
@@ -225,7 +263,7 @@ class Decompresser {
         return true;
     }
 
-    bool readChars() {
+    bool readBody() {
         unsigned long remainingToRead = 0;
         bool lastChunk = false;
 
@@ -260,26 +298,20 @@ class Decompresser {
                         }
                     }
 
-                    bitset<12> number;
+                    unsigned long number = 0;
                     for (int i = 11; i >= 0; i--) {
-                        number[i] = bits.front();
+                        number = number << 1;
+                        if (bits.front() == true) {
+                            number = (number | 1);
+                        }
                         bits.pop_front();
                     }
-                    remainingToRead = number.to_ulong();
+                    remainingToRead = number;
                     lastChunk = true;
                 }
             }
 
-            if (bits.size() < 8) {
-                try {
-                    readBits();
-                }
-                catch (...) {
-                    return false;
-                }
-            }
-
-            char c;
+            string c;
             try {
                 if (!tree.extractCharFromTree(bits, c)) {
                     try {
@@ -329,7 +361,7 @@ class Decompresser {
             return false;
         }
 
-        if (!readChars()) {
+        if (!readBody()) {
             return false;
         }
 
@@ -396,15 +428,18 @@ int main(void) {
 
     assert(decompressFile("tests/test2.huf", "tempfile"));
     assert(identicalFiles("tests/test2.orig", "tempfile"));
-
+    
     assert(decompressFile("tests/test3.huf", "tempfile"));
     assert(identicalFiles("tests/test3.orig", "tempfile"));
 
     assert(decompressFile("tests/test4.huf", "tempfile"));
     assert(identicalFiles("tests/test4.orig", "tempfile"));
 
-    /*
     assert(!decompressFile("tests/test5.huf", "tempfile"));
+
+    /*assert(!decompressFile("tests/test6.huf", "tempfile"));
+
+    assert(!decompressFile("tests/test7.huf", "tempfile"));*/
 
 
     assert(decompressFile("tests/extra0.huf", "tempfile"));
@@ -419,8 +454,8 @@ int main(void) {
     assert(decompressFile("tests/extra3.huf", "tempfile"));
     assert(identicalFiles("tests/extra3.orig", "tempfile"));
 
-    assert(decompressFile ( "tests/extra4.huf", "tempfile" ) );
-    assert(identicalFiles ( "tests/extra4.orig", "tempfile" ) );
+    assert(decompressFile("tests/extra4.huf", "tempfile"));
+    assert(identicalFiles("tests/extra4.orig", "tempfile"));
 
     assert(decompressFile("tests/extra5.huf", "tempfile"));
     assert(identicalFiles("tests/extra5.orig", "tempfile"));
@@ -437,6 +472,5 @@ int main(void) {
     assert(decompressFile("tests/extra9.huf", "tempfile"));
     assert(identicalFiles("tests/extra9.orig", "tempfile"));
     return 0;
-    */
 }
 #endif /* __PROGTEST__ */
