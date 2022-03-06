@@ -248,7 +248,22 @@ class Decompresser {
                     }
                 }
 
+                bool maxPossibleForUTF8 = false;
                 for (unsigned long i = 0; i < remainingChars; i++) {
+                    if (remainingChars == 3) {
+                        if (i == 0) {
+                            if (reinterpret_cast<unsigned char&>(newChar) == (unsigned)(0xF4)) {
+                                maxPossibleForUTF8 = true;
+                            } else if (reinterpret_cast<unsigned char&>(newChar) > (unsigned)(0xF4)) {
+                                return false;
+                            }
+                        } else if (i == 1) {
+                            if ((reinterpret_cast<unsigned char&>(newChar) > (unsigned)(0x8F)) && maxPossibleForUTF8) {
+                                return false;
+                            }
+                        }
+                    }
+
                     newChar = readChar();
                     if ((newChar & 0xC0) != 0x80) {
                         return false;
@@ -352,7 +367,9 @@ class Decompresser {
                 return false;
             }
 
-            ofilestream << c;
+            for (size_t i = 0; i < c.length(); i++) {
+                ofilestream.put(c.at(i));
+            }
             remainingToRead--;
         }
 
@@ -446,7 +463,7 @@ bool identicalFiles(const char * fileName1, const char * fileName2) {
     return true;
 }
 
-int main(void) {
+int main(void) { 
     assert(decompressFile("tests/test0.huf", "tempfile"));
     assert(identicalFiles("tests/test0.orig", "tempfile"));
 
@@ -468,7 +485,7 @@ int main(void) {
 
     assert(!decompressFile("tests/test7.huf", "tempfile"));
 
-    //assert(!decompressFile("tests/test8.huf", "tempfile"));
+    assert(!decompressFile("tests/test8.huf", "tempfile"));
 
     assert(!decompressFile("tests/test9.huf", "tempfile"));
 
