@@ -95,7 +95,20 @@ class CodeTree {
         }
     }
 
+    void deallocRec(Node * from) {
+        if (from != nullptr) {
+            deallocRec(from->right);
+            deallocRec(from->left);
+
+            delete from;
+        }
+    }
+
     public:
+    ~CodeTree() {
+        deallocRec(root);
+    }
+
     void createNewTree(queue<bool> & positions, queue<string> & characters) {
         root = new Node;
         if (positions.front() == true) {
@@ -271,7 +284,10 @@ class Decompresser {
 
             if (remainingToRead == 0) {
                 if (lastChunk) {
-                    // TODO: Check if file is trurly empty...
+                    ifilestream.peek();
+                    if (!ifilestream.eof() || bits.size() >= 8) {
+                        return false;
+                    }
                     break;
                 }
 
@@ -308,6 +324,7 @@ class Decompresser {
                     }
                     remainingToRead = number;
                     lastChunk = true;
+                    continue;
                 }
             }
 
@@ -419,7 +436,6 @@ bool identicalFiles(const char * fileName1, const char * fileName2) {
 }
 
 int main(void) {
-
     assert(decompressFile("tests/test0.huf", "tempfile"));
     assert(identicalFiles("tests/test0.orig", "tempfile"));
 
@@ -437,10 +453,13 @@ int main(void) {
 
     assert(!decompressFile("tests/test5.huf", "tempfile"));
 
-    /*assert(!decompressFile("tests/test6.huf", "tempfile"));
+    assert(!decompressFile("tests/test6.huf", "tempfile"));
 
-    assert(!decompressFile("tests/test7.huf", "tempfile"));*/
+    assert(!decompressFile("tests/test7.huf", "tempfile"));
 
+    assert(!decompressFile("tests/test8.huf", "tempfile"));
+
+    assert(!decompressFile("tests/test9.huf", "tempfile"));
 
     assert(decompressFile("tests/extra0.huf", "tempfile"));
     assert(identicalFiles("tests/extra0.orig", "tempfile"));
@@ -471,6 +490,9 @@ int main(void) {
 
     assert(decompressFile("tests/extra9.huf", "tempfile"));
     assert(identicalFiles("tests/extra9.orig", "tempfile"));
+
+    assert(decompressFile("tests/extra10.huf", "tempfile"));
+    assert(identicalFiles("tests/extra10.orig", "tempfile"));
     return 0;
 }
 #endif /* __PROGTEST__ */
