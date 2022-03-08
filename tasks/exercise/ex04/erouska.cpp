@@ -12,7 +12,11 @@
 using namespace std;
 #endif /* __PROGTEST__ */
 
-
+/**
+ * @brief Class for storing and comparing dates
+ *
+ * Values are not sanitized
+ */
 class CDate {
 public:
     int year;
@@ -44,6 +48,12 @@ public:
     }
 };
 
+/**
+ * @brief Class for stroring and comparing time
+ * 
+ * Values are not sanitized
+ * 
+ */
 class CTime {
 public:
     int hour;
@@ -75,6 +85,10 @@ public:
     }
 };
 
+/**
+ * @brief Class for storing and comparing date and time
+ * 
+ */
 class CTimeStamp {
 public:
     CTime time;
@@ -102,24 +116,50 @@ public:
     }
 };
 
+/**
+ * @brief Class representing contact between two persons, including date and time when this contact happend
+ * 
+ */
 class CContact {
-    CTimeStamp timestamp;
-    const unsigned long person1;
-    const unsigned long person2;
-
-    static size_t nextUniqueId;
+    const CTimeStamp timestamp;
+    const unsigned long person1; // ID of person1
+    const unsigned long person2; // ID of person2
 
 public:
     CContact(const CTimeStamp& ts, int p1, int p2) : timestamp(ts), person1(p1), person2(p2) {}
 
+    /**
+     * @brief Method to determine if contact contains person id
+     * 
+     * @param p Person id to look for
+     * @return true Person is part of this contact
+     * @return false Person is not part of this contact
+     */
     bool containsPerson(unsigned int p) const {
         return ((person1 == p) || (person2 == p));
     }
 
+    /**
+     * @brief Method to determine if contact contains person id and is between specified timestamps
+     * 
+     * @param p Person id to look for
+     * @param fromT Timestamp to look from
+     * @param toT Timestamp to look to
+     * @return true Person is part of this contact
+     * @return false Person is not part of this contact
+     */
     bool containsPerson(unsigned int p, const CTimeStamp& fromT, const CTimeStamp& toT) const {
         return (containsPerson(p) && (timestamp >= fromT && toT >= timestamp));
     }
 
+    /**
+     * @brief Method to get the second person of this contact
+     * 
+     * Throws if contact does not contain searched person, or if contact contains only searched person .
+     * 
+     * @param to Person in this contact
+     * @return unsigned long Person in this contact other than person in 'to'
+     */
     unsigned long otherPerson(unsigned int to) const {
         if (to != person1 && to == person2) {
             return person1;
@@ -131,11 +171,18 @@ public:
     }
 };
 
-size_t CContact::nextUniqueId = 0;
-
 class CEFaceMask {
-    vector<CContact> contacts;
+    vector<CContact> contacts; // Storage of all contacts
 
+    /**
+     * @brief Method to add the second person from contact to list
+     * 
+     * If contact doesn't contain searched person, or contains only searched person, nothing is added to the list.
+     * 
+     * @param contact Contact to look in
+     * @param person Person in this contact
+     * @param list List to add this other person to
+     */
     void addPersonToList(const CContact & contact, long unsigned person, vector<int> & list) const {
         try {
             unsigned long otherPerson = contact.otherPerson(person);
@@ -146,6 +193,17 @@ class CEFaceMask {
         catch (...) {}
     }
 
+    /**
+     * @brief Method that searches through all contacts of given person and outputs all other persons that this person has been in contact with
+     * 
+     * Duplicates and self contacts are not added to result.
+     * 
+     * @param person Person to look for in contacts
+     * @param fromT Timestamp to look from
+     * @param toT Timestamp to look to
+     * @param withTimestamps Should the search be restricted with timestamps
+     * @return vector<int> List of contacts of given person
+     */
     vector<int> processContacts(long unsigned person, CTimeStamp fromT = CTimeStamp(0, 0, 0, 0, 0, 0), CTimeStamp toT = CTimeStamp(0, 0, 0, 0, 0, 0), bool withTimestamps = false) const {
         vector<int> listOfContacts;
         for (auto& contact : contacts) {
@@ -163,15 +221,41 @@ class CEFaceMask {
     }
 
 public:
+    /**
+     * @brief Method that stores new contact
+     * 
+     * @param contact Contact to store
+     * @return CEFaceMask& this object
+     */
     CEFaceMask & addContact(const CContact & contact) {
         contacts.push_back(contact);
         return *this;
     }
 
+    /**
+     * @brief Method that searches through all contacts of given person and outputs all other persons that this person has been in contact with
+     * 
+     * Duplicates and self contacts are not added to result.
+     * 
+     * @param person Person to look for in contacts
+     * @return vector<int> IDs of persons specified person has been in contact with
+     */
     vector<int> listContacts(int person) const {
         return processContacts(person);
     }
 
+    /**
+     * @brief Method that searches through all contacts of given person and outputs all other persons that this person has been in contact with
+     * 
+     * Restricts search beween given timestamps.
+     * 
+     * Duplicates and self contacts are not added to result.
+     * 
+     * @param person Person to look for in contacts
+     * @param fromT Timestamp to look from
+     * @param toT Tinmestamp to look to
+     * @return vector<int> IDs of persons specified person has been in contact with
+     */
     vector<int> listContacts(int person, CTimeStamp fromT, CTimeStamp toT) const {
         return processContacts(person, fromT, toT, true);
     }
