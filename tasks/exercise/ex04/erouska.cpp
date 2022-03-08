@@ -15,21 +15,21 @@ using namespace std;
 
 class CDate {
 public:
-    const int year;
-    const int month;
-    const int day;
+    int year;
+    int month;
+    int day;
 
     CDate(unsigned int y, unsigned int m, unsigned int d): year(y), month(m), day(d) {}
 
-    bool isEqual(CDate & otherDate) const {
+    bool isEqual(const CDate & otherDate) const {
         return ((year == otherDate.year) && (month == otherDate.month) && (day == otherDate.day));
     }
 
-    bool operator == (CDate & rhs) const {
+    bool operator == (const CDate & rhs) const {
         return isEqual(rhs);
     }
 
-    bool operator > (CDate & rhs) const {
+    bool operator > (const CDate & rhs) const {
         
         if (year == rhs.year) {
             if (month == rhs.month) {
@@ -46,21 +46,21 @@ public:
 
 class CTime {
 public:
-    const int hour;
-    const int minute;
-    const int second;
+    int hour;
+    int minute;
+    int second;
 
     CTime(unsigned int h, unsigned int m, unsigned int s): hour(h), minute(m), second(s) {}
 
-    bool isEqual(CTime & otherTime) const {
+    bool isEqual(const CTime & otherTime) const {
         return ((hour == otherTime.hour) && (minute == otherTime.minute) && (second == otherTime.second));
     }
 
-    bool operator == (CTime & rhs) const {
+    bool operator == (const CTime & rhs) const {
         return isEqual(rhs);
     }
 
-    bool operator > (CTime& rhs) const {
+    bool operator > (const CTime& rhs) const {
 
         if (hour == rhs.hour) {
             if (minute == rhs.minute) {
@@ -82,15 +82,15 @@ public:
 
     CTimeStamp(unsigned int y, unsigned int mo, unsigned int d, unsigned int h, unsigned int mi, unsigned int s) : time(h, mi, s), date(y, mo, d) {}
 
-    bool isEqual(CTimeStamp & otherTimestamp) const {
+    bool isEqual(const CTimeStamp & otherTimestamp) const {
         return ((time == otherTimestamp.time) && (date == otherTimestamp.date));
     }
 
-    bool operator == (CTimeStamp & rhs) const {
+    bool operator == (const CTimeStamp & rhs) const {
         return isEqual(rhs);
     }
 
-    bool operator >= (CTimeStamp & rhs) const {
+    bool operator >= (const CTimeStamp & rhs) const {
 
         if (date == rhs.date) {
             if (time == rhs.time) {
@@ -99,10 +99,6 @@ public:
             return time > rhs.time;
         }
         return date > rhs.date;
-    }
-
-    bool operator >= (const CTimeStamp & rhs) const {
-        return (*this) >= const_cast<CTimeStamp&>(rhs);
     }
 };
 
@@ -114,13 +110,13 @@ class CContact {
     static size_t nextUniqueId;
 
 public:
-    CContact(const CTimeStamp& ts, unsigned long p1, unsigned long p2) : timestamp(ts), person1(p1), person2(p2) {}
+    CContact(const CTimeStamp& ts, int p1, int p2) : timestamp(ts), person1(p1), person2(p2) {}
 
     bool containsPerson(unsigned int p) const {
         return ((person1 == p) || (person2 == p));
     }
 
-    bool containsPerson(unsigned int p, const CTimeStamp& fromT, const CTimeStamp& toT) {
+    bool containsPerson(unsigned int p, const CTimeStamp& fromT, const CTimeStamp& toT) const {
         return (containsPerson(p) && (timestamp >= fromT && toT >= timestamp));
     }
 
@@ -140,7 +136,7 @@ size_t CContact::nextUniqueId = 0;
 class CEFaceMask {
     vector<CContact> contacts;
 
-    void addPersonToList(CContact & contact, long unsigned person, vector<int> & list) {
+    void addPersonToList(const CContact & contact, long unsigned person, vector<int> & list) const {
         try {
             unsigned long otherPerson = contact.otherPerson(person);
             if (find(list.begin(), list.end(), otherPerson) == list.end()) {
@@ -150,7 +146,7 @@ class CEFaceMask {
         catch (...) {}
     }
 
-    vector<int> processContacts(long unsigned person, CTimeStamp fromT = CTimeStamp(0, 0, 0, 0, 0, 0), CTimeStamp toT = CTimeStamp(0, 0, 0, 0, 0, 0), bool withTimestamps = false) {
+    vector<int> processContacts(long unsigned person, CTimeStamp fromT = CTimeStamp(0, 0, 0, 0, 0, 0), CTimeStamp toT = CTimeStamp(0, 0, 0, 0, 0, 0), bool withTimestamps = false) const {
         vector<int> listOfContacts;
         for (auto& contact : contacts) {
             if (withTimestamps) {
@@ -172,11 +168,11 @@ public:
         return *this;
     }
 
-    vector<int> listContacts(unsigned long person) {
+    vector<int> listContacts(int person) const {
         return processContacts(person);
     }
 
-    vector<int> listContacts(unsigned long person, CTimeStamp fromT, CTimeStamp toT) {
+    vector<int> listContacts(int person, CTimeStamp fromT, CTimeStamp toT) const {
         return processContacts(person, fromT, toT, true);
     }
 
