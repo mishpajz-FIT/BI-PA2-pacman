@@ -49,14 +49,13 @@ class CodeTree {
     queue<bool> creationPositions;
     queue<string> creationCharacters;
 
-    void createNode(Node* at) {
+    void createNode(Node * at) {
         if (creationPositions.front() == false) {
             at->left = new Node;
             size++;
             creationPositions.pop();
             createNode(at->left);
-        }
-        else {
+        } else {
             at->left = new Node(creationCharacters.front());
             size++;
             creationPositions.pop();
@@ -68,8 +67,7 @@ class CodeTree {
             size++;
             creationPositions.pop();
             createNode(at->right);
-        }
-        else {
+        } else {
             at->right = new Node(creationCharacters.front());
             size++;
             creationPositions.pop();
@@ -90,7 +88,7 @@ class CodeTree {
             printRec(from->left, newPath);
         }
 
-        if ((from->shouldHaveData())) {
+        if (from->shouldHaveData()) {
             cout << from->data << " : " << path << endl;
         }
     }
@@ -104,7 +102,7 @@ class CodeTree {
         }
     }
 
-    public:
+public:
     ~CodeTree() {
         deallocRec(root);
     }
@@ -124,7 +122,7 @@ class CodeTree {
         }
     }
 
-    bool extractCharFromTree(deque<bool>& bits, string & to) const {
+    bool extractCharFromTree(deque<bool> & bits, string & to) const {
         size_t bitIter = 0;
         Node * nodeIter = root;
         while (true) {
@@ -163,7 +161,7 @@ class CodeTree {
 };
 
 class Decompresser {
-    private:
+private:
 
     ifstream ifilestream;
     ofstream ofilestream;
@@ -252,13 +250,13 @@ class Decompresser {
                 for (unsigned long i = 0; i < remainingChars; i++) {
                     if (remainingChars == 3) {
                         if (i == 0) {
-                            if (reinterpret_cast<unsigned char&>(newChar) == (unsigned)(0xF4)) {
+                            if (reinterpret_cast<unsigned char &>(newChar) == (unsigned)(0xF4)) {
                                 maxPossibleForUTF8 = true;
-                            } else if (reinterpret_cast<unsigned char&>(newChar) > (unsigned)(0xF4)) {
+                            } else if (reinterpret_cast<unsigned char &>(newChar) > (unsigned)(0xF4)) {
                                 return false;
                             }
                         } else if (i == 1) {
-                            if ((reinterpret_cast<unsigned char&>(newChar) > (unsigned)(0x8F)) && maxPossibleForUTF8) {
+                            if ((reinterpret_cast<unsigned char &>(newChar) > (unsigned)(0x8F)) && maxPossibleForUTF8) {
                                 return false;
                             }
                         }
@@ -278,14 +276,12 @@ class Decompresser {
                 if (numberOfLists == numberOfNodes + 1) {
                     break;
                 }
-            }
-            else if (!readingChars) {
+            } else if (!readingChars) {
                 positions.push(bits.front());
                 bits.pop_front();
                 if (positions.back() == false) {
                     numberOfNodes++;
-                }
-                else {
+                } else {
                     numberOfLists++;
                     readingChars = true;
                 }
@@ -321,8 +317,7 @@ class Decompresser {
                 if (bits.front() == 1) {
                     bits.pop_front();
                     remainingToRead = 4096;
-                }
-                else {
+                } else {
                     bits.pop_front();
                     while (bits.size() < 12) {
                         try {
@@ -376,8 +371,8 @@ class Decompresser {
         return true;
     }
 
-    public:
-    Decompresser(const char* inFileName, const char* outFileName) {
+public:
+    Decompresser(const char * inFileName, const char * outFileName) {
         tree = CodeTree();
 
         ifilestream.open(inFileName, ios::in | ios::binary);
@@ -417,7 +412,8 @@ bool decompressFile(const char * inFileName, const char * outFileName) {
     try {
         Decompresser decompresser(inFileName, outFileName);
         return decompresser.decode();
-    } catch (...) {
+    }
+    catch (...) {
         return false;
     }
     return false;
@@ -434,7 +430,7 @@ bool identicalFiles(const char * fileName1, const char * fileName2) {
     ifstream ifs1(fileName1, ios::in | ios::binary);
     ifstream ifs2(fileName2, ios::in | ios::binary);
 
-    while(true) {
+    while (true) {
         bool eof;
 
         char c1 = 0, c2 = 0;
@@ -447,7 +443,7 @@ bool identicalFiles(const char * fileName1, const char * fileName2) {
             return false;
         }
 
-        if(eof) {
+        if (eof) {
             break;
         }
 
@@ -463,7 +459,7 @@ bool identicalFiles(const char * fileName1, const char * fileName2) {
     return true;
 }
 
-int main(void) { 
+int main(void) {
     assert(decompressFile("tests/test0.huf", "tempfile"));
     assert(identicalFiles("tests/test0.orig", "tempfile"));
 
@@ -472,7 +468,7 @@ int main(void) {
 
     assert(decompressFile("tests/test2.huf", "tempfile"));
     assert(identicalFiles("tests/test2.orig", "tempfile"));
-    
+
     assert(decompressFile("tests/test3.huf", "tempfile"));
     assert(identicalFiles("tests/test3.orig", "tempfile"));
 
