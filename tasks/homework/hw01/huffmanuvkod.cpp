@@ -43,53 +43,25 @@ struct Node {
 };
 
 class CodeTree {
+protected:
     Node * root;
     size_t size;
 
-    queue<bool> creationPositions;
-    queue<string> creationCharacters;
-
-    void createNode(Node * at) {
-        if (creationPositions.front() == false) {
-            at->left = new Node;
-            size++;
-            creationPositions.pop();
-            createNode(at->left);
-        } else {
-            at->left = new Node(creationCharacters.front());
-            size++;
-            creationPositions.pop();
-            creationCharacters.pop();
-        }
-
-        if (creationPositions.front() == false) {
-            at->right = new Node;
-            size++;
-            creationPositions.pop();
-            createNode(at->right);
-        } else {
-            at->right = new Node(creationCharacters.front());
-            size++;
-            creationPositions.pop();
-            creationCharacters.pop();
-        }
-    }
-
-    void printRec(Node * from, string path) {
+    void printRec(Node * from, string path, ostream & os) {
         string newPath = path;
         if (from->right != nullptr) {
             newPath.push_back('1');
-            printRec(from->right, newPath);
+            printRec(from->right, newPath, os);
         }
 
         newPath = path;
         if (from->left != nullptr) {
             newPath.push_back('0');
-            printRec(from->left, newPath);
+            printRec(from->left, newPath, os);
         }
 
         if (from->shouldHaveData()) {
-            cout << from->data << " : " << path << endl;
+            os << from->data << " : " << path;
         }
     }
 
@@ -107,6 +79,44 @@ public:
         deallocRec(root);
     }
 
+    void printTree(ostream & os) {
+        string path = "";
+        printRec(root, path, os);
+    }
+
+    friend ostream & operator << (ostream & os, CodeTree & rhs) {
+        rhs.printTree(os);
+        return os;
+    }
+};
+
+class DecodeTree : public CodeTree {
+private:
+    queue<bool> creationPositions;
+    queue<string> creationCharacters;
+
+    void createNode(Node ** at) {
+        if (creationPositions.front() == false) {
+            *at = new Node;
+            size++;
+            creationPositions.pop();
+            createNodePosition(*at);
+        } else {
+            *at = new Node(creationCharacters.front());
+            size++;
+            creationPositions.pop();
+            creationCharacters.pop();
+        }
+    }
+
+    void createNodePosition(Node * at) {
+        createNode(&(at->left));
+
+        createNode(&(at->right));
+    }
+
+public:
+
     void createNewTree(queue<bool> & positions, queue<string> & characters) {
         root = new Node;
         if (positions.front() == true) {
@@ -118,7 +128,7 @@ public:
             creationPositions = positions;
             creationCharacters = characters;
 
-            createNode(root);
+            createNodePosition(root);
         }
     }
 
@@ -153,22 +163,21 @@ public:
             bitIter++;
         }
     }
-
-    void printTree() {
-        string path = "";
-        printRec(root, path);
-    }
 };
 
-class Decompresser {
-private:
-
+class Compression {
+protected:
     ifstream ifilestream;
     ofstream ofilestream;
 
-    CodeTree tree;
-
     deque<bool> bits;
+
+};
+
+class Decompresser : public Compression {
+private:
+
+    DecodeTree tree;
 
     void readBits() {
         char c;
@@ -373,7 +382,7 @@ private:
 
 public:
     Decompresser(const char * inFileName, const char * outFileName) {
-        tree = CodeTree();
+        tree = DecodeTree();
 
         ifilestream.open(inFileName, ios::in | ios::binary);
         ofilestream.open(outFileName, ios::out);
