@@ -23,13 +23,81 @@
 using namespace std;
 #endif /* __PROGTEST__ */
 
+class LongChar {
+private:
+    char * data;
+    unsigned int length;
+
+public:
+    LongChar() : length(0) {
+        data = new char[4];
+    }
+
+    LongChar(const LongChar & obj) : length(obj.size()) {
+        data = new char[4];
+        for (unsigned int i = 0; i < obj.size(); i++) {
+            data[i] = obj[i];
+        }
+    }
+
+    ~LongChar() {
+        delete [] data;
+    }
+
+    void push(char newChar) {
+        if (length < 4) {
+            data[length++] = newChar;
+        } else {
+            throw "String full";
+        }
+    }
+
+    char & at(unsigned int i) const {
+        if (i < length) {
+            return data[i];
+        } else {
+            throw "Wrong input";
+        }
+    }
+
+    char & operator [ ] (unsigned int i) const {
+        if (i < length) {
+            return data[i];
+        } else {
+            throw "Wrong input";
+        }
+    }
+
+    unsigned int size() const {
+        return length;
+    }
+
+    void operator = (const LongChar & obj) {
+        length = obj.size();
+        for (unsigned int i = 0; i < obj.size(); i++) {
+            data[i] = obj[i];
+        }
+    }
+
+    friend ostream & operator << (ostream & os, LongChar & longChar) {
+        for (unsigned int i = 0; i < longChar.length; i++) {
+            os << longChar.data[i];
+        }
+        return os;
+    }
+};
+
 struct Node {
-    string data;
+    LongChar data;
     Node * left;
     Node * right;
 
-    Node(string newData = "") {
-        data = newData;
+    Node() : data() {
+        left = nullptr;
+        right = nullptr;
+    }
+
+    Node(LongChar newChar) : data(newChar) {
         left = nullptr;
         right = nullptr;
     }
@@ -93,7 +161,7 @@ public:
 class DecodeTree : public CodeTree {
 private:
     queue<bool> creationPositions;
-    queue<string> creationCharacters;
+    queue<LongChar> creationCharacters;
 
     void createNode(Node ** at) {
         if (creationPositions.front() == false) {
@@ -117,7 +185,7 @@ private:
 
 public:
 
-    void createNewTree(queue<bool> & positions, queue<string> & characters) {
+    void createNewTree(queue<bool> & positions, queue<LongChar> & characters) {
         root = new Node;
         if (positions.front() == true) {
             root->data = characters.front();
@@ -132,7 +200,7 @@ public:
         }
     }
 
-    bool extractCharFromTree(deque<bool> & bits, string & to) const {
+    bool extractCharFromTree(deque<bool> & bits, LongChar & to) const {
         size_t bitIter = 0;
         Node * nodeIter = root;
         while (true) {
@@ -165,6 +233,10 @@ public:
     }
 };
 
+class EncodeTree : public CodeTree {
+
+};
+
 class Compression {
 protected:
     ifstream ifilestream;
@@ -172,6 +244,43 @@ protected:
 
     deque<bool> bits;
 
+public:
+    int utf8CharLength(const char & newChar) {
+        if ((newChar & 0xF8) == 0xF0) {
+            return 4;
+        } else if ((newChar & 0xF0) == 0xE0) {
+            return 3;
+        } else if ((newChar & 0xE0) == 0xC0) {
+            return 2;
+        } else if ((newChar & 0x80) == 0) {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+
+    bool isValidUTF8Char(int totalCharLength, int currentChar, bool & firstCharMaxPossible, char & newChar) {
+        if (totalCharLength == 4) {
+            if (currentChar == 0) {
+                if (reinterpret_cast<unsigned char &>(newChar) == (unsigned)(0xF4)) {
+                    firstCharMaxPossible = true;
+                } else if (reinterpret_cast<unsigned char &>(newChar) > (unsigned)(0xF4)) {
+                    return false;
+                }
+            } else if (currentChar == 1) {
+                if ((reinterpret_cast<unsigned char &>(newChar) > (unsigned)(0x8F)) && firstCharMaxPossible) {
+                    return false;
+                }
+            }
+        }
+
+        if (currentChar != 0) {
+            if ((newChar & 0xC0) != 0x80) {
+                return false;
+            }
+        }
+        return true;
+    }
 };
 
 class Decompresser : public Compression {
@@ -215,7 +324,7 @@ private:
         int numberOfLists = 0;
 
         queue<bool> positions;
-        queue<string> characters;
+        queue<LongChar> characters;
 
         bool readingChars = false;
 
@@ -229,24 +338,16 @@ private:
                 }
             }
             if (readingChars && bits.size() >= 8) {
-                string charString;
+                LongChar longChar;
                 char newChar = readChar();
-                charString.push_back(newChar);
+                longChar.push(newChar);
 
-                unsigned long remainingChars = 0;
-                if ((newChar & 0xF8) == 0xF0) {
-                    remainingChars = 3;
-                } else if ((newChar & 0xF0) == 0xE0) {
-                    remainingChars = 2;
-                } else if ((newChar & 0xE0) == 0xC0) {
-                    remainingChars = 1;
-                } else if ((newChar & 0x80) == 0) {
-                    remainingChars = 0;
-                } else {
+                int charLength = utf8CharLength(newChar);
+                if (charLength == 0) {
                     return false;
                 }
 
-                while (bits.size() < remainingChars * 8) {
+                while (bits.size() < (unsigned long)((charLength - 1) * 8)) {
                     try {
                         readBits();
                     }
@@ -256,30 +357,21 @@ private:
                 }
 
                 bool maxPossibleForUTF8 = false;
-                for (unsigned long i = 0; i < remainingChars; i++) {
-                    if (remainingChars == 3) {
-                        if (i == 0) {
-                            if (reinterpret_cast<unsigned char &>(newChar) == (unsigned)(0xF4)) {
-                                maxPossibleForUTF8 = true;
-                            } else if (reinterpret_cast<unsigned char &>(newChar) > (unsigned)(0xF4)) {
-                                return false;
-                            }
-                        } else if (i == 1) {
-                            if ((reinterpret_cast<unsigned char &>(newChar) > (unsigned)(0x8F)) && maxPossibleForUTF8) {
-                                return false;
-                            }
-                        }
-                    }
-
+                if (!isValidUTF8Char(charLength, 0, maxPossibleForUTF8, newChar)) {
+                    return false;
+                }
+                for (int i = 1; i < charLength; i++) {
                     newChar = readChar();
-                    if ((newChar & 0xC0) != 0x80) {
+
+                    if (!isValidUTF8Char(charLength, i, maxPossibleForUTF8, newChar)) {
                         return false;
                     }
-                    charString.push_back(newChar);
+
+                    longChar.push(newChar);
                 }
 
 
-                characters.push(charString);
+                characters.push(longChar);
                 readingChars = false;
 
                 if (numberOfLists == numberOfNodes + 1) {
@@ -351,7 +443,7 @@ private:
                 }
             }
 
-            string c;
+            LongChar c;
             try {
                 if (!tree.extractCharFromTree(bits, c)) {
                     try {
@@ -371,7 +463,7 @@ private:
                 return false;
             }
 
-            for (size_t i = 0; i < c.length(); i++) {
+            for (size_t i = 0; i < c.size(); i++) {
                 ofilestream.put(c.at(i));
             }
             remainingToRead--;
@@ -413,6 +505,99 @@ public:
         }
 
         return true;
+    }
+};
+
+class Compresser : public Compression {
+private:
+    EncodeTree tree;
+    vector<string> characters;
+
+    char readChar() {
+        char c;
+
+        try {
+            ifilestream.get(c);
+        }
+        catch (...) {
+            throw "Could not read from file";
+        }
+
+        if (ifilestream.fail()) {
+            throw "Error reading from file";
+        }
+
+        return c;
+    }
+
+    bool readFile() {
+        while (true) {
+            string newString;
+            char newChar;
+            try {
+                newChar = readChar();
+            }
+            catch (...) {
+                if (!ifilestream.eof()) {
+                    return false;
+                } else {
+                    break;
+                }
+            }
+
+            newString.push_back(newChar);
+
+            int charLength = utf8CharLength(newChar);
+            if (charLength == 0) {
+                return false;
+            }
+
+            bool maxPossibleForUTF8 = false;
+            if (!isValidUTF8Char(charLength, 0, maxPossibleForUTF8, newChar)) {
+                return false;
+            }
+            for (int i = 1; i < charLength; i++) {
+                try {
+                    newChar = readChar();
+                }
+                catch (...) {
+                    return false;
+                }
+
+                if (!isValidUTF8Char(charLength, i, maxPossibleForUTF8, newChar)) {
+                    return false;
+                }
+
+                newString.push_back(newChar);
+            }
+
+            characters.push_back(newString);
+        }
+        return true;
+    }
+
+    bool generateEncoding() {
+        //map < string,
+        return false;
+    }
+
+public:
+    Compresser(const char * inFileName, const char * outFileName) {
+        tree = EncodeTree();
+
+        ifilestream.open(inFileName, ios::in);
+        ofilestream.open(outFileName, ios::out | ios::binary);
+
+        if (ifilestream.fail() || ofilestream.fail()) {
+            throw "Error opening file";
+        }
+    }
+
+    bool encode() {
+
+        if (!readFile()) {
+            return false;
+        }
     }
 };
 
