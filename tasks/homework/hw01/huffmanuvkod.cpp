@@ -68,6 +68,18 @@ public:
         }
     }
 
+    bool operator == (const LongChar & rhs) const {
+        if (length == rhs.size()) {
+            for (unsigned int i = 0; i < length; i++) {
+                if (data[i] != rhs[i]) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        return false;
+    }
+
     unsigned int size() const {
         return length;
     }
@@ -77,6 +89,19 @@ public:
         for (unsigned int i = 0; i < obj.size(); i++) {
             data[i] = obj[i];
         }
+    }
+
+    bool operator < (const LongChar & rhs) const {
+        if (length == rhs.size()) {
+            for (unsigned int i = 0; i < length; i++) {
+                if (data[i] < rhs[i]) {
+                    return true;
+                }
+            }
+        } else {
+            return (length < rhs.size());
+        }
+        return false;
     }
 
     friend ostream & operator << (ostream & os, LongChar & longChar) {
@@ -89,17 +114,21 @@ public:
 
 struct Node {
     LongChar data;
+    unsigned int frequency;
     Node * left;
     Node * right;
+    Node * parent;
 
-    Node() : data() {
+    Node() : data(), frequency(0) {
         left = nullptr;
         right = nullptr;
+        parent = nullptr;
     }
 
-    Node(LongChar newChar) : data(newChar) {
+    Node(LongChar newChar, unsigned int newFrequency = 0) : data(newChar), frequency(newFrequency) {
         left = nullptr;
         right = nullptr;
+        parent = nullptr;
     }
 
     bool shouldHaveData() {
@@ -108,7 +137,15 @@ struct Node {
         }
         return false;
     }
+
+    bool operator < (const Node & rhs) const {
+        return data < rhs.data;
+    }
 };
+
+bool compareNodePointersByFreq(Node * rhs, Node * lhs) {
+    return (*rhs).frequency < (*lhs).frequency;
+}
 
 class CodeTree {
 protected:
@@ -129,7 +166,7 @@ protected:
         }
 
         if (from->shouldHaveData()) {
-            os << from->data << " : " << path;
+            os << "\n" << from->data << ": " << path;
         }
     }
 
@@ -184,7 +221,6 @@ private:
     }
 
 public:
-
     void createNewTree(queue<bool> & positions, queue<LongChar> & characters) {
         root = new Node;
         if (positions.front() == true) {
@@ -234,7 +270,79 @@ public:
 };
 
 class EncodeTree : public CodeTree {
+private:
 
+    map<LongChar, Node * > translation;
+
+    bool organizeNodes(map<LongChar, unsigned int> & frequecies) {
+        deque<Node * > nodes;
+        for (auto const & [key, value] : frequecies) {
+            Node * newNode = new Node(key, value);
+            nodes.push_back(newNode);
+            translation[key] = newNode;
+            size++;
+        }
+
+        if (nodes.size() == 0) {
+            return false;
+        }
+
+        sort(nodes.begin(), nodes.end(), compareNodePointersByFreq);
+
+        while (nodes.size() > 1) {
+            Node * parentNode = new Node();
+            nodes.front()->parent = parentNode;
+            parentNode->left = nodes.front();
+            nodes.pop_front();
+            parentNode->right = nodes.front();
+            nodes.front()->parent = parentNode;
+            nodes.pop_front();
+            parentNode->frequency = parentNode->left->frequency + parentNode->right->frequency;
+
+            nodes.insert(lower_bound(nodes.begin(), nodes.end(), parentNode, compareNodePointersByFreq), parentNode);
+
+            size++;
+        }
+
+        root = nodes.front();
+
+        sort(translation.begin(), translation.end());
+
+        return true;
+    }
+public:
+
+    bool retrieveCoding(const LongChar & forChar, vector<bool> & to) {
+        if (translation.find(forChar) != translation.end()) {
+            Node * codedNode = translation[forChar];
+            Node * codedParent = codedNode->parent;
+            if (codedParent == nullptr) {
+                return false;
+            }
+            while (codedParent != nullptr) {
+                if (codedNode == codedParent->left) {
+                    to.push_back(false);
+                } else if (codedNode == codedParent->right) {
+                    to.push_back(true);
+                } else {
+                    return false;
+                }
+
+                return true;
+            }
+        }
+        return false;
+    }
+
+    bool generateTree(vector<LongChar> & characters) {
+        map<LongChar, unsigned int> frequecies;
+
+        for (auto & longCharElement : characters) {
+            frequecies[longCharElement]++;
+        }
+
+        return organizeNodes(frequecies);
+    }
 };
 
 class Compression {
@@ -511,11 +619,19 @@ public:
 class Compresser : public Compression {
 private:
     EncodeTree tree;
-    vector<string> characters;
+    vector<LongChar> characters;
 
-    char readChar() {
-        char c;
+    bool writeFile(bool last = false) {
 
+    }
+
+    bool convertChars() {
+        while (characters.size() > 0) {
+            vector<bool> charBits;
+        }
+    }
+
+    bool readChar(char & c) {
         try {
             ifilestream.get(c);
         }
@@ -523,29 +639,31 @@ private:
             throw "Could not read from file";
         }
 
+        if (ifilestream.eof()) {
+            return false;
+        }
+
         if (ifilestream.fail()) {
             throw "Error reading from file";
         }
 
-        return c;
+        return true;
     }
 
     bool readFile() {
         while (true) {
-            string newString;
+            LongChar newLongChar;
             char newChar;
             try {
-                newChar = readChar();
-            }
-            catch (...) {
-                if (!ifilestream.eof()) {
-                    return false;
-                } else {
+                if (!readChar(newChar)) {
                     break;
                 }
             }
+            catch (...) {
+                return false;
+            }
 
-            newString.push_back(newChar);
+            newLongChar.push(newChar);
 
             int charLength = utf8CharLength(newChar);
             if (charLength == 0) {
@@ -558,7 +676,9 @@ private:
             }
             for (int i = 1; i < charLength; i++) {
                 try {
-                    newChar = readChar();
+                    if (!readChar(newChar)) {
+                        return false;
+                    }
                 }
                 catch (...) {
                     return false;
@@ -568,17 +688,12 @@ private:
                     return false;
                 }
 
-                newString.push_back(newChar);
+                newLongChar.push(newChar);
             }
 
-            characters.push_back(newString);
+            characters.push_back(newLongChar);
         }
         return true;
-    }
-
-    bool generateEncoding() {
-        //map < string,
-        return false;
     }
 
 public:
@@ -598,6 +713,14 @@ public:
         if (!readFile()) {
             return false;
         }
+
+        if (!tree.generateTree(characters)) {
+            return false;
+        }
+
+
+
+        return true;
     }
 };
 
@@ -614,7 +737,13 @@ bool decompressFile(const char * inFileName, const char * outFileName) {
 }
 
 bool compressFile(const char * inFileName, const char * outFileName) {
-      // keep this dummy implementation (no bonus) or implement the compression (bonus)
+    try {
+        Compresser compresser(inFileName, outFileName);
+        return compresser.encode();
+    }
+    catch (...) {
+        return false;
+    }
     return false;
 }
 
@@ -713,6 +842,8 @@ int main(void) {
 
     assert(decompressFile("tests/extra10.huf", "tempfile"));
     assert(identicalFiles("tests/extra10.orig", "tempfile"));
+
+    compressFile("tests/test0.orig", "tempfile");
     return 0;
 }
 #endif /* __PROGTEST__ */
