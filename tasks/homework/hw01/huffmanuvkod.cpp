@@ -1,3 +1,18 @@
+/**
+ * @file huffmanuvkod.cpp
+ * @author Michal Dobeš
+ * @date 2022-03-11
+ *
+ * @brief Implementation of decompression and compression of UTF-8 text files using Huffman encoding.
+ *
+ * Huffman encoding: https://en.wikipedia.org/wiki/Huffman_coding
+ *
+ *
+ * Note: Everything is stored in one file because of the submission software.
+ *
+ * @copyright Copyright (c) 2022
+ *
+ */
 #ifndef __PROGTEST__
 #include <cstring>
 #include <cstdlib>
@@ -21,10 +36,16 @@
 using namespace std;
 #endif /* __PROGTEST__ */
 
+/**
+ * @brief Storage for UTF-8 characters
+ *
+ * Stores up to 4 chars.
+ *
+ */
 class LongChar {
 private:
-    char * data;
-    unsigned int length;
+    char * data; //Dynamically allocated array of 4 characters
+    unsigned int length; //Count of occupied character in array
 
 public:
     LongChar() : length(0) {
@@ -42,6 +63,13 @@ public:
         delete [] data;
     }
 
+    /**
+     * @brief Add char behind last character (or at the front)
+     *
+     * Throws if already filled with chars.
+     *
+     * @param newChar Char to append.
+     */
     void push(char newChar) {
         if (length < 4) {
             data[length++] = newChar;
@@ -50,6 +78,14 @@ public:
         }
     }
 
+    /**
+     * @brief Access character at position
+     *
+     * Throws if
+     *
+     * @param i Index of position
+     * @return char& Character at position
+     */
     char & at(unsigned int i) const {
         if (i < length) {
             return data[i];
@@ -58,6 +94,9 @@ public:
         }
     }
 
+    /**
+     *  @copydoc LongChar::at(unsigned int i) const
+     */
     char & operator [ ] (unsigned int i) const {
         if (i < length) {
             return data[i];
@@ -78,6 +117,11 @@ public:
         return false;
     }
 
+    /**
+     * @brief Return amount of chars that are filled
+     *
+     * @return unsigned int Amount
+     */
     unsigned int size() const {
         return length;
     }
@@ -114,9 +158,14 @@ public:
     }
 };
 
+/**
+ * @brief Node in bindary tree
+ *
+ */
 struct Node {
-    LongChar data;
-    unsigned int frequency;
+    LongChar data; //UTF-8 Char
+    unsigned int frequency; //Frequency in file
+
     Node * left;
     Node * right;
     Node * parent;
@@ -133,6 +182,12 @@ struct Node {
         parent = nullptr;
     }
 
+    /**
+     * @brief Should this node contain data
+     *
+     * @return true Node is a leaf
+     * @return false Node is not a leaf
+     */
     bool shouldHaveData() {
         if (left == nullptr && right == nullptr) {
             return true;
@@ -145,18 +200,38 @@ struct Node {
     }
 };
 
+/**
+ * @brief Comparison function for comparing Node by frequency elements
+ *
+ * @param rhs Node
+ * @param lhs Node
+ * @return true frequency of rhs < frequecy of lhs
+ * @return false !(frequency of rhs < frequecy of lhs)
+ */
 bool compareNodePointersByFreq(Node * rhs, Node * lhs) {
     return (*rhs).frequency < (*lhs).frequency;
 }
 
+/**
+ * @brief Binary tree used for Huffman coding
+ *
+ */
 class CodeTree {
 protected:
-    Node * root;
-    size_t size;
 
+    Node * root; //Root Node of the tree
+    size_t size; //Nodes in the tree
+
+    /**
+     * @brief Recursively print path to and Node value to stream
+     *
+     * @param from Node which (and its descendants) to print to stream
+     * @param path Path to this Node
+     * @param os Stream to print to
+     */
     void printRec(Node * from, string path, ostream & os) {
         string newPath = path;
-        if (from->right != nullptr) {
+        if (from->right != nullptr) { //Writes 1 for right turn in tree path, 0 for left turn
             newPath.push_back('1');
             printRec(from->right, newPath, os);
         }
@@ -172,6 +247,11 @@ protected:
         }
     }
 
+    /**
+     * @brief Node deallocation recursively
+     *
+     * @param from Node which (and its descendants) to dealloc
+     */
     void deallocRec(Node * from) {
         if (from != nullptr) {
             deallocRec(from->right);
@@ -186,6 +266,11 @@ public:
         deallocRec(root);
     }
 
+    /**
+     * @brief Print tree (Node values and paths to them) to stream
+     *
+     * @param os Stream to print to
+     */
     void printTree(ostream & os) {
         string path = "";
         printRec(root, path, os);
@@ -197,18 +282,30 @@ public:
     }
 };
 
+/**
+ * @brief Binary tree used to decode from the encoded file
+ *
+ */
 class DecodeTree : public CodeTree {
 private:
-    queue<bool> creationPositions;
-    queue<LongChar> creationCharacters;
+    queue<bool> creationPositions; //Positions in binary tree for characters read from the file header
+    queue<LongChar> creationCharacters; //Characters encoded in the file header
 
+    /**
+     * @brief Creates Nodes in the tree
+     *
+     * Nodes are created at the positions specified by DecodeTree#creationPositions for the characters in DecodeTree#creationCharacters.
+     *
+     * @param at Pointer to position where new Node should be allocated.
+     */
     void createNode(Node ** at) {
-        if (creationPositions.front() == false) {
+        //Positions of nodes should be coded using pre-order travelsal
+        if (creationPositions.front() == false) { //If positions (from file header) contain 0, node should not contain characters
             *at = new Node;
             size++;
             creationPositions.pop();
             createNodePosition(*at);
-        } else {
+        } else { //If positions (from file header) contain 1, node be a leaf and contain characters
             *at = new Node(creationCharacters.front());
             size++;
             creationPositions.pop();
@@ -223,7 +320,14 @@ private:
     }
 
 public:
+    /**
+     * @brief Construct a binary encoding tree from the encoding information
+     *
+     * @param positions Positions in binary tree for characters read from the file header
+     * @param characters Characters encoded in the file header
+     */
     void createNewTree(queue<bool> & positions, queue<LongChar> & characters) {
+        //Create root and then generate other nodes recursively 
         root = new Node;
         if (positions.front() == true) {
             root->data = characters.front();
@@ -238,12 +342,23 @@ public:
         }
     }
 
+    /**
+     * @brief Based on the provided encoded bits, finds the decoded character in the tree
+     *
+     * When a character is found, the bits that encode it are removed.
+     *
+     * Throws when character can not be decoded from encoded bits.
+     *
+     * @param[inout] bits Encoded bits
+     * @param[out] to Decoded character
+     * @return true The character was decoded
+     * @return false The character could not be decoded (probably not enough bits read from the file, if the encoding is wrong it throws)
+     */
     bool extractCharFromTree(deque<bool> & bits, LongChar & to) const {
         size_t bitIter = 0;
         Node * nodeIter = root;
         while (true) {
-
-            if (nodeIter->shouldHaveData()) {
+            if (nodeIter->shouldHaveData()) { //If found leaf, return character
                 to = nodeIter->data;
                 for (size_t i = 0; i < bitIter; i++) {
                     bits.pop_front();
@@ -251,16 +366,16 @@ public:
                 return true;
             }
 
-            if (bits.size() <= bitIter) {
+            if (bits.size() <= bitIter) { //If not enough bits loaded to continue reading
                 return false;
             }
 
-            if (bits.at(bitIter) == true) {
+            if (bits.at(bitIter) == true) { //If bit (encoding the char) is 1, the character is in right branch of node
                 if (nodeIter->right == nullptr) {
                     throw "Error in encoding";
                 }
                 nodeIter = nodeIter->right;
-            } else {
+            } else { //If bit (encoding the char) is 0, the character is in left branch of node
                 if (nodeIter->left == nullptr) {
                     throw "Error in encoding";
                 }
@@ -271,14 +386,28 @@ public:
     }
 };
 
+/**
+ * @brief Binary tree used to encode file
+ *
+ */
 class EncodeTree : public CodeTree {
 private:
 
-    map<LongChar, Node * > translation;
+    map<LongChar, Node * > translation; //The map storing the character and the Node that encodes it
 
+    /**
+     * @brief Creates Nodes in the tree
+     *
+     * Nodes are created based on their frequency of occurrence in the file.
+     *
+     * @param frequecies Map containing characters and their frequency of occurrence in the set
+     * @return true The binary tree with node was created
+     * @return false There was an error creating the tree
+     */
     bool organizeNodes(map<LongChar, unsigned int> & frequecies) {
-        deque<Node * > nodes;
-        for (auto const & [key, value] : frequecies) {
+        deque<Node * > nodes; //Nodes without parent
+
+        for (auto const & [key, value] : frequecies) { //For each unique character in file create node and pass frequency of characters to node
             Node * newNode = new Node(key, value);
             nodes.push_back(newNode);
             translation[key] = newNode;
@@ -289,71 +418,43 @@ private:
             return false;
         }
 
-        sort(nodes.begin(), nodes.end(), compareNodePointersByFreq);
+        sort(nodes.begin(), nodes.end(), compareNodePointersByFreq); //Sort pointers to nodes by frequency
 
-        while (nodes.size() > 1) {
-            Node * parentNode = new Node();
+        while (nodes.size() > 1) { //Until there is only one node without parent (root)
+            Node * parentNode = new Node(); //Create new node (without character)
+
+            //Add the two nodes with smallest frequecy that do not have a parent yet as the new nodes left and right child
             nodes.front()->parent = parentNode;
             parentNode->left = nodes.front();
             nodes.pop_front();
             parentNode->right = nodes.front();
             nodes.front()->parent = parentNode;
             nodes.pop_front();
-            parentNode->frequency = parentNode->left->frequency + parentNode->right->frequency;
 
-            nodes.insert(lower_bound(nodes.begin(), nodes.end(), parentNode, compareNodePointersByFreq), parentNode);
+            parentNode->frequency = parentNode->left->frequency + parentNode->right->frequency; //Set frequency to the new node as sum of freqencies of its childer nodes 
+
+            nodes.insert(lower_bound(nodes.begin(), nodes.end(), parentNode, compareNodePointersByFreq), parentNode); //Insert new node to deque with nodes without parent at correct position (so the deque stays sorted by frequency)
 
             size++;
         }
 
-        root = nodes.front();
+        root = nodes.front(); //Last node without parent is root
 
         return true;
     }
-public:
 
-    bool retrieveCoding(const LongChar & forChar, deque<bool> & to) {
-        if (translation.find(forChar) != translation.end()) {
-            vector<bool> inBits;
-            Node * codedNode = translation[forChar];
-            Node * codedParent = codedNode->parent;
-            if (codedParent == nullptr) {
-                return false;
-            }
-            while (codedParent != nullptr) {
-                if (codedNode == codedParent->left) {
-                    inBits.push_back(false);
-                } else if (codedNode == codedParent->right) {
-                    inBits.push_back(true);
-                } else {
-                    return false;
-                }
-                codedNode = codedParent;
-                codedParent = codedNode->parent;
-            }
 
-            while (!inBits.empty()) {
-                to.push_back(inBits.back());
-                inBits.pop_back();
-            }
-            return true;
-        }
-        return false;
-    }
-
-    bool generateTree(deque<LongChar> & characters) {
-        map<LongChar, unsigned int> frequecies;
-
-        unsigned int c = 0;
-        for (auto & longCharElement : characters) {
-            frequecies[longCharElement]++;
-            c++;
-        }
-
-        return organizeNodes(frequecies);
-    }
-
+    /**
+     * @brief Recursive retrieval of paths to characters
+     *
+     * Stores the retrieved paths together with the characters.
+     *
+     * @param node Node which is next in path
+     * @param to Bits to which to append the encoding
+     */
     void recTreePath(Node * node, deque<bool> & to) {
+        //Positions of nodes should be coded using pre-order travelsal
+        //If node isnt leaf, add 0, if is leaf add 1 and the whole character
         if (node->shouldHaveData()) {
             to.push_back(true);
             for (unsigned int i = 0; i < node->data.size(); i++) {
@@ -367,20 +468,97 @@ public:
             recTreePath(node->right, to);
         }
     }
+public:
 
+    /**
+     * @brief Gets the bits representing encoding for given character
+     *
+     * Finds a character in a binary tree and creates an encoding from the path from the root of the tree to the character.
+     *
+     * The encoding bits are added to the end of the deque
+     *
+     * @param[in] forChar Character to be encoded
+     * @param[inout] to Bits to which to append the encoding
+     * @return true The character has been successfully encoded
+     * @return false The character hasn't been successfully encoded
+     */
+    bool retrieveCoding(const LongChar & forChar, deque<bool> & to) {
+        if (translation.find(forChar) != translation.end()) { //Find node for given character
+            vector<bool> inBits;
+            Node * codedNode = translation[forChar];
+            Node * codedParent = codedNode->parent;
+            if (codedParent == nullptr) {
+                return false;
+            }
+            while (codedParent != nullptr) { //Get path from the node containing the character to the root 
+                if (codedNode == codedParent->left) {
+                    inBits.push_back(false);
+                } else if (codedNode == codedParent->right) {
+                    inBits.push_back(true);
+                } else {
+                    return false;
+                }
+                codedNode = codedParent;
+                codedParent = codedNode->parent;
+            }
+
+            while (!inBits.empty()) { //Reverse recieved path (so it is root to node), this path is code encoding the character
+                to.push_back(inBits.back());
+                inBits.pop_back();
+            }
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * @brief From the characters in the file creates a binary tree representing the encoding of those characters.
+     *
+     * @param characters
+     * @return true The tree was successfully created
+     * @return false The tree creation failed
+     */
+    bool generateTree(deque<LongChar> & characters) {
+        map<LongChar, unsigned int> frequecies;
+
+        for (auto & longCharElement : characters) { //Store the number of occurrences for each character in file using map
+            frequecies[longCharElement]++;
+        }
+
+        return organizeNodes(frequecies);
+    }
+
+    /**
+     * @brief Gets the encoding of all stored characters
+     *
+     * The bits representing the path in the binary tree along with the character are stored in the deque.
+     *
+     * @param[inout] to Bits to which to append the encoding
+     */
     void renderTreePaths(deque<bool> & to) {
         recTreePath(root, to);
     }
 };
 
+/**
+ * @brief Compression & Decompression masterclass
+ *
+ */
 class Compression {
 protected:
-    ifstream ifilestream;
-    ofstream ofilestream;
+    ifstream ifilestream; //Input file
+    ofstream ofilestream; //Output file
 
-    deque<bool> bits;
+    deque<bool> bits; //Bits in memory
 
 public:
+
+    /**
+     * @brief Based on the first char distinguishes the length of the UTF-8 character
+     *
+     * @param newChar First char
+     * @return int UTF-8 character length (in bytes)
+     */
     int utf8CharLength(const char & newChar) {
         if ((newChar & 0xF8) == 0xF0) {
             return 4;
@@ -395,12 +573,26 @@ public:
         }
     }
 
+    /**
+     * @brief Determine if char falls within the UTF-8 character range that is part of
+     *
+     * @param[in] totalCharLength UTF-8 character length in bytes
+     * @param[in] currentChar Index of char in UTF-8 character
+     * @param[in] firstCharAtLimit A flag indicating the limit position of the first char in the UTF-8 range
+     * @param[in] newChar Char in UTF-8 character
+     * @return true newChar is valid in UTF-8 encoding
+     * @return false newChar is not valid
+     */
     bool isValidUTF8Char(int totalCharLength, int currentChar, int & firstCharAtLimit, char & newChar) {
         if (currentChar == 0) {
-            firstCharAtLimit = 0;
+            firstCharAtLimit = 0; //Set flag to default
+        } else {
+            if ((newChar & 0xC0) != 0x80) { //Check if char is valid for not first byte of character 
+                return false;
+            }
         }
 
-        switch (totalCharLength) {
+        switch (totalCharLength) { //Check byte is in range specified by last coding point and first coding point (or if first byte is the smallest possible set flag)
             case 2:
                 if (currentChar == 0) {
                     if ((reinterpret_cast<unsigned char &>(newChar)) < (unsigned)(0xC2)) {
@@ -440,20 +632,25 @@ public:
                 break;
         }
 
-        if (currentChar != 0) {
-            if ((newChar & 0xC0) != 0x80) {
-                return false;
-            }
-        }
         return true;
     }
 };
 
+/**
+ * @brief File decompression using Huffman encoding
+ *
+ */
 class Decompresser : public Compression {
 private:
 
-    DecodeTree tree;
+    DecodeTree tree; //Binary tree storing encoding
 
+    /**
+     * @brief Reads bytes from input file and stores them as bits
+     *
+     * If error is encoutered, throws.
+     *
+     */
     void readBits() {
         char c;
 
@@ -469,13 +666,18 @@ private:
         }
 
         for (int i = 7; i >= 0; i--) {
-            bits.push_back((c >> i) & 1 ? true : false);
+            bits.push_back((c >> i) & 1 ? true : false); //Using bitshift and mask get each bit out of char, add 0 as false and 1 as true
         }
     }
 
+    /**
+     * @brief Re-forms bits into chars (bytes)
+     *
+     * @return char Created char
+     */
     char readChar() {
         char newChar = 0;
-        for (int i = 7; i >= 0; i--) {
+        for (int i = 7; i >= 0; i--) { //Using bitshift and mask recreate char out of 8 bits
             newChar = newChar << 1;
             if (bits.front() == true) {
                 newChar = (newChar | 1);
@@ -485,17 +687,26 @@ private:
         return newChar;
     }
 
+    /**
+     * @brief Reads the header of the encoded input file
+     *
+     * The header must contain encoding information.
+     * Creates an encoding binary tree based on the header.
+     *
+     * @return true Header read successfully and the tree was created
+     * @return false There was a problem during reading or three creation
+     */
     bool readHeader() {
-        int numberOfNodes = 0;
-        int numberOfLists = 0;
+        int numberOfNodes = 0; //Number of total nodes for coding tree recieved
+        int numberOfLists = 0; //Number of leafs for coding tree recieved
 
-        queue<bool> positions;
-        queue<LongChar> characters;
+        queue<bool> positions; //Positions in coding tree (0 means node, 1 means leaf with character from characters)
+        queue<LongChar> characters; //Characters that is encoded in file
 
         bool readingChars = false;
 
         while (true) {
-            if (bits.size() < 8) {
+            if (bits.size() < 8) { //Read bits from file if not enough bits
                 try {
                     readBits();
                 }
@@ -503,17 +714,18 @@ private:
                     return false;
                 }
             }
-            if (readingChars && bits.size() >= 8) {
+
+            if (readingChars && bits.size() >= 8) { //If enough bits and there should be a char (instead of positions of encoding) in input, read given char
                 LongChar longChar;
                 char newChar = readChar();
                 longChar.push(newChar);
 
-                int charLength = utf8CharLength(newChar);
+                int charLength = utf8CharLength(newChar); //Check character length in bytes (if UTF-8)
                 if (charLength == 0) {
                     return false;
                 }
 
-                while (bits.size() < (unsigned long)((charLength - 1) * 8)) {
+                while (bits.size() < (unsigned long)((charLength - 1) * 8)) { //If UTF-8 character, read enough bits for whole character
                     try {
                         readBits();
                     }
@@ -523,10 +735,10 @@ private:
                 }
 
                 int firstCharAtLimitValue = 0;
-                if (!isValidUTF8Char(charLength, 0, firstCharAtLimitValue, newChar)) {
+                if (!isValidUTF8Char(charLength, 0, firstCharAtLimitValue, newChar)) { //Check if first character is valid
                     return false;
                 }
-                for (int i = 1; i < charLength; i++) {
+                for (int i = 1; i < charLength; i++) { //Read other char in UTF-8 character anc check if they are valid
                     newChar = readChar();
 
                     if (!isValidUTF8Char(charLength, i, firstCharAtLimitValue, newChar)) {
@@ -540,10 +752,10 @@ private:
                 characters.push(longChar);
                 readingChars = false;
 
-                if (numberOfLists == numberOfNodes + 1) {
+                if (numberOfLists == numberOfNodes + 1) { //If tree is full, end reading
                     break;
                 }
-            } else if (!readingChars) {
+            } else if (!readingChars) { //Add positions (0s) until position signals 1 (leaf), so character encoded by this position should come next
                 positions.push(bits.front());
                 bits.pop_front();
                 if (positions.back() == false) {
@@ -558,21 +770,28 @@ private:
         return true;
     }
 
+    /**
+     * @brief Reads the encoded characters in the input file and writes the decoded characters to the output file
+     *
+     * @return true The input file has been decoded to the end
+     * @return false An unexpected error occurred during reading or decoding
+     */
     bool readBody() {
-        unsigned long remainingToRead = 0;
+        unsigned long remainingToRead = 0; //Count of characters that should be decoded (length of chunk of characters)
         bool lastChunk = false;
 
         while (true) {
 
             if (remainingToRead == 0) {
                 if (lastChunk) {
-                    ifilestream.peek();
+                    ifilestream.peek(); //Check if there trurly are no other characters encoded (after decoded what should be last chunk)
                     if (!ifilestream.eof() || bits.size() >= 8) {
                         return false;
                     }
                     break;
                 }
 
+                //Calculate length of next chunk
                 if (bits.size() < 8) {
                     try {
                         readBits();
@@ -581,10 +800,11 @@ private:
                         return false;
                     }
                 }
-                if (bits.front() == 1) {
+                if (bits.front() == 1) { //If contains 1, chunk should be 4096 characters
                     bits.pop_front();
                     remainingToRead = 4096;
-                } else {
+                } else { //If contains 0, length of chunk is stored in next 12 bits
+
                     bits.pop_front();
                     while (bits.size() < 12) {
                         try {
@@ -595,7 +815,7 @@ private:
                         }
                     }
 
-                    unsigned long number = 0;
+                    unsigned long number = 0; //
                     for (int i = 11; i >= 0; i--) {
                         number = number << 1;
                         if (bits.front() == true) {
@@ -609,7 +829,7 @@ private:
                 }
             }
 
-            LongChar c;
+            LongChar c; //Extract encoded character using bits read in file
             try {
                 if (!tree.extractCharFromTree(bits, c)) {
                     try {
@@ -625,11 +845,12 @@ private:
                 return false;
             }
 
+            //Write encoded character into output file
             if (ofilestream.fail()) {
                 return false;
             }
 
-            for (size_t i = 0; i < c.size(); i++) {
+            for (size_t i = 0; i < c.size(); i++) { //If character is UTF-8, write all chars
                 ofilestream.put(c.at(i));
             }
             remainingToRead--;
@@ -660,13 +881,19 @@ public:
         }
     }
 
+    /**
+     * @brief Decodes input file into text output file (specified in the object constructor)
+     *
+     * @return true Decoding was successful
+     * @return false An error occurred during the process
+     */
     bool decode() {
 
-        if (!readHeader()) {
+        if (!readHeader()) { //Read header and create decoding tree
             return false;
         }
 
-        if (!readBody()) {
+        if (!readBody()) { //Read body and decode characters into file
             return false;
         }
 
@@ -674,14 +901,25 @@ public:
     }
 };
 
+/**
+ * @brief File compression using Huffman encoding
+ *
+ */
 class Compresser : public Compression {
 private:
-    EncodeTree tree;
-    deque<LongChar> characters;
+    EncodeTree tree; //Binary tree storing encoding
+    deque<LongChar> characters; //Memory of characters read from the input file
 
+    /**
+     * @brief Converts bits to bytes and writes to the output file
+     *
+     * If specified, pads the last bits with zeros to the whole byte, otherwise leaves bits giving less than a whole byte in memory.
+     *
+     * @param last Fill the last byte with zeros
+     */
     void writeFile(bool last = false) {
         while (bits.size() > 0) {
-            if (bits.size() < 8) {
+            if (bits.size() < 8) { //If not enough bits for full byte, either pad with 0s or break based on parameter
                 if (last) {
                     while (bits.size() < 8) {
                         bits.push_back(false);
@@ -694,7 +932,8 @@ private:
             if (ofilestream.fail()) {
                 throw "Failed writing";
             }
-            char c = 0;
+
+            char c = 0; //Using bitshift and mask create char out of 8 bits
             for (int i = 7; i >= 0; i--) {
                 c = c << 1;
                 if (bits.front() == true) {
@@ -703,16 +942,24 @@ private:
                 bits.pop_front();
             }
 
-            ofilestream.put(c);
+            ofilestream.put(c); //Write created char
         }
     }
 
+    /**
+     * @brief Reads the characters from the input file and writes the encoded characters to the output file
+     *
+     * Encoded characters also include notation about their count.
+     *
+     * @return true All characters have been encoded
+     * @return false An unexpected error occurred during reading or encoding
+     */
     bool convertChars() {
-        unsigned int remainingCharacters = 0;
-        bool lastChunkFull = false;
+        unsigned int remainingCharacters = 0; //Count of characters that should be encoded (length of chunk of characters)
+        bool lastChunkFull = false; // Was last chunk full (4096 characters)
 
         while (characters.size() > 0) {
-            if (remainingCharacters == 0) {
+            if (remainingCharacters == 0) { //If filled chunk, write new information about chunk length
                 if (characters.size() > 4096) {
                     remainingCharacters = 4096;
                     bits.push_back(true);
@@ -727,7 +974,7 @@ private:
                 }
             }
 
-            if (!tree.retrieveCoding(characters.front(), bits)) {
+            if (!tree.retrieveCoding(characters.front(), bits)) { //Recieve and write encoding for character in file
                 return false;
             }
 
@@ -741,20 +988,31 @@ private:
             }
         }
 
-        if (lastChunkFull) {
+        if (lastChunkFull) { //If chunk was long 4096 characters and was long, write information about chunk with length 0
             for (unsigned int i = 0; i < 13; i++) {
                 bits.push_back(false);
             }
         }
-        try {
+
+        try { //Write last bits into file (and pad nonfull bytes with 0s)
             writeFile(true);
         }
         catch (...) {
             return false;
         }
+
         return true;
     }
 
+    /**
+     * @brief Reads characters from the input file and stores them in memory
+     *
+     * If error is encoutered, throws.
+     *
+     * @param[out] c Read character
+     * @return true The read was a success (and can continue)
+     * @return false The reading has been completed
+     */
     bool readChar(char & c) {
         try {
             ifilestream.get(c);
@@ -774,8 +1032,14 @@ private:
         return true;
     }
 
+    /**
+     * @brief Reads the input file and stores all characters in memory
+     *
+     * @return true The input file has been read to the end
+     * @return false An unexpected error occurred during reading
+     */
     bool readFile() {
-        while (true) {
+        while (true) { //Read character from input file
             LongChar newLongChar;
             char newChar;
             try {
@@ -789,16 +1053,16 @@ private:
 
             newLongChar.push(newChar);
 
-            int charLength = utf8CharLength(newChar);
+            int charLength = utf8CharLength(newChar); //Check character length in bytes (if UTF-8)
             if (charLength == 0) {
                 return false;
             }
 
             int firstCharAtLimitValue = 0;
-            if (!isValidUTF8Char(charLength, 0, firstCharAtLimitValue, newChar)) {
+            if (!isValidUTF8Char(charLength, 0, firstCharAtLimitValue, newChar)) { //Check if first character is valid
                 return false;
             }
-            for (int i = 1; i < charLength; i++) {
+            for (int i = 1; i < charLength; i++) { //Read other char in UTF-8 character anc check if they are valid
                 try {
                     if (!readChar(newChar)) {
                         return false;
@@ -832,19 +1096,25 @@ public:
         }
     }
 
+    /**
+     * @brief Encodes input file into binary output file (specified in the object constructor)
+     *
+     * @return true Encoding was successful
+     * @return false An error occurred during the process
+     */
     bool encode() {
 
-        if (!readFile()) {
+        if (!readFile()) { //Read all characters from input file and store them in memory
             return false;
         }
 
-        if (!tree.generateTree(characters)) {
+        if (!tree.generateTree(characters)) { //Generate encoding tree from characters in memory (from input file)
             return false;
         }
 
-        tree.renderTreePaths(bits);
+        tree.renderTreePaths(bits); //Generate header for output file containing encoding information (and store it as bits)
 
-        if (!convertChars()) {
+        if (!convertChars()) { //For each character in memory get encoding from tree (as bits), and write bits into output file
             return false;
         }
 
