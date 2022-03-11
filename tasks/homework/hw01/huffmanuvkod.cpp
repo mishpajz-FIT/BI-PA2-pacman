@@ -94,8 +94,10 @@ public:
     bool operator < (const LongChar & rhs) const {
         if (length == rhs.size()) {
             for (unsigned int i = 0; i < length; i++) {
-                if (data[i] < rhs[i]) {
+                if (reinterpret_cast<unsigned char &>(data[i]) < reinterpret_cast<unsigned char &>(rhs[i])) {
                     return true;
+                } else if (reinterpret_cast<unsigned char &>(data[i]) > reinterpret_cast<unsigned char &>(rhs[i])) {
+                    return false;
                 }
             }
         } else {
@@ -306,14 +308,13 @@ private:
 
         root = nodes.front();
 
-        sort(translation.begin(), translation.end());
-
         return true;
     }
 public:
 
-    bool retrieveCoding(const LongChar & forChar, vector<bool> & to) {
+    bool retrieveCoding(const LongChar & forChar, deque<bool> & to) {
         if (translation.find(forChar) != translation.end()) {
+            vector<bool> inBits;
             Node * codedNode = translation[forChar];
             Node * codedParent = codedNode->parent;
             if (codedParent == nullptr) {
@@ -321,27 +322,54 @@ public:
             }
             while (codedParent != nullptr) {
                 if (codedNode == codedParent->left) {
-                    to.push_back(false);
+                    inBits.push_back(false);
                 } else if (codedNode == codedParent->right) {
-                    to.push_back(true);
+                    inBits.push_back(true);
                 } else {
                     return false;
                 }
-
-                return true;
+                codedNode = codedParent;
+                codedParent = codedNode->parent;
             }
+
+            while (!inBits.empty()) {
+                to.push_back(inBits.back());
+                inBits.pop_back();
+            }
+            return true;
         }
         return false;
     }
 
-    bool generateTree(vector<LongChar> & characters) {
+    bool generateTree(deque<LongChar> & characters) {
         map<LongChar, unsigned int> frequecies;
 
+        unsigned int c = 0;
         for (auto & longCharElement : characters) {
             frequecies[longCharElement]++;
+            c++;
         }
 
         return organizeNodes(frequecies);
+    }
+
+    void recTreePath(Node * node, deque<bool> & to) {
+        if (node->shouldHaveData()) {
+            to.push_back(true);
+            for (unsigned int i = 0; i < node->data.size(); i++) {
+                for (int j = 7; j >= 0; j--) {
+                    to.push_back((node->data[i] >> j) & 1 ? true : false);
+                }
+            }
+        } else {
+            to.push_back(false);
+            recTreePath(node->left, to);
+            recTreePath(node->right, to);
+        }
+    }
+
+    void renderTreePaths(deque<bool> & to) {
+        recTreePath(root, to);
     }
 };
 
@@ -619,16 +647,82 @@ public:
 class Compresser : public Compression {
 private:
     EncodeTree tree;
-    vector<LongChar> characters;
+    deque<LongChar> characters;
 
-    bool writeFile(bool last = false) {
+    void writeFile(bool last = false) {
+        while (bits.size() > 0) {
+            if (bits.size() < 8) {
+                if (last) {
+                    while (bits.size() < 8) {
+                        bits.push_back(false);
+                    }
+                } else {
+                    break;
+                }
+            }
 
+            if (ofilestream.fail()) {
+                throw "Failed writing";
+            }
+            char c = 0;
+            for (int i = 7; i >= 0; i--) {
+                c = c << 1;
+                if (bits.front() == true) {
+                    c = (c | 1);
+                }
+                bits.pop_front();
+            }
+
+            ofilestream.put(c);
+        }
     }
 
     bool convertChars() {
+        unsigned int remainingCharacters = 0;
+        bool lastChunkFull = false;
+
         while (characters.size() > 0) {
-            vector<bool> charBits;
+            if (remainingCharacters == 0) {
+                if (characters.size() > 4096) {
+                    remainingCharacters = 4096;
+                    bits.push_back(true);
+                    lastChunkFull = true;
+                } else {
+                    remainingCharacters = characters.size();
+                    bits.push_back(false);
+                    for (int j = 11; j >= 0; j--) {
+                        bits.push_back((remainingCharacters >> j) & 1 ? true : false);
+                    }
+                    lastChunkFull = false;
+                }
+            }
+
+            if (!tree.retrieveCoding(characters.front(), bits)) {
+                return false;
+            }
+
+            characters.pop_front();
+            remainingCharacters--;
+            try {
+                writeFile();
+            }
+            catch (...) {
+                return false;
+            }
         }
+
+        if (lastChunkFull) {
+            for (unsigned int i = 0; i < 13; i++) {
+                bits.push_back(false);
+            }
+        }
+        try {
+            writeFile(true);
+        }
+        catch (...) {
+            return false;
+        }
+        return true;
     }
 
     bool readChar(char & c) {
@@ -718,7 +812,11 @@ public:
             return false;
         }
 
+        tree.renderTreePaths(bits);
 
+        if (!convertChars()) {
+            return false;
+        }
 
         return true;
     }
@@ -783,6 +881,7 @@ bool identicalFiles(const char * fileName1, const char * fileName2) {
 }
 
 int main(void) {
+
     assert(decompressFile("tests/test0.huf", "tempfile"));
     assert(identicalFiles("tests/test0.orig", "tempfile"));
 
@@ -843,7 +942,69 @@ int main(void) {
     assert(decompressFile("tests/extra10.huf", "tempfile"));
     assert(identicalFiles("tests/extra10.orig", "tempfile"));
 
-    compressFile("tests/test0.orig", "tempfile");
+
+
+
+    assert(compressFile("tests/test0.orig", "tmp.huf"));
+    assert(decompressFile("tmp.huf", "tmp.orig"));
+    assert(identicalFiles("tests/test0.orig", "tmp.orig"));
+
+    assert(compressFile("tests/test1.orig", "tmp.huf"));
+    assert(decompressFile("tmp.huf", "tmp.orig"));
+    assert(identicalFiles("tests/test1.orig", "tmp.orig"));
+
+    assert(compressFile("tests/test2.orig", "tmp.huf"));
+    assert(decompressFile("tmp.huf", "tmp.orig"));
+    assert(identicalFiles("tests/test2.orig", "tmp.orig"));
+
+    assert(compressFile("tests/test3.orig", "tmp.huf"));
+    assert(decompressFile("tmp.huf", "tmp.orig"));
+    assert(identicalFiles("tests/test3.orig", "tmp.orig"));
+
+    assert(compressFile("tests/test4.orig", "tmp.huf"));
+    assert(decompressFile("tmp.huf", "tmp.orig"));
+    assert(identicalFiles("tests/test4.orig", "tmp.orig"));
+
+
+    assert(compressFile("tests/extra0.orig", "tmp.huf"));
+    assert(decompressFile("tmp.huf", "tmp.orig"));
+    assert(identicalFiles("tests/extra0.orig", "tmp.orig"));
+
+    assert(compressFile("tests/extra1.orig", "tmp.huf"));
+    assert(decompressFile("tmp.huf", "tmp.orig"));
+    assert(identicalFiles("tests/extra1.orig", "tmp.orig"));
+
+    assert(compressFile("tests/extra2.orig", "tmp.huf"));
+    assert(decompressFile("tmp.huf", "tmp.orig"));
+    assert(identicalFiles("tests/extra2.orig", "tmp.orig"));
+
+    assert(compressFile("tests/extra3.orig", "tmp.huf"));
+    assert(decompressFile("tmp.huf", "tmp.orig"));
+    assert(identicalFiles("tests/extra3.orig", "tmp.orig"));
+
+    assert(compressFile("tests/extra4.orig", "tmp.huf"));
+    assert(decompressFile("tmp.huf", "tmp.orig"));
+    assert(identicalFiles("tests/extra4.orig", "tmp.orig"));
+
+    assert(compressFile("tests/extra5.orig", "tmp.huf"));
+    assert(decompressFile("tmp.huf", "tmp.orig"));
+    assert(identicalFiles("tests/extra5.orig", "tmp.orig"));
+
+    assert(compressFile("tests/extra6.orig", "tmp.huf"));
+    assert(decompressFile("tmp.huf", "tmp.orig"));
+    assert(identicalFiles("tests/extra6.orig", "tmp.orig"));
+
+    assert(compressFile("tests/extra7.orig", "tmp.huf"));
+    assert(decompressFile("tmp.huf", "tmp.orig"));
+    assert(identicalFiles("tests/extra7.orig", "tmp.orig"));
+
+    assert(compressFile("tests/extra8.orig", "tmp.huf"));
+    assert(decompressFile("tmp.huf", "tmp.orig"));
+    assert(identicalFiles("tests/extra8.orig", "tmp.orig"));
+
+    assert(compressFile("tests/extra9.orig", "tmp.huf"));
+    assert(decompressFile("tmp.huf", "tmp.orig"));
+    assert(identicalFiles("tests/extra9.orig", "tmp.orig"));
     return 0;
 }
 #endif /* __PROGTEST__ */
