@@ -1,5 +1,3 @@
-// TODO: Implement compressing
-
 #ifndef __PROGTEST__
 #include <cstring>
 #include <cstdlib>
@@ -84,11 +82,13 @@ public:
         return length;
     }
 
-    void operator = (const LongChar & obj) {
+    LongChar & operator = (const LongChar & obj) {
+        if (&obj == this) return *this;
         length = obj.size();
         for (unsigned int i = 0; i < obj.size(); i++) {
             data[i] = obj[i];
         }
+        return *this;
     }
 
     bool operator < (const LongChar & rhs) const {
@@ -395,19 +395,49 @@ public:
         }
     }
 
-    bool isValidUTF8Char(int totalCharLength, int currentChar, bool & firstCharMaxPossible, char & newChar) {
-        if (totalCharLength == 4) {
-            if (currentChar == 0) {
-                if (reinterpret_cast<unsigned char &>(newChar) == (unsigned)(0xF4)) {
-                    firstCharMaxPossible = true;
-                } else if (reinterpret_cast<unsigned char &>(newChar) > (unsigned)(0xF4)) {
-                    return false;
+    bool isValidUTF8Char(int totalCharLength, int currentChar, int & firstCharAtLimit, char & newChar) {
+        if (currentChar == 0) {
+            firstCharAtLimit = 0;
+        }
+
+        switch (totalCharLength) {
+            case 2:
+                if (currentChar == 0) {
+                    if ((reinterpret_cast<unsigned char &>(newChar)) < (unsigned)(0xC2)) {
+                        return false;
+                    }
                 }
-            } else if (currentChar == 1) {
-                if ((reinterpret_cast<unsigned char &>(newChar) > (unsigned)(0x8F)) && firstCharMaxPossible) {
-                    return false;
+            case 3:
+                if (currentChar == 0) {
+                    if (reinterpret_cast<unsigned char &>(newChar) == (unsigned)(0xE0)) {
+                        firstCharAtLimit = -1;
+                    }
+                } else if (currentChar == 1 && firstCharAtLimit == -1) {
+                    if (reinterpret_cast<unsigned char &>(newChar) < (unsigned)(0xA0)) {
+                        return false;
+                    }
                 }
-            }
+            case 4:
+                if (currentChar == 0) {
+                    if (reinterpret_cast<unsigned char &>(newChar) == (unsigned)(0xF4)) {
+                        firstCharAtLimit = 1;
+                    } else if (reinterpret_cast<unsigned char &>(newChar) > (unsigned)(0xF4)) {
+                        return false;
+                    } else if (reinterpret_cast<unsigned char &>(newChar) == (unsigned)(0xF0)) {
+                        firstCharAtLimit = -1;
+                    }
+                } else if (currentChar == 1) {
+                    if (firstCharAtLimit == 1) {
+                        if (reinterpret_cast<unsigned char &>(newChar) > (unsigned)(0x8F)) {
+                            return false;
+                        }
+                    } else if (firstCharAtLimit == -1) {
+                        if (reinterpret_cast<unsigned char &>(newChar) < (unsigned)(0x90)) {
+                            return false;
+                        }
+                    }
+                }
+                break;
         }
 
         if (currentChar != 0) {
@@ -492,14 +522,14 @@ private:
                     }
                 }
 
-                bool maxPossibleForUTF8 = false;
-                if (!isValidUTF8Char(charLength, 0, maxPossibleForUTF8, newChar)) {
+                int firstCharAtLimitValue = 0;
+                if (!isValidUTF8Char(charLength, 0, firstCharAtLimitValue, newChar)) {
                     return false;
                 }
                 for (int i = 1; i < charLength; i++) {
                     newChar = readChar();
 
-                    if (!isValidUTF8Char(charLength, i, maxPossibleForUTF8, newChar)) {
+                    if (!isValidUTF8Char(charLength, i, firstCharAtLimitValue, newChar)) {
                         return false;
                     }
 
@@ -764,8 +794,8 @@ private:
                 return false;
             }
 
-            bool maxPossibleForUTF8 = false;
-            if (!isValidUTF8Char(charLength, 0, maxPossibleForUTF8, newChar)) {
+            int firstCharAtLimitValue = 0;
+            if (!isValidUTF8Char(charLength, 0, firstCharAtLimitValue, newChar)) {
                 return false;
             }
             for (int i = 1; i < charLength; i++) {
@@ -778,7 +808,7 @@ private:
                     return false;
                 }
 
-                if (!isValidUTF8Char(charLength, i, maxPossibleForUTF8, newChar)) {
+                if (!isValidUTF8Char(charLength, i, firstCharAtLimitValue, newChar)) {
                     return false;
                 }
 
