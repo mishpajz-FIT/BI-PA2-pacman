@@ -207,8 +207,13 @@ private:
     }
 
 public:
-    /*CVATRegister(void);
-    ~CVATRegister(void);*/
+    CVATRegister(void) : medianLowerHalf(true), medianUpperHalf(false) { }
+
+    ~CVATRegister(void) {
+        for (auto & a : companyIds) {
+            delete a.invoices;
+        }
+    }
 
     bool newCompany(const string & name, const string & addr, const string & taxID) {
         CompanyID newId(taxID);
