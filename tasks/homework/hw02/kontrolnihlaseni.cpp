@@ -15,36 +15,24 @@
 using namespace std;
 #endif /* __PROGTEST__ */
 
-string lowercase(string input) {
-    for (auto & c : input) {
-        tolower(c);
-    }
-    return input;
-}
-
 class CVATRegister {
 private:
     struct TaxInvoice {
-        unsigned long amount;
+        unsigned int amount;
 
         TaxInvoice() : amount(0) { }
     };
 
     struct CompanyContact {
         string name;
-        string lname;
         string address;
-        string laddress;
 
         TaxInvoice * invoice;
 
-        CompanyContact(string newName, string newAddress) : name(newName), address(newAddress) {
-            lname = move(lowercase(newName));
-            laddress = move(lowercase(newAddress));
-        }
+        CompanyContact(string newName, string newAddress) : name(newName), address(newAddress) { }
 
         bool operator == (const CompanyContact & rhs) const {
-            return ((lname == rhs.lname) && (laddress == rhs.laddress));
+            return ((strcasecmp(name.c_str(), rhs.name.c_str()) == 0) && (strcasecmp(address.c_str(), rhs.address.c_str()) == 0));
         }
 
         bool operator != (const CompanyContact & rhs) const {
@@ -52,10 +40,10 @@ private:
         }
 
         bool operator < (const CompanyContact & rhs) const {
-            if (lname == rhs.lname) {
-                return laddress < rhs.laddress;
+            if (strcasecmp(name.c_str(), rhs.name.c_str()) == 0) {
+                return strcasecmp(address.c_str(), rhs.address.c_str()) < 0;
             }
-            return lname < rhs.lname;
+            return strcasecmp(name.c_str(), rhs.name.c_str()) < 0;
         }
     };
 
@@ -64,10 +52,7 @@ private:
 
         TaxInvoice * invoice;
 
-        CompanyID(string newId) {
-
-
-        }
+        CompanyID(string newId) : id(newId) { }
 
         bool operator == (const CompanyID & rhs) const {
             return (id == rhs.id);
@@ -85,9 +70,31 @@ private:
     vector<CompanyContact> companyContacts;
     vector<CompanyID> companyIds;
 
+    const vector<CompanyContact>::const_iterator getContactIter(const string & name, const string & addr) const {
+        CompanyContact newContact(name, addr);
+
+        auto contactBound = lower_bound(companyContacts.begin(), companyContacts.end(), newContact);
+        if (contactBound == companyContacts.end() || newContact != (*contactBound)) {
+            throw (-1);
+        }
+
+        return contactBound;
+    }
+
+    const vector<CompanyID>::const_iterator getIDIter(const string & taxID) const {
+        CompanyID newId(taxID);
+
+        auto idBound = lower_bound(companyIds.begin(), companyIds.end(), newId);
+        if (idBound == companyIds.end() || newId != (*idBound)) {
+            throw (-1);
+        }
+
+        return idBound;
+    }
+
 public:
-    CVATRegister(void);
-    ~CVATRegister(void);
+    /*CVATRegister(void);
+    ~CVATRegister(void);*/
 
     bool newCompany(const string & name, const string & addr, const string & taxID) {
         CompanyID newId(taxID);
@@ -143,24 +150,87 @@ public:
             return false;
         }
 
-        for (auto it = companyIds.begin(); it != companyIds.end(); it++) {
-            if ((*it).invoice == (*contactBound).invoice) {
-                delete (*contactBound).invoice;
-                companyIds.erase(it);
-                companyContacts.erase(contactBound);
+        for (auto it = companyContacts.begin(); it != companyContacts.end(); it++) {
+            if ((*it).invoice == (*idBound).invoice) {
+                delete (*idBound).invoice;
+                companyIds.erase(idBound);
+                companyContacts.erase(it);
                 return true;
             }
         }
 
         return false;
     }
-    bool invoice(const string & taxID, unsigned int amount);
-    bool invoice(const string & name, const string & addr, unsigned int amount);
-    bool audit(const string & name, const string & addr, unsigned int & sumIncome) const;
-    bool audit(const string & taxID, unsigned int & sumIncome) const;
-    bool firstCompany(string & name, string & addr) const;
-    bool nextCompany(string & name, string & addr) const;
-    unsigned int medianInvoice(void) const;
+
+    bool invoice(const string & taxID, unsigned int amount) {
+        try {
+            (*getIDIter(taxID)).invoice->amount += amount;
+        }
+        catch (...) {
+            return false;
+        }
+        return true;
+    }
+
+    bool invoice(const string & name, const string & addr, unsigned int amount) {
+        try {
+            (*getContactIter(name, addr)).invoice->amount += amount;
+        }
+        catch (...) {
+            return false;
+        }
+        return true;
+    }
+
+    bool audit(const string & name, const string & addr, unsigned int & sumIncome) const {
+        try {
+            sumIncome = (*getContactIter(name, addr)).invoice->amount;
+        }
+        catch (...) {
+            return false;
+        }
+        return true;
+    }
+
+    bool audit(const string & taxID, unsigned int & sumIncome) const {
+        try {
+            sumIncome = (*getIDIter(taxID)).invoice->amount;
+        }
+        catch (...) {
+            return false;
+        }
+        return true;
+    }
+
+    bool firstCompany(string & name, string & addr) const {
+        if (companyContacts.size() == 0) {
+            return false;
+        }
+
+        name = companyContacts.front().name;
+        addr = companyContacts.front().address;
+        return true;
+    }
+
+    bool nextCompany(string & name, string & addr) const {
+        try {
+            auto contactBound = getContactIter(name, addr);
+
+            contactBound++;
+            if (contactBound == companyContacts.end()) {
+                return false;
+            }
+
+            name = (*contactBound).name;
+            addr = (*contactBound).address;
+        }
+        catch (...) {
+            return false;
+        }
+        return true;
+    }
+
+    //unsigned int medianInvoice(void) const;
 };
 
 #ifndef __PROGTEST__
@@ -173,13 +243,13 @@ int main(void) {
     assert(b1.newCompany("ACME", "Kolejni", "666/666/666"));
     assert(b1.newCompany("Dummy", "Thakurova", "123456"));
     assert(b1.invoice("666/666", 2000));
-    assert(b1.medianInvoice() == 2000);
+    //assert(b1.medianInvoice() == 2000);
     assert(b1.invoice("666/666/666", 3000));
-    assert(b1.medianInvoice() == 3000);
+    //assert(b1.medianInvoice() == 3000);
     assert(b1.invoice("123456", 4000));
-    assert(b1.medianInvoice() == 3000);
+    //assert(b1.medianInvoice() == 3000);
     assert(b1.invoice("aCmE", "Kolejni", 5000));
-    assert(b1.medianInvoice() == 4000);
+    //assert(b1.medianInvoice() == 4000);
     assert(b1.audit("ACME", "Kolejni", sumIncome) && sumIncome == 8000);
     assert(b1.audit("123456", sumIncome) && sumIncome == 4000);
     assert(b1.firstCompany(name, addr) && name == "ACME" && addr == "Kolejni");
@@ -187,9 +257,9 @@ int main(void) {
     assert(b1.nextCompany(name, addr) && name == "Dummy" && addr == "Thakurova");
     assert(!b1.nextCompany(name, addr));
     assert(b1.cancelCompany("ACME", "KoLeJnI"));
-    assert(b1.medianInvoice() == 4000);
+    //assert(b1.medianInvoice() == 4000);
     assert(b1.cancelCompany("666/666"));
-    assert(b1.medianInvoice() == 4000);
+    /*assert(b1.medianInvoice() == 4000);
     assert(b1.invoice("123456", 100));
     assert(b1.medianInvoice() == 3000);
     assert(b1.invoice("123456", 300));
@@ -207,7 +277,7 @@ int main(void) {
     assert(b1.invoice("123456", 2830));
     assert(b1.medianInvoice() == 2000);
     assert(b1.invoice("123456", 3200));
-    assert(b1.medianInvoice() == 2000);
+    assert(b1.medianInvoice() == 2000);*/
     assert(b1.firstCompany(name, addr) && name == "Dummy" && addr == "Thakurova");
     assert(!b1.nextCompany(name, addr));
     assert(b1.cancelCompany("123456"));
@@ -218,13 +288,13 @@ int main(void) {
     assert(b2.newCompany("Dummy", "Kolejni", "123456"));
     assert(!b2.newCompany("AcMe", "kOlEjNi", "1234"));
     assert(b2.newCompany("Dummy", "Thakurova", "ABCDEF"));
-    assert(b2.medianInvoice() == 0);
+    //assert(b2.medianInvoice() == 0);
     assert(b2.invoice("ABCDEF", 1000));
-    assert(b2.medianInvoice() == 1000);
+    //assert(b2.medianInvoice() == 1000);
     assert(b2.invoice("abcdef", 2000));
-    assert(b2.medianInvoice() == 2000);
+    //assert(b2.medianInvoice() == 2000);
     assert(b2.invoice("aCMe", "kOlEjNi", 3000));
-    assert(b2.medianInvoice() == 2000);
+    //assert(b2.medianInvoice() == 2000);
     assert(!b2.invoice("1234567", 100));
     assert(!b2.invoice("ACE", "Kolejni", 100));
     assert(!b2.invoice("ACME", "Thakurova", 100));
@@ -235,7 +305,7 @@ int main(void) {
     assert(!b2.cancelCompany("ACE", "Kolejni"));
     assert(!b2.cancelCompany("ACME", "Thakurova"));
     assert(b2.cancelCompany("abcdef"));
-    assert(b2.medianInvoice() == 2000);
+    //assert(b2.medianInvoice() == 2000);
     assert(!b2.cancelCompany("abcdef"));
     assert(b2.newCompany("ACME", "Kolejni", "abcdef"));
     assert(b2.cancelCompany("ACME", "Kolejni"));
