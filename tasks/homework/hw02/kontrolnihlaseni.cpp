@@ -15,19 +15,133 @@
 using namespace std;
 #endif /* __PROGTEST__ */
 
+
+class LittleHeap {
+private:
+    vector<unsigned int> nodes;
+    bool max;
+
+    bool compare(unsigned int & lhs, unsigned int rhs) {
+        if (max) {
+            return lhs < rhs;
+        } else {
+            return lhs > rhs;
+        }
+    }
+
+public:
+
+    LittleHeap(bool isMaxHeap) : max(isMaxHeap) { }
+
+    void push(unsigned int value) {
+        size_t currentIndex = nodes.size();
+
+        nodes.push_back(value);
+
+        size_t parentIndex;
+        while (true) {
+            parentIndex = (currentIndex - 1) / 2;
+
+            if (currentIndex == 0) {
+                break;
+            }
+
+            if (compare(nodes[parentIndex], value)) {
+                swap(nodes[parentIndex], nodes[currentIndex]);
+            } else {
+                break;
+            }
+
+            currentIndex = parentIndex;
+        }
+    }
+
+    unsigned int pop() {
+        if (nodes.size() == 0) {
+            throw (-1);
+        }
+
+        unsigned int value = nodes.front();
+
+        nodes.front() = nodes.back();
+        nodes.pop_back();
+
+        if (nodes.size() < 2) {
+            return value;
+        }
+
+        size_t currentIndex = 0;
+        size_t leftChild;
+        size_t rightChild;
+
+        size_t greaterNode;
+        size_t secondGreaterNode;
+
+        while (true) {
+
+            leftChild = (2 * currentIndex) + 1;
+            rightChild = (2 * currentIndex) + 2;
+
+            if (nodes.size() > rightChild) {
+                if (compare(nodes[leftChild], nodes[rightChild])) {
+                    greaterNode = rightChild;
+                    secondGreaterNode = leftChild;
+                } else {
+                    greaterNode = leftChild;
+                    secondGreaterNode = rightChild;
+                }
+
+                if (compare(nodes[currentIndex], nodes[greaterNode])) {
+                    swap(nodes[currentIndex], nodes[greaterNode]);
+
+                    currentIndex = greaterNode;
+                    continue;
+                } else if (compare(nodes[currentIndex], nodes[secondGreaterNode])) {
+                    swap(nodes[currentIndex], nodes[secondGreaterNode]);
+
+                    currentIndex = secondGreaterNode;
+
+                    continue;
+                } else {
+                    break;
+                }
+            } else if (nodes.size() > leftChild) {
+                if (compare(nodes[currentIndex], nodes[leftChild])) {
+                    swap(nodes[currentIndex], nodes[leftChild]);
+
+                    currentIndex = leftChild;
+                    continue;
+                } else {
+                    break;
+                }
+            } else {
+                break;
+            }
+        }
+
+        return value;
+    }
+
+    unsigned int top() {
+        if (nodes.size() == 0) {
+            throw (-1);
+        }
+        return nodes.front();
+    }
+
+    size_t size() {
+        return nodes.size();
+    }
+};
+
 class CVATRegister {
 private:
-    struct TaxInvoice {
-        unsigned int amount;
-
-        TaxInvoice() : amount(0) { }
-    };
 
     struct CompanyContact {
         string name;
         string address;
 
-        TaxInvoice * invoice;
+        unsigned int * invoices;
 
         CompanyContact(string newName, string newAddress) : name(newName), address(newAddress) { }
 
@@ -50,7 +164,7 @@ private:
     struct CompanyID {
         string id;
 
-        TaxInvoice * invoice;
+        unsigned int * invoices;
 
         CompanyID(string newId) : id(newId) { }
 
@@ -100,9 +214,9 @@ public:
         CompanyID newId(taxID);
         CompanyContact newContact(name, addr);
 
-        TaxInvoice * newInvoice = new TaxInvoice;
-        newId.invoice = newInvoice;
-        newContact.invoice = newInvoice;
+        unsigned int * newInvoice = new unsigned int(0);
+        newId.invoices = newInvoice;
+        newContact.invoices = newInvoice;
 
         auto idBound = lower_bound(companyIds.begin(), companyIds.end(), newId);
         if (idBound != companyIds.end() && newId == (*idBound)) {
@@ -131,8 +245,8 @@ public:
         }
 
         for (auto it = companyIds.begin(); it != companyIds.end(); it++) {
-            if ((*it).invoice == (*contactBound).invoice) {
-                delete (*contactBound).invoice;
+            if ((*it).invoices == (*contactBound).invoices) {
+                delete (*contactBound).invoices;
                 companyIds.erase(it);
                 companyContacts.erase(contactBound);
                 return true;
@@ -151,8 +265,8 @@ public:
         }
 
         for (auto it = companyContacts.begin(); it != companyContacts.end(); it++) {
-            if ((*it).invoice == (*idBound).invoice) {
-                delete (*idBound).invoice;
+            if ((*it).invoices == (*idBound).invoices) {
+                delete (*idBound).invoices;
                 companyIds.erase(idBound);
                 companyContacts.erase(it);
                 return true;
@@ -164,7 +278,7 @@ public:
 
     bool invoice(const string & taxID, unsigned int amount) {
         try {
-            (*getIDIter(taxID)).invoice->amount += amount;
+            *(getIDIter(taxID)->invoices) += amount;
         }
         catch (...) {
             return false;
@@ -174,7 +288,7 @@ public:
 
     bool invoice(const string & name, const string & addr, unsigned int amount) {
         try {
-            (*getContactIter(name, addr)).invoice->amount += amount;
+            *(getContactIter(name, addr)->invoices) += amount;
         }
         catch (...) {
             return false;
@@ -184,7 +298,7 @@ public:
 
     bool audit(const string & name, const string & addr, unsigned int & sumIncome) const {
         try {
-            sumIncome = (*getContactIter(name, addr)).invoice->amount;
+            sumIncome = *(getContactIter(name, addr)->invoices);
         }
         catch (...) {
             return false;
@@ -194,7 +308,7 @@ public:
 
     bool audit(const string & taxID, unsigned int & sumIncome) const {
         try {
-            sumIncome = (*getIDIter(taxID)).invoice->amount;
+            sumIncome = *(getIDIter(taxID)->invoices);
         }
         catch (...) {
             return false;
