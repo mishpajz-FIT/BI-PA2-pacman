@@ -1,3 +1,15 @@
+/**
+ * @file kontrolnihlaseni.cpp
+ * @author Michal Dobeš (dobesmic@fit.cvut.cz)
+ * @date 2022-03-13
+ *
+ * @brief Registry of values, specified by two uniqe identificators and calculation of median from inputted values
+ *
+ * Optimised for speed of access to information.
+ *
+ * @copyright Copyright (c) 2022
+ *
+ */
 #ifndef __PROGTEST__
 #include <cstring>
 #include <cstdlib>
@@ -16,10 +28,14 @@ using namespace std;
 #endif /* __PROGTEST__ */
 
 
+/**
+ * @brief Min or max heap of unsigned ints
+ *
+ */
 class LittleHeap {
 private:
-    vector<unsigned int> nodes;
-    bool max;
+    vector<unsigned int> nodes; //Vector used for storing data
+    bool max; //Bool determining whether it is max or min heap
 
     bool compare(unsigned int & lhs, unsigned int rhs) const {
         if (max) {
@@ -31,22 +47,32 @@ private:
 
 public:
 
+    /**
+     * @brief Construct a new Heap object
+     *
+     * @param isMaxHeap If true, object will be Max heap, else Min heap
+     */
     LittleHeap(bool isMaxHeap) : max(isMaxHeap) { }
 
+    /**
+     * @brief Add element into heap
+     *
+     * @param value
+     */
     void push(unsigned int value) {
         size_t currentIndex = nodes.size();
 
-        nodes.push_back(value);
+        nodes.push_back(value); //Add to the back of the vectors
 
         size_t parentIndex;
         while (true) {
-            parentIndex = (currentIndex - 1) / 2;
+            parentIndex = (currentIndex - 1) / 2; //Calculate index of parent node
 
-            if (currentIndex == 0) {
+            if (currentIndex == 0) { //If in root, stop the loop
                 break;
             }
 
-            if (compare(nodes[parentIndex], value)) {
+            if (compare(nodes[parentIndex], value)) { //Compare value with parent, if parent is larger/smaller (depending on heap type) switch values
                 swap(nodes[parentIndex], nodes[currentIndex]);
             } else {
                 break;
@@ -56,13 +82,20 @@ public:
         }
     }
 
+    /**
+     * @brief Remove top element from heap
+     *
+     * Throws if heap is empty
+     *
+     * @return unsigned int Removed element
+     */
     unsigned int pop() {
         if (nodes.size() == 0) {
             throw (-1);
         }
 
         unsigned int value = nodes.front();
-
+        //Remove root (first value), add last value as root
         nodes.front() = nodes.back();
         nodes.pop_back();
 
@@ -77,13 +110,13 @@ public:
         size_t greaterNode;
         size_t secondGreaterNode;
 
-        while (true) {
+        while (true) { //Reorder until in correct order
 
-            leftChild = (2 * currentIndex) + 1;
+            leftChild = (2 * currentIndex) + 1; //Calculate left child of current node
             rightChild = (2 * currentIndex) + 2;
 
-            if (nodes.size() > rightChild) {
-                if (compare(nodes[leftChild], nodes[rightChild])) {
+            if (nodes.size() > rightChild) { // If both childern are in the heap
+                if (compare(nodes[leftChild], nodes[rightChild])) { // Get childern with larger/smaller (depending if is min or max heap) value
                     greaterNode = rightChild;
                     secondGreaterNode = leftChild;
                 } else {
@@ -91,30 +124,30 @@ public:
                     secondGreaterNode = rightChild;
                 }
 
-                if (compare(nodes[currentIndex], nodes[greaterNode])) {
+                if (compare(nodes[currentIndex], nodes[greaterNode])) { //If current node larger/smaller (depending if is min or max heap) than first childern, switch values
                     swap(nodes[currentIndex], nodes[greaterNode]);
 
-                    currentIndex = greaterNode;
+                    currentIndex = greaterNode; //Move to the switched node for next loop
                     continue;
-                } else if (compare(nodes[currentIndex], nodes[secondGreaterNode])) {
+                } else if (compare(nodes[currentIndex], nodes[secondGreaterNode])) { //If current node larger/smaller (depending if is min or max heap) than second childern, switch values
                     swap(nodes[currentIndex], nodes[secondGreaterNode]);
 
-                    currentIndex = secondGreaterNode;
+                    currentIndex = secondGreaterNode;   //Move to the switched node for next loop
 
                     continue;
-                } else {
+                } else { //If cant switch nodes break (node is in its place)
                     break;
                 }
-            } else if (nodes.size() > leftChild) {
-                if (compare(nodes[currentIndex], nodes[leftChild])) {
+            } else if (nodes.size() > leftChild) { //If only one childern in the heap
+                if (compare(nodes[currentIndex], nodes[leftChild])) { //If current node larger/smaller (depending if is min or max heap) than childern, switch values
                     swap(nodes[currentIndex], nodes[leftChild]);
 
                     currentIndex = leftChild;
                     continue;
-                } else {
+                } else { //If cant switch nodes break (node is in its place)
                     break;
                 }
-            } else {
+            } else { //If no childern break (node is in its place)
                 break;
             }
         }
@@ -122,6 +155,15 @@ public:
         return value;
     }
 
+    /**
+     * @brief Get top element in heap
+     *
+     * Throws if heap is empty
+     *
+     * For Max heap largest element, for Min heap smallest element
+     *
+     * @return unsigned int Top element
+     */
     unsigned int top() const {
         if (nodes.size() == 0) {
             throw (-1);
@@ -134,14 +176,26 @@ public:
     }
 };
 
+/**
+ * @brief Registry of values, specified by two uniqe identificators
+ *
+ */
 class CVATRegister {
 private:
 
+    /**
+     * @brief Unique identification representation (name and address)
+     *
+     * When comparing values, upper and lower case letters are not distinguished.
+     *
+     * Complementary to CVATRegister#CompanyID.
+     *
+     */
     struct CompanyContact {
         string name;
         string address;
 
-        unsigned int * invoices;
+        unsigned int * invoices; //Pointer to value
 
         CompanyContact(string newName, string newAddress) : name(newName), address(newAddress) { }
 
@@ -161,10 +215,16 @@ private:
         }
     };
 
+    /**
+     * @brief Unique identification representation (ID)
+     *
+     * Complementary to CVATRegister#CompanyContact.
+     *
+     */
     struct CompanyID {
         string id;
 
-        unsigned int * invoices;
+        unsigned int * invoices; //Pointer to value
 
         CompanyID(string newId) : id(newId) { }
 
@@ -181,15 +241,26 @@ private:
         }
     };
 
-    vector<CompanyContact> companyContacts;
-    vector<CompanyID> companyIds;
+    vector<CompanyContact> companyContacts; //Storage of unique names and addresses (with pointers to values), sorted alphabetically
+    vector<CompanyID> companyIds; //Storage of unique ids (with pointers to values), sorted alphabetically
 
-    LittleHeap medianLowerHalf;
-    LittleHeap medianUpperHalf;
+    //The median is calculated quickly thanks to splitting all values into two halves
+    LittleHeap medianLowerHalf; //Values from the lower half are stored in the Max heap.
+    LittleHeap medianUpperHalf; //values from the upper half are stored in the Min heap.
 
+    /**
+     * @brief Get iterator to searched contact from CVATRegister#companyContacts
+     *
+     * Throws if contact was not found.
+     *
+     * @param name Name value of contact
+     * @param addr Address value of contact
+     * @return const vector<CompanyContact>::const_iterator Iterator to CompanyContact in vector
+     */
     const vector<CompanyContact>::const_iterator getContactIter(const string & name, const string & addr) const {
-        CompanyContact newContact(name, addr);
+        CompanyContact newContact(name, addr); //Create temporary object
 
+        //Use binary search to find values in the sorted vector
         auto contactBound = lower_bound(companyContacts.begin(), companyContacts.end(), newContact);
         if (contactBound == companyContacts.end() || newContact != (*contactBound)) {
             throw (-1);
@@ -198,9 +269,18 @@ private:
         return contactBound;
     }
 
+    /**
+     * @brief Get iterator to searched ID from CVATRegister#companyIds
+     *
+     * Throws if id was not found.
+     *
+     * @param taxID Id value of id
+     * @return const vector<CompanyContact>::const_iterator Iterator to CompanyID in vector
+     */
     const vector<CompanyID>::const_iterator getIDIter(const string & taxID) const {
-        CompanyID newId(taxID);
+        CompanyID newId(taxID); //Create temporary object
 
+        //Use binary search to find values in the sorted vector
         auto idBound = lower_bound(companyIds.begin(), companyIds.end(), newId);
         if (idBound == companyIds.end() || newId != (*idBound)) {
             throw (-1);
@@ -209,18 +289,26 @@ private:
         return idBound;
     }
 
+    /**
+     * @brief Add a new value to memory to be taken into account when calculating the median
+     *
+     * @param amount New value
+     */
     void addInvoiceToMedian(unsigned int amount) {
-        if (medianLowerHalf.size() == 0 && medianUpperHalf.size() == 0) {
+        //The median is calculated quickly thanks to splitting all values into two halves
+
+        if (medianLowerHalf.size() == 0 && medianUpperHalf.size() == 0) { //If both halves are empty, add to lower
             medianLowerHalf.push(amount);
             return;
         }
 
-        if (amount < medianLowerHalf.top()) {
+        if (amount < medianLowerHalf.top()) { //If new value is smaller than largest value in bottom half, add to bottom half, else add to upper half
             medianLowerHalf.push(amount);
         } else {
             medianUpperHalf.push(amount);
         }
 
+        //If one or the other half is too big (difference is bigger than 1), move biggest (or smallest) elements to the other half
         while (medianLowerHalf.size() > medianUpperHalf.size() + 1) {
             medianUpperHalf.push(medianLowerHalf.pop());
         }
@@ -238,7 +326,20 @@ public:
         }
     }
 
+    /**
+     * @brief Add new identifiers (name & address, id) for new value
+     *
+     * Name and address need to be (together) unique, is case-insensitive
+     * ID needs to be unique, is case-sensitive
+     *
+     * @param name Name value of identifier for new value
+     * @param addr Address value of identifier for new value
+     * @param taxID ID value of identifier for new value
+     * @return true The value with identifiers has been created and stored
+     * @return false Value with identifiers could not be created
+     */
     bool newCompany(const string & name, const string & addr, const string & taxID) {
+        //Create temporary objects
         CompanyID newId(taxID);
         CompanyContact newContact(name, addr);
 
@@ -246,12 +347,14 @@ public:
         newId.invoices = newInvoice;
         newContact.invoices = newInvoice;
 
+        // Using binary search, it tries to find same values in the sorted vector (if found exact match, it is a duplicate and the new value cannot be created), else it finds a new position for the new value so that the vector remains sorted
         auto idBound = lower_bound(companyIds.begin(), companyIds.end(), newId);
         if (idBound != companyIds.end() && newId == (*idBound)) {
             delete newInvoice;
             return false;
         }
 
+        // Using binary search, it tries to find same values in the sorted vector (if found exact match, it is a duplicate and the new value cannot be created), else it finds a new position for the new value so that the vector remains sorted
         auto contactBound = lower_bound(companyContacts.begin(), companyContacts.end(), newContact);
         if (contactBound != companyContacts.end() && newContact == (*contactBound)) {
             delete newInvoice;
@@ -264,46 +367,73 @@ public:
         return true;
     }
 
+    /**
+     * @brief Remove values based on identifiers
+     *
+     * @param name Name value of identifier
+     * @param addr Address value of identifier
+     * @return true The value with given identifiers was removed from memory
+     * @return false Value with identifiers could not be removed
+     */
     bool cancelCompany(const string & name, const string & addr) {
-        CompanyContact newContact(name, addr);
 
-        auto contactBound = lower_bound(companyContacts.begin(), companyContacts.end(), newContact);
-        if (contactBound == companyContacts.end() || newContact != (*contactBound)) {
-            return false;
-        }
+        try {
+            auto contactBound = getContactIter(name, addr); //Finds value of CompanyContact identifier
 
-        for (auto it = companyIds.begin(); it != companyIds.end(); it++) {
-            if ((*it).invoices == (*contactBound).invoices) {
-                delete (*contactBound).invoices;
-                companyIds.erase(it);
-                companyContacts.erase(contactBound);
-                return true;
+            //Finds (and removes) the complementary CompanyID identifier according to the pointer to the value (and removes value from memory)
+            for (auto it = companyIds.begin(); it != companyIds.end(); it++) {
+                if ((*it).invoices == (*contactBound).invoices) {
+                    delete (*contactBound).invoices;
+                    companyIds.erase(it);
+                    companyContacts.erase(contactBound);
+                    return true;
+                }
             }
+        }
+        catch (...) {
+            return false;
         }
 
         return false;
     }
 
+    /**
+     * @brief Remove values based on identifier
+     *
+     * @param taxID ID value of identifier
+     * @return true The value with given identifier was removed from memory
+     * @return false Value with identifier could not be removed
+     */
     bool cancelCompany(const string & taxID) {
-        CompanyID newId(taxID);
 
-        auto idBound = lower_bound(companyIds.begin(), companyIds.end(), newId);
-        if (idBound == companyIds.end() || newId != (*idBound)) {
-            return false;
-        }
+        try {
+            auto idBound = getIDIter(taxID); //Finds value of CompanyID identifier
 
-        for (auto it = companyContacts.begin(); it != companyContacts.end(); it++) {
-            if ((*it).invoices == (*idBound).invoices) {
-                delete (*idBound).invoices;
-                companyIds.erase(idBound);
-                companyContacts.erase(it);
-                return true;
+            //Finds (and removes) the complementary CompanyContact identifier according to the pointer to the value (and removes value from memory)
+            for (auto it = companyContacts.begin(); it != companyContacts.end(); it++) {
+                if ((*it).invoices == (*idBound).invoices) {
+                    delete (*idBound).invoices;
+                    companyIds.erase(idBound);
+                    companyContacts.erase(it);
+                    return true;
+                }
             }
+        }
+        catch (...) {
+            return false;
         }
 
         return false;
     }
 
+    /**
+     * @brief Increase value pointed to by identifier
+     *
+     * @param taxID ID value of identifier
+     * @param amount Amount by which to increase the value
+     * @return true The value with given identifier was increased
+     * @return false The value with given identifier could not be increased
+     */
     bool invoice(const string & taxID, unsigned int amount) {
         try {
             *(getIDIter(taxID)->invoices) += amount;
@@ -316,6 +446,15 @@ public:
         return true;
     }
 
+    /**
+     * @brief Increase value pointed to by identifier
+     *
+     * @param name Name value of identifier
+     * @param addr Address value of identifier
+     * @param amount Amount by which to increase the value
+     * @return true The value with given identifier was increased
+     * @return false The value with given identifier could not be increased
+     */
     bool invoice(const string & name, const string & addr, unsigned int amount) {
         try {
             *(getContactIter(name, addr)->invoices) += amount;
@@ -328,6 +467,15 @@ public:
         return true;
     }
 
+    /**
+     * @brief Get value pointed to by identifier
+     *
+     * @param[in] name Name value of identifier
+     * @param[in] addr Address value of identifier
+     * @param[out] sumIncome Value pointed to by identifier
+     * @return true The value was obtained
+     * @return false The value could not be obtained
+     */
     bool audit(const string & name, const string & addr, unsigned int & sumIncome) const {
         try {
             sumIncome = *(getContactIter(name, addr)->invoices);
@@ -338,6 +486,14 @@ public:
         return true;
     }
 
+    /**
+     * @brief Get value pointed to by identifier
+     *
+     * @param[in] taxID ID value of identifier
+     * @param[out] sumIncome Value pointed to by identifier
+     * @return true The value was obtained
+     * @return false The value could not be obtained
+     */
     bool audit(const string & taxID, unsigned int & sumIncome) const {
         try {
             sumIncome = *(getIDIter(taxID)->invoices);
@@ -348,6 +504,16 @@ public:
         return true;
     }
 
+    /**
+     * @brief Get the values of alphabetically first identifier
+     *
+     * Arranged alphabetically first by name, in case of a match second sort parameter is address
+     *
+     * @param[out] name Name value of identifier
+     * @param[out] addr Address value of identifier
+     * @return true First identifier was obtained
+     * @return false First identifier could not be obtained
+     */
     bool firstCompany(string & name, string & addr) const {
         if (companyContacts.size() == 0) {
             return false;
@@ -358,6 +524,14 @@ public:
         return true;
     }
 
+    /**
+     * @brief Get the values of alphabetically next identifier after specified identifier
+     *
+     * @param name Name value of identifier
+     * @param addr Address value of identifier
+     * @return true Next identifier was obtained
+     * @return false Next identifier could not be obtained
+     */
     bool nextCompany(string & name, string & addr) const {
         try {
             auto contactBound = getContactIter(name, addr);
@@ -376,11 +550,19 @@ public:
         return true;
     }
 
+    /**
+     * @brief Get the median of all inputted values
+     *
+     * @return unsigned int Median
+     */
     unsigned int medianInvoice(void) const {
+        //The median is calculated quickly thanks to splitting all values into two halves
+
         if (medianLowerHalf.size() == 0 && medianUpperHalf.size() == 0) {
             return 0;
         }
 
+        //Get the largest/smallest value from the bigger half (or from the upper half if there has been even number of values inputted)
         if ((medianUpperHalf.size() > medianLowerHalf.size()) || (medianLowerHalf.size() == medianUpperHalf.size())) {
             return medianUpperHalf.top();
         } else {
