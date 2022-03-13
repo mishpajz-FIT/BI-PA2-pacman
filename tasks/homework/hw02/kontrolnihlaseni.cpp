@@ -3,7 +3,8 @@
  * @author Michal Dobeš (dobesmic@fit.cvut.cz)
  * @date 2022-03-13
  *
- * @brief Registry of values, specified by two uniqe identificators and calculation of median from inputted values
+ * @brief Registry of values, each value is specified by two uniqe identificators
+ * Calculation of median from inputted values.
  *
  * Optimised for speed of access to information.
  *
@@ -177,7 +178,9 @@ public:
 };
 
 /**
- * @brief Registry of values, specified by two uniqe identificators
+ * @brief Registry of values, each value is specified by two uniqe identificators (name and address) and (id)
+ *
+ * Supports calculation of the median of all values by which the values in the register have increased.
  *
  */
 class CVATRegister {
