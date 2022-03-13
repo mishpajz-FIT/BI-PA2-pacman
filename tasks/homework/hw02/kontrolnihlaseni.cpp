@@ -21,7 +21,7 @@ private:
     vector<unsigned int> nodes;
     bool max;
 
-    bool compare(unsigned int & lhs, unsigned int rhs) {
+    bool compare(unsigned int & lhs, unsigned int rhs) const {
         if (max) {
             return lhs < rhs;
         } else {
@@ -122,14 +122,14 @@ public:
         return value;
     }
 
-    unsigned int top() {
+    unsigned int top() const {
         if (nodes.size() == 0) {
             throw (-1);
         }
         return nodes.front();
     }
 
-    size_t size() {
+    size_t size() const {
         return nodes.size();
     }
 };
@@ -184,6 +184,9 @@ private:
     vector<CompanyContact> companyContacts;
     vector<CompanyID> companyIds;
 
+    LittleHeap medianLowerHalf;
+    LittleHeap medianUpperHalf;
+
     const vector<CompanyContact>::const_iterator getContactIter(const string & name, const string & addr) const {
         CompanyContact newContact(name, addr);
 
@@ -204,6 +207,26 @@ private:
         }
 
         return idBound;
+    }
+
+    void addInvoiceToMedian(unsigned int amount) {
+        if (medianLowerHalf.size() == 0 && medianUpperHalf.size() == 0) {
+            medianLowerHalf.push(amount);
+            return;
+        }
+
+        if (amount < medianLowerHalf.top()) {
+            medianLowerHalf.push(amount);
+        } else {
+            medianUpperHalf.push(amount);
+        }
+
+        while (medianLowerHalf.size() > medianUpperHalf.size() + 1) {
+            medianUpperHalf.push(medianLowerHalf.pop());
+        }
+        while (medianUpperHalf.size() > medianLowerHalf.size() + 1) {
+            medianLowerHalf.push(medianUpperHalf.pop());
+        }
     }
 
 public:
@@ -288,6 +311,8 @@ public:
         catch (...) {
             return false;
         }
+
+        addInvoiceToMedian(amount);
         return true;
     }
 
@@ -298,6 +323,8 @@ public:
         catch (...) {
             return false;
         }
+
+        addInvoiceToMedian(amount);
         return true;
     }
 
@@ -349,7 +376,17 @@ public:
         return true;
     }
 
-    //unsigned int medianInvoice(void) const;
+    unsigned int medianInvoice(void) const {
+        if (medianLowerHalf.size() == 0 && medianUpperHalf.size() == 0) {
+            return 0;
+        }
+
+        if ((medianUpperHalf.size() > medianLowerHalf.size()) || (medianLowerHalf.size() == medianUpperHalf.size())) {
+            return medianUpperHalf.top();
+        } else {
+            return medianLowerHalf.top();
+        }
+    }
 };
 
 #ifndef __PROGTEST__
@@ -362,13 +399,13 @@ int main(void) {
     assert(b1.newCompany("ACME", "Kolejni", "666/666/666"));
     assert(b1.newCompany("Dummy", "Thakurova", "123456"));
     assert(b1.invoice("666/666", 2000));
-    //assert(b1.medianInvoice() == 2000);
+    assert(b1.medianInvoice() == 2000);
     assert(b1.invoice("666/666/666", 3000));
-    //assert(b1.medianInvoice() == 3000);
+    assert(b1.medianInvoice() == 3000);
     assert(b1.invoice("123456", 4000));
-    //assert(b1.medianInvoice() == 3000);
+    assert(b1.medianInvoice() == 3000);
     assert(b1.invoice("aCmE", "Kolejni", 5000));
-    //assert(b1.medianInvoice() == 4000);
+    assert(b1.medianInvoice() == 4000);
     assert(b1.audit("ACME", "Kolejni", sumIncome) && sumIncome == 8000);
     assert(b1.audit("123456", sumIncome) && sumIncome == 4000);
     assert(b1.firstCompany(name, addr) && name == "ACME" && addr == "Kolejni");
@@ -376,9 +413,9 @@ int main(void) {
     assert(b1.nextCompany(name, addr) && name == "Dummy" && addr == "Thakurova");
     assert(!b1.nextCompany(name, addr));
     assert(b1.cancelCompany("ACME", "KoLeJnI"));
-    //assert(b1.medianInvoice() == 4000);
+    assert(b1.medianInvoice() == 4000);
     assert(b1.cancelCompany("666/666"));
-    /*assert(b1.medianInvoice() == 4000);
+    assert(b1.medianInvoice() == 4000);
     assert(b1.invoice("123456", 100));
     assert(b1.medianInvoice() == 3000);
     assert(b1.invoice("123456", 300));
@@ -396,7 +433,7 @@ int main(void) {
     assert(b1.invoice("123456", 2830));
     assert(b1.medianInvoice() == 2000);
     assert(b1.invoice("123456", 3200));
-    assert(b1.medianInvoice() == 2000);*/
+    assert(b1.medianInvoice() == 2000);
     assert(b1.firstCompany(name, addr) && name == "Dummy" && addr == "Thakurova");
     assert(!b1.nextCompany(name, addr));
     assert(b1.cancelCompany("123456"));
@@ -407,13 +444,13 @@ int main(void) {
     assert(b2.newCompany("Dummy", "Kolejni", "123456"));
     assert(!b2.newCompany("AcMe", "kOlEjNi", "1234"));
     assert(b2.newCompany("Dummy", "Thakurova", "ABCDEF"));
-    //assert(b2.medianInvoice() == 0);
+    assert(b2.medianInvoice() == 0);
     assert(b2.invoice("ABCDEF", 1000));
-    //assert(b2.medianInvoice() == 1000);
+    assert(b2.medianInvoice() == 1000);
     assert(b2.invoice("abcdef", 2000));
-    //assert(b2.medianInvoice() == 2000);
+    assert(b2.medianInvoice() == 2000);
     assert(b2.invoice("aCMe", "kOlEjNi", 3000));
-    //assert(b2.medianInvoice() == 2000);
+    assert(b2.medianInvoice() == 2000);
     assert(!b2.invoice("1234567", 100));
     assert(!b2.invoice("ACE", "Kolejni", 100));
     assert(!b2.invoice("ACME", "Thakurova", 100));
@@ -424,7 +461,7 @@ int main(void) {
     assert(!b2.cancelCompany("ACE", "Kolejni"));
     assert(!b2.cancelCompany("ACME", "Thakurova"));
     assert(b2.cancelCompany("abcdef"));
-    //assert(b2.medianInvoice() == 2000);
+    assert(b2.medianInvoice() == 2000);
     assert(!b2.cancelCompany("abcdef"));
     assert(b2.newCompany("ACME", "Kolejni", "abcdef"));
     assert(b2.cancelCompany("ACME", "Kolejni"));
