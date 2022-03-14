@@ -89,69 +89,62 @@ public:
         return *this;
     }
 
+    CTime operator ++ (int) {
+        CTime newTime = *this;
+        ++newTime;
+        return newTime;
+    }
+
     CTime & operator -- () {
         *this -= 1;
         return *this;
     }
 
+    CTime operator -- (int) {
+        CTime newTime = *this;
+        --newTime;
+        return newTime;
+    }
+
     // comparison operators
-    bool operator == (CTime & rhs) const {
-        return ((m_Hour == rhs.hours()) && (m_Minute == rhs.minutes()) && (m_Second == rhs.seconds()));
+    friend bool operator == (const CTime & lhs, const CTime & rhs) {
+        return ((lhs.m_Hour == rhs.m_Hour) && (lhs.m_Minute == rhs.m_Minute) && (lhs.m_Second == rhs.m_Second));
     }
 
-    bool operator != (CTime & rhs) const {
-        return !(*this == rhs);
+    friend bool operator != (const CTime & lhs, const CTime & rhs) {
+        return !(lhs == rhs);
     }
 
-    bool operator > (CTime & rhs) const {
-        if (m_Hour == rhs.hours()) {
-            if (m_Minute == rhs.minutes()) {
-                return m_Second > rhs.seconds();
+    friend bool operator < (const CTime & lhs, const CTime & rhs) {
+        if (lhs.m_Hour == rhs.m_Hour) {
+            if (lhs.m_Minute == rhs.m_Minute) {
+                return lhs.m_Second < rhs.m_Second;
             }
-            return m_Minute > rhs.minutes();
+            return lhs.m_Minute < rhs.m_Minute;
         }
-        return m_Hour > rhs.hours();
+        return lhs.m_Hour < rhs.m_Hour;
     }
 
-    bool operator < (CTime & rhs) const {
-        if (m_Hour == rhs.hours()) {
-            if (m_Minute == rhs.minutes()) {
-                return m_Second < rhs.seconds();
-            }
-            return m_Minute < rhs.minutes();
-        }
-        return m_Hour < rhs.hours();
+    friend bool operator > (const CTime & lhs, const CTime & rhs) {
+        return rhs < lhs;
     }
 
-    bool operator <= (CTime & rhs) const {
-        return (*this < rhs) || (*this == rhs);
+    friend bool operator <= (const CTime & lhs, const CTime & rhs) {
+        return !(lhs > rhs);
     }
 
-    bool operator >= (CTime & rhs) const {
-        return (*this > rhs) || (*this == rhs);
+    friend bool operator >= (const CTime & lhs, const CTime & rhs) {
+        return !(lhs < rhs);
     }
 
     // output operator
     friend ostream & operator << (ostream & out, CTime & rhs) {
-        out << std::setfill(' ') << std::setw(2) << rhs.hours();
+        out << std::setfill(' ') << std::setw(2) << rhs.m_Hour;
         out << ":";
-        out << std::setfill('0') << std::setw(2) << rhs.minutes();
+        out << std::setfill('0') << std::setw(2) << rhs.m_Minute;
         out << ":";
-        out << std::setfill('0') << std::setw(2) << rhs.seconds();
+        out << std::setfill('0') << std::setw(2) << rhs.m_Second;
         return out;
-    }
-
-    // helper functions
-    int hours() const {
-        return m_Hour;
-    }
-
-    int minutes() const {
-        return m_Minute;
-    }
-
-    int seconds() const {
-        return m_Second;
     }
 
     friend class ::CTimeTester;
