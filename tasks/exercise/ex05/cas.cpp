@@ -1,3 +1,13 @@
+/**
+ * @file cas.cpp
+ * @author Michal Dobeš
+ * @date 2022-03-14
+ *
+ * @brief Implementation of class representing time
+ *
+ * @copyright Copyright (c) 2022
+ *
+ */
 #ifndef __PROGTEST__
 #include <iostream>
 #include <iomanip>
@@ -8,6 +18,12 @@ using namespace std;
 class CTimeTester;
 #endif /* __PROGTEST__ */
 
+/**
+ * @brief Representation of time with overloaded operators.
+ *
+ * Note: It was required to implement time as hours, minutes and seconds in proprietary variables.
+ *
+ */
 class CTime {
 private:
     int m_Hour;
@@ -16,6 +32,10 @@ private:
 
     void recalculate() {
 
+        /* Trick to substract seconds from time:
+            When seconds go under zero after substracting, instead of calculating minutes and hours from this underflown variable
+            add exactly one day to seconds, and then calculate minutes and days from seconds as if
+            seconds were added (modulo cancels effects of the added day) */
         if (m_Second < 0) {
             m_Second += 60 * 60 * 24;
         }
@@ -40,7 +60,7 @@ private:
     }
 
 public:
-    // constructor, destructor
+    // Constructors
     CTime() : m_Hour(0), m_Minute(0), m_Second(0) { }
 
     CTime(int hour, int minute, int second = 0) {
@@ -55,7 +75,7 @@ public:
         m_Second = second;
     }
 
-    // arithmetic operators
+    // Arithmetic operators
     CTime & operator += (int seconds) {
         m_Second += seconds;
         recalculate();
@@ -106,7 +126,7 @@ public:
         return newTime;
     }
 
-    // comparison operators
+    // Comparison operators
     friend bool operator == (const CTime & lhs, const CTime & rhs) {
         return ((lhs.m_Hour == rhs.m_Hour) && (lhs.m_Minute == rhs.m_Minute) && (lhs.m_Second == rhs.m_Second));
     }
@@ -137,7 +157,7 @@ public:
         return !(lhs < rhs);
     }
 
-    // output operator
+    // Output operator
     friend ostream & operator << (ostream & out, CTime & rhs) {
         out << std::setfill(' ') << std::setw(2) << rhs.m_Hour;
         out << ":";
