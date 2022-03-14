@@ -36,7 +36,7 @@ private:
             When seconds go under zero after substracting, instead of calculating minutes and hours from this underflown variable
             add exactly one day to seconds, and then calculate minutes and days from seconds as if
             seconds were added (modulo cancels effects of the added day) */
-        if (m_Second < 0) {
+        while (m_Second < 0) {
             m_Second += 60 * 60 * 24;
         }
 
@@ -82,10 +82,14 @@ public:
         return *this;
     }
 
-    CTime operator + (int seconds) {
-        CTime newTime = *this;
+    friend CTime operator + (const CTime & lhs, int seconds) {
+        CTime newTime = lhs;
         newTime += seconds;
         return newTime;
+    }
+
+    friend CTime operator + (int seconds, const CTime & rhs) {
+        return rhs + seconds;
     }
 
     CTime & operator -= (int seconds) {
@@ -94,13 +98,17 @@ public:
         return *this;
     }
 
-    CTime operator - (int seconds) {
-        CTime newTime = *this;
+    friend CTime operator - (const CTime & lhs, int seconds) {
+        CTime newTime = lhs;
         newTime -= seconds;
         return newTime;
     }
 
-    friend int operator - (CTime & lhs, CTime & rhs) {
+    friend CTime operator - (int seconds, const CTime & rhs) {
+        return rhs - seconds;
+    }
+
+    friend int operator - (const CTime & lhs, const CTime & rhs) {
         return abs(lhs.toSeconds() - rhs.toSeconds());
     }
 
@@ -110,9 +118,9 @@ public:
     }
 
     CTime operator ++ (int) {
-        CTime newTime = *this;
-        ++newTime;
-        return newTime;
+        CTime old = *this;
+        ++(*this);
+        return old;
     }
 
     CTime & operator -- () {
@@ -121,9 +129,9 @@ public:
     }
 
     CTime operator -- (int) {
-        CTime newTime = *this;
-        --newTime;
-        return newTime;
+        CTime old = *this;
+        --(*this);
+        return old;
     }
 
     // Comparison operators
@@ -158,7 +166,7 @@ public:
     }
 
     // Output operator
-    friend ostream & operator << (ostream & out, CTime & rhs) {
+    friend ostream & operator << (ostream & out, const CTime & rhs) {
         out << std::setfill(' ') << std::setw(2) << rhs.m_Hour;
         out << ":";
         out << std::setfill('0') << std::setw(2) << rhs.m_Minute;
