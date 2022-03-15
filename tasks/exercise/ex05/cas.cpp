@@ -52,11 +52,8 @@ private:
         return ((m_Hour * 60) + m_Minute) * 60 + m_Second;
     }
 
-    static int abs(int from) {
-        if (from > 0) {
-            return from;
-        }
-        return from * (-1);
+    static inline int min(int a, int b) {
+        return a < b ? a : b;
     }
 
 public:
@@ -109,7 +106,7 @@ public:
     }
 
     friend int operator - (const CTime & lhs, const CTime & rhs) {
-        return abs(lhs.toSeconds() - rhs.toSeconds());
+        return min((lhs - rhs.toSeconds()).toSeconds(), (rhs - lhs.toSeconds()).toSeconds());
     }
 
     CTime & operator ++ () {
@@ -224,6 +221,11 @@ int main() {
 
     assert(a-- == b--);
     assert(a == b);
+
+    CTime c(23, 59, 59);
+    CTime d(0, 0, 1);
+
+    assert((c - d) == 2);
 
     return 0;
 }
