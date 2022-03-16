@@ -79,10 +79,9 @@ public:
         return *this;
     }
 
-    friend CTime operator + (const CTime & lhs, int seconds) {
-        CTime newTime = lhs;
-        newTime += seconds;
-        return newTime;
+    friend CTime operator + (CTime lhs, int seconds) {
+        lhs += seconds;
+        return lhs;
     }
 
     friend CTime operator + (int seconds, const CTime & rhs) {
@@ -95,10 +94,9 @@ public:
         return *this;
     }
 
-    friend CTime operator - (const CTime & lhs, int seconds) {
-        CTime newTime = lhs;
-        newTime -= seconds;
-        return newTime;
+    friend CTime operator - (CTime lhs, int seconds) {
+        lhs -= seconds;
+        return lhs;
     }
 
     friend CTime operator - (int seconds, const CTime & rhs) {
