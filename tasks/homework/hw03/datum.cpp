@@ -23,9 +23,6 @@ ios_base & (*date_format(const char * fmt)) (ios_base & x) {
     return [ ](ios_base & ios) -> ios_base & { return ios; };
 }
 
-#define MAX_DAYS 11322
-#define MAX_YEAR 30
-
 class CDate {
 private:
     unsigned int days; // Days sice lower bound (01/01/2000) to the date this instance is representing
@@ -88,8 +85,7 @@ public:
         y -= 2000;
 
         if (m > 12 || m == 0 ||
-            d > DateConvertor::daysInMonth(m, y) || d == 0 ||
-            y > MAX_YEAR) {
+            d > DateConvertor::daysInMonth(m, y) || d == 0) {
             throw InvalidDateException();
         }
 
@@ -104,16 +100,10 @@ public:
     }
 
     CDate(unsigned int d) {
-        if (d > MAX_DAYS) {
-            throw InvalidDateException();
-        }
         days = d;
     }
 
     CDate & operator += (unsigned int d) {
-        if (days + d > MAX_DAYS) {
-            throw InvalidDateException();
-        }
         days += d;
         return *this;
     }
@@ -124,9 +114,6 @@ public:
     }
 
     CDate & operator -= (unsigned int d) {
-        if (days - d > MAX_DAYS) {
-            throw InvalidDateException();
-        }
         days -= d;
         return *this;
     }
