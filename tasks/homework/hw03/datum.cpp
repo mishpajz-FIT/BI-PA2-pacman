@@ -21,7 +21,7 @@ public:
 // own working manipulator.
 ios_base & (*date_format(const char * fmt)) (ios_base & x) {
     return [ ](ios_base & ios) -> ios_base & { return ios; };
-}
+} 
 
 class CDate {
 private:
@@ -82,13 +82,13 @@ private:
 
 public:
     CDate(unsigned int y, unsigned int m, unsigned int d) {
-        y -= 2000;
-
-        if (m > 12 || m == 0 ||
+        if (y < 2000 ||
+            m > 12 || m == 0 ||
             d > DateConvertor::daysInMonth(m, y) || d == 0) {
             throw InvalidDateException();
         }
 
+        y -= 2000;
         days = y * 365;
         if (y > 0) {
             days += DateConvertor::leapYearsUntil(y - 1);
@@ -99,9 +99,7 @@ public:
         days += (d - 1);
     }
 
-    CDate(unsigned int d) {
-        days = d;
-    }
+    CDate(unsigned int d) : days(d) { }
 
     CDate & operator += (unsigned int d) {
         days += d;
@@ -113,6 +111,11 @@ public:
         return lhs;
     }
 
+    friend CDate operator + (unsigned int d, CDate rhs) {
+        rhs += d;
+        return rhs;
+    }
+
     CDate & operator -= (unsigned int d) {
         days -= d;
         return *this;
@@ -121,6 +124,11 @@ public:
     friend CDate operator - (CDate lhs, unsigned int d) {
         lhs -= d;
         return lhs;
+    }
+
+    friend CDate operator - (unsigned int d, CDate rhs) {
+        rhs -= d;
+        return rhs;
     }
 
     friend int operator - (const CDate & lhs, const CDate & rhs) {
@@ -184,8 +192,26 @@ public:
         char dummy1, dummy2;
         int y, m, d;
 
-        is >> y >> dummy1 >> m >> dummy2 >> d;
-        if (dummy1 != '-' || dummy2 != '-') {
+        is >> y >> dummy1;
+        if (dummy1 != '-') {
+            is.setstate(ios::failbit);
+            return is;
+        }
+        bool isPadded = false;
+        if (is.peek() == '0') {
+            isPadded = true;
+        }
+        is >> m >> dummy2;
+        if (dummy2 != '-' || (m < 10 && !isPadded)) {
+            is.setstate(ios::failbit);
+            return is;
+        }
+        isPadded = false;
+        if (is.peek() == '0') {
+            isPadded = true;
+        }
+        is >> d;
+        if (d < 10 && !isPadded) {
             is.setstate(ios::failbit);
             return is;
         }
