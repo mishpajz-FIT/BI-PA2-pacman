@@ -29,17 +29,17 @@ private:
 
     class DateConvertor {
     private:
-        unsigned int _internalYear;
-        unsigned int _internalMonth;
-        unsigned int _internalDay;
+        unsigned int year;
+        unsigned int month;
+        unsigned int day;
 
     public:
-        static unsigned int leapYearsUntil(unsigned int year) {
-            return (year / 4) - (year / 100) + (year / 400) - (year / 4000) + (year > 0 ? 1 : 0);
+        static unsigned int leapYearsUntil(unsigned int y) {
+            return (y / 4) - (y / 100) + (y / 400) - (y / 4000) + 1;
         }
 
-        static bool leapYear(unsigned int year) {
-            return ((year == 0) || (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0 && year % 4000 != 0));
+        static bool leapYear(unsigned int y) {
+            return ((y == 0) || (y % 4 == 0 && y % 100 != 0) || (y % 400 == 0 && y % 4000 != 0));
         }
 
         static unsigned int daysInMonth(unsigned int m, unsigned int y) {
@@ -48,35 +48,37 @@ private:
         }
 
         void convertFromDays(unsigned int days) {
-            _internalYear = days / 365;
 
+            year = days / 365;
 
-            _internalDay = (days - (365 * _internalYear));
-            if (_internalYear > 0) {
-                if (days % 365 < leapYearsUntil(_internalYear - 1)) {
-                    _internalYear--;
-                    _internalDay += 365;
+            day = (days - (365 * year));
+            if (year > 0) {
+                if (days % 365 < leapYearsUntil(year - 1)) {
+                    year--;
+                    day += 365;
                 }
-                _internalDay -= leapYearsUntil(_internalYear - 1);
+                if (year > 0) {
+                    day -= leapYearsUntil(year - 1);
+                }
             }
 
-            _internalMonth = 1;
-            while (_internalDay >= daysInMonth(_internalMonth, _internalYear)) {
-                _internalDay -= daysInMonth(_internalMonth, _internalYear);
-                _internalMonth++;
+            month = 1;
+            while (day >= daysInMonth(month, year)) {
+                day -= daysInMonth(month, year);
+                month++;
             }
         }
 
-        unsigned int year() const {
-            return _internalYear + 2000;
+        unsigned int getYear() const {
+            return year + 2000;
         }
 
-        unsigned int month() const {
-            return _internalMonth;
+        unsigned int getMonth() const {
+            return month;
         }
 
-        unsigned int day() const {
-            return _internalDay + 1;
+        unsigned int getDay() const {
+            return day + 1;
         }
     };
 
@@ -184,7 +186,7 @@ public:
     friend ostream & operator << (ostream & os, const CDate & rhs) {
         DateConvertor convertor;
         convertor.convertFromDays(rhs.days);
-        os << convertor.year() << "-" << setfill('0') << setw(2) << convertor.month() << "-" << setw(2) << convertor.day();
+        os << convertor.getYear() << "-" << setfill('0') << setw(2) << convertor.getMonth() << "-" << setw(2) << convertor.getDay();
         return os;
     }
 
