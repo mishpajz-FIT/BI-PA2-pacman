@@ -23,6 +23,17 @@ private:
             strcpy(value, v);
         }
 
+        CNode(const CNode & copy) {
+            value = new char[strlen(copy.value) + 1];
+            strcpy(value, copy.value);
+
+            if (copy.m_Next != nullptr) {
+                m_Next = new CNode(*(copy.m_Next));
+            } else {
+                m_Next = nullptr;
+            }
+        }
+
         ~CNode() {
             delete [] value;
         }
@@ -40,9 +51,21 @@ public:
         m_Begin = nullptr;
     }
 
-    // copy constructor
+    CLinkedSet(const CLinkedSet & toCopy) {
+        m_Begin = new CNode(*(toCopy.m_Begin));
 
-    // operator=
+        size = toCopy.size;
+    }
+
+    CLinkedSet & operator = (CLinkedSet toCopy) {
+        size = toCopy.size;
+
+        CNode * tmpBegin = m_Begin;
+        m_Begin = toCopy.m_Begin;
+        toCopy.m_Begin = tmpBegin;
+
+        return *this;
+    }
 
     ~CLinkedSet() {
         CNode * iter = m_Begin;
@@ -199,8 +222,8 @@ struct CLinkedSetTester {
 
 int main() {
     CLinkedSetTester::test0();
-    //CLinkedSetTester::test1();
-    //CLinkedSetTester::test2();
+    CLinkedSetTester::test1();
+    CLinkedSetTester::test2();
     return 0;
 }
 #endif /* __PROGTEST__ */
