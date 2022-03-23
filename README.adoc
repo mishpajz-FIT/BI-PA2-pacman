@@ -46,7 +46,7 @@ https://courses.fit.cvut.cz/BI-PA2/
 |0.15/0.15
 
 |ex05
-|
+|0.15/0.15
 
 |ex06
 |
