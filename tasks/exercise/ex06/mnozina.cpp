@@ -1,5 +1,6 @@
 #ifndef __PROGTEST__
 #include <cstring>
+#include <iostream>
 using namespace std;
 
 class CLinkedSetTester;
@@ -9,31 +10,127 @@ class CLinkedSetTester;
 class CLinkedSet {
 private:
     struct CNode {
+    private:
+        char * value;
+
+    public:
         CNode * m_Next;
 
-        const char * Value() const;
+        CNode(const char * v) {
+            m_Next = nullptr;
+
+            value = new char[strlen(v) + 1];
+            strcpy(value, v);
+        }
+
+        ~CNode() {
+            delete [] value;
+        }
+
+        const char * Value() const {
+            return value;
+        }
     };
 
     CNode * m_Begin;
+    size_t size;
 
 public:
-    // default constructor
+    CLinkedSet() : size(0) {
+        m_Begin = nullptr;
+    }
 
     // copy constructor
 
     // operator=
 
-    // destructor
+    ~CLinkedSet() {
+        CNode * iter = m_Begin;
+        while (iter != nullptr) {
+            CNode * tmp = iter;
+            iter = iter->m_Next;
+            delete tmp;
+        }
+    }
 
-    bool Insert(const char * value);
+    bool Insert(const char * value) {
+        CNode * iter = m_Begin;
+        CNode * iterPrev = nullptr;
+        while (iter != nullptr) {
+            int comp = strcmp(value, iter->Value());
+            if (comp > -1) {
+                if (comp == 0) {
+                    return false;
+                }
+                break;
+            }
+            iterPrev = iter;
+            iter = iter->m_Next;
+        }
 
-    bool Remove(const char * value);
+        CNode * newNode = new CNode(value);
+        if (iterPrev == nullptr) {
+            m_Begin = newNode;
+            newNode->m_Next = iter;
+        } else {
+            iterPrev->m_Next = newNode;
+            newNode->m_Next = iter;
+        }
+        size++;
+        return true;
+    }
 
-    bool Empty() const;
 
-    size_t Size() const;
+    bool Remove(const char * value) {
 
-    bool Contains(const char * value) const;
+        CNode * iter = m_Begin;
+        CNode * iterPrev = nullptr;
+        while (iter != nullptr) {
+            int comp = strcmp(value, iter->Value());
+            if (comp > -1) {
+                if (comp == 0) {
+                    break;
+                } else {
+                    return false;
+                }
+            }
+            iterPrev = iter;
+            iter = iter->m_Next;
+        }
+
+        if (iterPrev == nullptr) {
+            m_Begin = iter->m_Next;
+        } else {
+            iterPrev->m_Next = iter->m_Next;
+        }
+        delete iter;
+        size--;
+        return true;
+    }
+
+    bool Empty() const {
+        return size == 0;
+    }
+
+    size_t Size() const {
+        return size;
+    }
+
+    bool Contains(const char * value) const {
+        CNode * iter = m_Begin;
+
+        while (iter != nullptr) {
+            int comp = strcmp(value, iter->Value());
+            if (comp > -1) {
+                if (comp == 0) {
+                    return true;
+                }
+                break;
+            }
+            iter = iter->m_Next;
+        }
+        return false;
+    }
 
     friend class ::CLinkedSetTester;
 };
@@ -102,8 +199,8 @@ struct CLinkedSetTester {
 
 int main() {
     CLinkedSetTester::test0();
-    CLinkedSetTester::test1();
-    CLinkedSetTester::test2();
+    //CLinkedSetTester::test1();
+    //CLinkedSetTester::test2();
     return 0;
 }
 #endif /* __PROGTEST__ */
