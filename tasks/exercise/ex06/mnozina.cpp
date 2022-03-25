@@ -54,6 +54,7 @@ private:
     }
 
 public:
+
     CLinkedSet() : m_Begin(nullptr), size(0) { }
 
     CLinkedSet(const CLinkedSet & copyFrom) : size(copyFrom.size) {
@@ -92,7 +93,7 @@ public:
         CNode * iter = m_Begin;
         CNode * prevIter = nullptr;
         while (iter != nullptr) {
-            int cmp = strcmp(value, iter->Value());
+            int cmp = strcmp(iter->Value(), value);
             if (cmp >= 0) {
                 if (cmp == 0) {
                     return false;
@@ -124,7 +125,7 @@ public:
         CNode * iter = m_Begin;
         CNode * prevIter = nullptr;
         while (iter != nullptr) {
-            int cmp = strcmp(value, iter->Value());
+            int cmp = strcmp(iter->Value(), value);
             if (cmp >= 0) {
                 if (cmp == 0) {
                     if (prevIter == nullptr) {
@@ -158,7 +159,7 @@ public:
     bool Contains(const char * value) const {
         CNode * iter = m_Begin;
         while (iter != nullptr) {
-            int cmp = strcmp(value, iter->Value());
+            int cmp = strcmp(iter->Value(), value);
             if (cmp >= 0) {
                 if (cmp == 0) {
                     return true;
