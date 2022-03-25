@@ -1,6 +1,5 @@
 #ifndef __PROGTEST__
 #include <cstring>
-#include <iostream>
 using namespace std;
 
 class CLinkedSetTester;
@@ -10,32 +9,29 @@ class CLinkedSetTester;
 class CLinkedSet {
 private:
     struct CNode {
-    private:
-        char * value;
-
-    public:
         CNode * m_Next;
 
-        CNode(const char * v) {
-            m_Next = nullptr;
+        char * value;
 
+        CNode(const char * v) : m_Next(nullptr) {
             value = new char[strlen(v) + 1];
             strcpy(value, v);
         }
 
-        CNode(const CNode & copy) {
-            value = new char[strlen(copy.value) + 1];
-            strcpy(value, copy.value);
-
-            if (copy.m_Next != nullptr) {
-                m_Next = new CNode(*(copy.m_Next));
+        CNode(const CNode & copyFrom) : m_Next(nullptr) {
+            if (copyFrom.value != nullptr) {
+                value = new char[strlen(copyFrom.value) + 1];
+                strcpy(value, copyFrom.value);
             } else {
-                m_Next = nullptr;
+                value = nullptr;
             }
         }
 
         ~CNode() {
-            delete [] value;
+            if (value != nullptr) {
+                delete [] value;
+                value = nullptr;
+            }
         }
 
         const char * Value() const {
@@ -44,91 +40,111 @@ private:
     };
 
     CNode * m_Begin;
+
     size_t size;
 
-public:
-    CLinkedSet() : size(0) {
+    void deallocNodes() {
+        CNode * iter = m_Begin;
+        while (iter != nullptr) {
+            CNode * tmp = iter->m_Next;
+            delete iter;
+            iter = tmp;
+        }
         m_Begin = nullptr;
     }
 
-    CLinkedSet(const CLinkedSet & toCopy) {
-        m_Begin = new CNode(*(toCopy.m_Begin));
+public:
+    CLinkedSet() : m_Begin(nullptr), size(0) { }
 
-        size = toCopy.size;
+    CLinkedSet(const CLinkedSet & copyFrom) : size(copyFrom.size) {
+        if (copyFrom.m_Begin != nullptr) {
+            m_Begin = new CNode(*(copyFrom.m_Begin));
+            CNode * iter = m_Begin;
+            CNode * iterCopy = copyFrom.m_Begin->m_Next;
+            while (iterCopy != nullptr) {
+                iter->m_Next = new CNode(*(iterCopy));
+                iter = iter->m_Next;
+                iterCopy = iterCopy->m_Next;
+            }
+        } else {
+            m_Begin = nullptr;
+        }
     }
 
-    CLinkedSet & operator = (CLinkedSet toCopy) {
-        size = toCopy.size;
+    CLinkedSet & operator = (const CLinkedSet & toAssign) {
+        deallocNodes();
+        CLinkedSet copy(toAssign);
 
-        CNode * tmpBegin = m_Begin;
-        m_Begin = toCopy.m_Begin;
-        toCopy.m_Begin = tmpBegin;
+        size = copy.size;
+
+        CNode * tmpBegin = copy.m_Begin;
+        copy.m_Begin = m_Begin;
+        m_Begin = tmpBegin;
 
         return *this;
     }
 
     ~CLinkedSet() {
-        CNode * iter = m_Begin;
-        while (iter != nullptr) {
-            CNode * tmp = iter;
-            iter = iter->m_Next;
-            delete tmp;
-        }
+        deallocNodes();
     }
 
     bool Insert(const char * value) {
         CNode * iter = m_Begin;
-        CNode * iterPrev = nullptr;
+        CNode * prevIter = nullptr;
         while (iter != nullptr) {
-            int comp = strcmp(value, iter->Value());
-            if (comp > -1) {
-                if (comp == 0) {
+            int cmp = strcmp(value, iter->Value());
+            if (cmp >= 0) {
+                if (cmp == 0) {
                     return false;
                 }
                 break;
             }
-            iterPrev = iter;
+            prevIter = iter;
             iter = iter->m_Next;
         }
 
         CNode * newNode = new CNode(value);
-        if (iterPrev == nullptr) {
+        if (prevIter == nullptr) {
             m_Begin = newNode;
             newNode->m_Next = iter;
         } else {
-            iterPrev->m_Next = newNode;
+            prevIter->m_Next = newNode;
             newNode->m_Next = iter;
         }
+
         size++;
         return true;
     }
 
-
     bool Remove(const char * value) {
+        if (m_Begin == nullptr) {
+            return false;
+        }
 
         CNode * iter = m_Begin;
-        CNode * iterPrev = nullptr;
+        CNode * prevIter = nullptr;
         while (iter != nullptr) {
-            int comp = strcmp(value, iter->Value());
-            if (comp > -1) {
-                if (comp == 0) {
-                    break;
-                } else {
-                    return false;
+            int cmp = strcmp(value, iter->Value());
+            if (cmp >= 0) {
+                if (cmp == 0) {
+                    if (prevIter == nullptr) {
+                        m_Begin = iter->m_Next;
+                    } else {
+                        prevIter->m_Next = iter->m_Next;
+                    }
+                    delete iter;
+
+                    size--;
+                    return true;
                 }
+                break;
             }
-            iterPrev = iter;
+
+            prevIter = iter;
             iter = iter->m_Next;
         }
 
-        if (iterPrev == nullptr) {
-            m_Begin = iter->m_Next;
-        } else {
-            iterPrev->m_Next = iter->m_Next;
-        }
-        delete iter;
-        size--;
-        return true;
+        return false;
     }
 
     bool Empty() const {
@@ -141,11 +157,10 @@ public:
 
     bool Contains(const char * value) const {
         CNode * iter = m_Begin;
-
         while (iter != nullptr) {
-            int comp = strcmp(value, iter->Value());
-            if (comp > -1) {
-                if (comp == 0) {
+            int cmp = strcmp(value, iter->Value());
+            if (cmp >= 0) {
+                if (cmp == 0) {
                     return true;
                 }
                 break;
@@ -177,6 +192,7 @@ struct CLinkedSetTester {
 
     static void test1() {
         CLinkedSet x0;
+        assert(!x0.Remove("Karel"));
         assert(x0.Insert("Jerabek Michal"));
         assert(x0.Insert("Pavlik Ales"));
         assert(x0.Insert("Dusek Zikmund"));
