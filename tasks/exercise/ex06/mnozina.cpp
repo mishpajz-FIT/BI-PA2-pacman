@@ -254,6 +254,38 @@ struct CLinkedSetTester {
         assert(x1.Remove("Kadlecova Kvetslava"));
     }
 
+    static void test4() {
+        CLinkedSet x0;
+        assert(x0.Insert("adasdsadsadas"));
+        assert(x0.Insert("jfkhaJKDAlkj"));
+        assert(x0.Insert("sfgddfg"));
+        assert(x0.Insert("jfajdjklassjdlk"));
+        assert(x0.Insert("ndhdf"));
+        assert(x0.Insert("sbfgsfg"));
+        assert(x0.Insert("sfdgsfgf"));
+        assert(x0.Insert("xbcvbxcvb"));
+        assert(x0.Insert("sfdgsfdg"));
+        assert(x0.Insert("sfdggsgdf"));
+        assert(x0.Insert("xvcbbxcvbx"));
+        assert(x0.Insert("xvcbbcxvb"));
+        assert(x0.Insert("sfdgsgs"));
+        assert(x0.Insert("sgferqq"));
+        assert(x0.Insert("fgafdfadddd"));
+        CLinkedSet x1(x0);
+        assert(x0.Size() == 15);
+        assert(x1.Size() == 15);
+        assert(x1.Remove("sfdgsfgf"));
+        assert(x1.Remove("xvcbbxcvbx"));
+        assert(x1.Remove("sfdgsgs"));
+        assert(x1.Remove("jfkhaJKDAlkj"));
+        assert(x1.Size() == 11);
+        x0 = x1;
+        assert(x0.Size() == 11);
+        assert(x0.Remove("jfajdjklassjdlk"));
+        assert(x0.Size() == 10);
+        assert(x1.Size() == 11);
+    }
+
 };
 
 int main() {
@@ -261,6 +293,7 @@ int main() {
     CLinkedSetTester::test1();
     CLinkedSetTester::test2();
     CLinkedSetTester::test3();
+    CLinkedSetTester::test4();
     return 0;
 }
 #endif /* __PROGTEST__ */
