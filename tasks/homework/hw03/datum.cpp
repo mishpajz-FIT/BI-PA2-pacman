@@ -7,6 +7,7 @@
 #include <iomanip>
 #include <string>
 #include <sstream>
+#include <cstring>
 #include <stdexcept>
 using namespace std;
 #endif /* __PROGTEST__ */
@@ -17,41 +18,47 @@ public:
     InvalidDateException() : invalid_argument("invalid date or format") { }
 };
 
-// date_format manipulator - a dummy implementation. Keep this code unless you implement your
-// own working manipulator.
-/*ios_base & (*date_format(const char * fmt)) (ios_base & x) {
-    return [ ](ios_base & ios) -> ios_base & { return ios; };
-}*/
-
 const int date_index = ios::xalloc();
-
 const string defaultFormat = "%Y-%m-%d";
 
+struct date_format_handler {
+    string formatString;
+    void * currentStream;
+};
+
 struct date_format {
-    string storedFormat;
+    const char * storedFormat;
 
     date_format(const char * s) : storedFormat(s) { }
 
     static void caughtEvent(ios::event event, ios_base & stream, int index) {
-        if (stream.iword(index) == 1) {
+        if (stream.iword(date_index) == 1) {
             if (event == ios_base::erase_event) {
-                delete (string *)(stream.pword(index));
-                stream.pword(index) = nullptr;
-                stream.iword(index) = 0;
+                delete static_cast<date_format_handler *>(stream.pword(date_index));
+                stream.pword(date_index) = nullptr;
+                stream.iword(date_index) = 0;
             } else if (event == ios_base::copyfmt_event) {
-                string * newString = new string(*(static_cast<string *>(stream.pword(index))));
-                stream.pword(index) = newString;
+                date_format_handler * formatHandler = static_cast<date_format_handler *>(stream.pword(date_index));
+                if (formatHandler->currentStream != (&stream)) {
+                    date_format_handler * newHandler = new date_format_handler();
+                    newHandler->formatString = string(formatHandler->formatString);
+                    newHandler->currentStream = &stream;
+                    stream.pword(date_index) = static_cast<void *>(newHandler);
+                }
             }
         }
     }
 
     static void addFormatToStream(ios_base & stream, const date_format & format) {
         if (stream.iword(date_index) == 1) {
-            delete static_cast<string *>(stream.pword(date_index));
+            delete static_cast<date_format_handler *>(stream.pword(date_index));
             stream.pword(date_index) = nullptr;
         }
         stream.iword(date_index) = 1;
-        stream.pword(date_index) = static_cast<void *>(new string(format.storedFormat));
+        date_format_handler * newHandler = new date_format_handler();
+        newHandler->formatString = string(format.storedFormat);
+        newHandler->currentStream = static_cast<void *>(&stream);
+        stream.pword(date_index) = static_cast<void *>(newHandler);
         stream.register_callback(caughtEvent, date_index);
     }
 
@@ -184,7 +191,7 @@ private:
     }
 
     static istream & formatInput(istream & stream, const string & format, CDate & date) {
-        int d, m, y;
+        int d = 0, m = 0, y = 0;
         bool dIn = false, mIn = false, yIn = false;
         bool modifierOnInput = false;
 
@@ -349,7 +356,8 @@ public:
 
     friend ostream & operator << (ostream & os, const CDate & rhs) {
         if (os.iword(date_index) == 1) {
-            string formatString = *(static_cast<string *>(os.pword(date_index)));
+            date_format_handler * formatHandler = static_cast<date_format_handler *>(os.pword(date_index));
+            string formatString(formatHandler->formatString);
             return formatOutput(os, formatString, rhs);
         }
         return formatOutput(os, defaultFormat, rhs);
@@ -357,7 +365,8 @@ public:
 
     friend istream & operator >> (istream & is, CDate & rhs) {
         if (is.iword(date_index) == 1) {
-            string formatString = *(static_cast<string *>(is.pword(date_index)));
+            date_format_handler * formatHandler = static_cast<date_format_handler *>(is.pword(date_index));
+            string formatString(formatHandler->formatString);
             return formatInput(is, formatString, rhs);
         }
         return formatInput(is, defaultFormat, rhs);
@@ -491,7 +500,9 @@ int main(void) {
     oss << date_format("%Y-%m-%d") << f;
     assert(oss.str() == "2000-05-12");
     iss.clear();
-
+    ostringstream ossss;
+    ossss.copyfmt(oss);
+    ossss << f;
     iss.str("2001-01-1");
     assert(!(iss >> f));
     oss.str("");
@@ -589,7 +600,6 @@ int main(void) {
     oss.str("");
     oss << g;
     assert(oss.str() == "2000-01-01");
-
     return EXIT_SUCCESS;
 }
 #endif /* __PROGTEST__ */
