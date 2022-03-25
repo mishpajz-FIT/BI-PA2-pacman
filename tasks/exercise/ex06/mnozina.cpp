@@ -1,4 +1,13 @@
-
+/**
+ * @file mnozina.cpp
+ * @author Michal Dobeš
+ * @date 2022-03-25
+ *
+ * @brief Implementation of Set (of C strings) using linked list
+ *
+ * @copyright Copyright (c) 2022
+ *
+ */
 #ifndef __PROGTEST__
 #include <cstring>
 using namespace std;
@@ -6,19 +15,40 @@ using namespace std;
 class CLinkedSetTester;
 #endif /* __PROGTEST__ */
 
-
+/**
+ * @brief Set of C strings
+ *
+ * Set is kept sorted
+ *
+ */
 class CLinkedSet {
 private:
+    /**
+     * @brief Node of linked list
+     *
+     */
     struct CNode {
         CNode * m_Next;
 
         char * value;
 
+        /**
+         * @brief Construct a new CNode object
+         *
+         * @param v Pointer to char-array (C string) to copy
+         */
         CNode(const char * v) : m_Next(nullptr) {
             value = new char[strlen(v) + 1];
             strcpy(value, v);
         }
 
+        /**
+         * @brief Construct a new CNode object
+         *
+         * C String is copied, pointer to next CNode is set to null.
+         *
+         * @param copyFrom CNode to copy
+         */
         CNode(const CNode & copyFrom) : m_Next(nullptr) {
             if (copyFrom.value != nullptr) {
                 value = new char[strlen(copyFrom.value) + 1];
@@ -68,6 +98,7 @@ public:
             return *this;
         }
 
+        // Assign using copying and then swapping all variables with the copy 
         CLinkedSet copy(toCopy);
 
         size = copy.size;
@@ -93,10 +124,10 @@ public:
     bool Insert(const char * value) {
         CNode * iter = m_Begin;
         CNode * prevIter = nullptr;
-        while (iter != nullptr) {
+        while (iter != nullptr) { // Search for correct place to insert new value to (set is sorted)
             int cmp = strcmp(iter->Value(), value);
             if (cmp >= 0) {
-                if (cmp == 0) {
+                if (cmp == 0) { // If value is already contained return false
                     return false;
                 }
                 break;
@@ -105,7 +136,7 @@ public:
             iter = iter->m_Next;
         }
 
-        CNode * newNode = new CNode(value);
+        CNode * newNode = new CNode(value); //Insert new node into linked list
         if (prevIter == nullptr) {
             m_Begin = newNode;
             newNode->m_Next = iter;
@@ -125,10 +156,10 @@ public:
 
         CNode * iter = m_Begin;
         CNode * prevIter = nullptr;
-        while (iter != nullptr) {
+        while (iter != nullptr) { // Search for node with value to remove in set (set is sorted)
             int cmp = strcmp(iter->Value(), value);
             if (cmp >= 0) {
-                if (cmp == 0) {
+                if (cmp == 0) { //Node is found, remove it from linked list
                     if (prevIter == nullptr) {
                         m_Begin = iter->m_Next;
                     } else {
@@ -159,13 +190,13 @@ public:
 
     bool Contains(const char * value) const {
         CNode * iter = m_Begin;
-        while (iter != nullptr) {
+        while (iter != nullptr) { // Search for node with value set (set is sorted)
             int cmp = strcmp(iter->Value(), value);
             if (cmp >= 0) {
-                if (cmp == 0) {
+                if (cmp == 0) { //Node was found
                     return true;
                 }
-                break;
+                break; //Gotto max possible location where value could be but was not found
             }
             iter = iter->m_Next;
         }
