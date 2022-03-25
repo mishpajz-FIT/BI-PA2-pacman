@@ -19,9 +19,52 @@ public:
 
 // date_format manipulator - a dummy implementation. Keep this code unless you implement your
 // own working manipulator.
-ios_base & (*date_format(const char * fmt)) (ios_base & x) {
+/*ios_base & (*date_format(const char * fmt)) (ios_base & x) {
     return [ ](ios_base & ios) -> ios_base & { return ios; };
-} 
+}*/
+
+const int date_index = ios::xalloc();
+
+const string defaultFormat = "%Y-%m-%d";
+
+struct date_format {
+    string storedFormat;
+
+    date_format(const char * s) : storedFormat(s) { }
+
+    static void caughtEvent(ios::event event, ios_base & stream, int index) {
+        if (stream.iword(index) == 1) {
+            if (event == ios_base::erase_event) {
+                delete (string *)(stream.pword(index));
+                stream.pword(index) = nullptr;
+                stream.iword(index) = 0;
+            } else if (event == ios_base::copyfmt_event) {
+                string * newString = new string(*(static_cast<string *>(stream.pword(index))));
+                stream.pword(index) = newString;
+            }
+        }
+    }
+
+    static void addFormatToStream(ios_base & stream, const date_format & format) {
+        if (stream.iword(date_index) == 1) {
+            delete static_cast<string *>(stream.pword(date_index));
+            stream.pword(date_index) = nullptr;
+        }
+        stream.iword(date_index) = 1;
+        stream.pword(date_index) = static_cast<void *>(new string(format.storedFormat));
+        stream.register_callback(caughtEvent, date_index);
+    }
+
+    friend ostream & operator << (ostream & os, const date_format & rhs) {
+        addFormatToStream(os, rhs);
+        return os;
+    }
+
+    friend istream & operator >> (istream & is, const date_format & rhs) {
+        addFormatToStream(is, rhs);
+        return is;
+    }
+};
 
 class CDate {
 private:
@@ -81,6 +124,127 @@ private:
             return day + 1;
         }
     };
+
+    static ostream & formatOutput(ostream & stream, const string & format, const CDate & date) {
+        DateConvertor convertor;
+        convertor.convertFromDays(date.days);
+
+        bool modifierOnInput = false;;
+        for (auto iter = format.begin(); iter != format.end(); iter++) {
+            char c = *iter;
+            if (c == '%' && !modifierOnInput) {
+                modifierOnInput = true;
+                continue;
+            } else {
+                if (modifierOnInput) {
+                    modifierOnInput = false;
+                    if (c == 'd') {
+                        stream << setw(2) << setfill('0') << convertor.getDay();
+                        continue;
+                    } else if (c == 'm') {
+                        stream << setw(2) << setfill('0') << convertor.getMonth();
+                        continue;
+                    } else if (c == 'Y') {
+                        stream << convertor.getYear();
+                        continue;
+                    }
+                }
+                stream << c;
+            }
+        }
+        return stream;
+    }
+
+    static bool processCharsToInt(int & to, char * chars, int size) {
+        to = 0;
+        int multiplier = 1;
+        for (int j = 1; j < size; j++) {
+            multiplier *= 10;
+        }
+        for (int i = 0; i < size; i++) {
+            if (chars[i] < '0' || chars[i] > '9') {
+                return false;
+            }
+
+            to += multiplier * (chars[i] - '0');
+            multiplier /= 10;
+        }
+        return true;
+    }
+
+    static bool extractCharsFromStream(istream & stream, char * to, int count) {
+        for (int j = 0; j < count; j++) {
+            to[j] = stream.get();
+            if (stream.fail()) {
+                stream.setstate(ios::failbit);
+                return false;
+            }
+        }
+        return true;
+    }
+
+    static istream & formatInput(istream & stream, const string & format, CDate & date) {
+        int d, m, y;
+        bool dIn = false, mIn = false, yIn = false;
+        bool modifierOnInput = false;
+
+        for (auto iter = format.begin(); iter != format.end(); iter++) {
+            char forChar = *iter;
+            if (forChar == '%' && !modifierOnInput) {
+                modifierOnInput = true;
+                continue;
+            } else {
+                if (modifierOnInput) {
+                    modifierOnInput = false;
+                    if (forChar == 'd') {
+                        char day[2];
+                        if (dIn || !extractCharsFromStream(stream, day, 2) || !processCharsToInt(d, day, 2)) {
+                            stream.setstate(ios::failbit);
+                            return stream;
+                        }
+                        dIn = true;
+                        continue;
+                    } else if (forChar == 'm') {
+                        char month[2];
+                        if (mIn || !extractCharsFromStream(stream, month, 2) || !processCharsToInt(m, month, 2)) {
+                            stream.setstate(ios::failbit);
+                            return stream;
+                        }
+                        mIn = true;
+                        continue;
+                    } else if (forChar == 'Y') {
+                        char year[4];
+                        if (yIn || !extractCharsFromStream(stream, year, 4) || !processCharsToInt(y, year, 4)) {
+                            stream.setstate(ios::failbit);
+                            return stream;
+                        }
+                        yIn = true;
+                        continue;
+                    }
+                }
+
+                char inChar = stream.get();
+                if (inChar != forChar || stream.fail()) {
+                    stream.setstate(ios::failbit);
+                    return stream;
+                }
+            }
+        }
+
+        if (!dIn || !mIn || !yIn) {
+            stream.setstate(ios::failbit);
+            return stream;
+        }
+
+        try {
+            CDate newDate(y, m, d);
+            date = newDate;
+        }
+        catch (InvalidDateException & e) {
+            stream.setstate(ios::failbit);
+        }
+        return stream;
+    }
 
 public:
     CDate(unsigned int y, unsigned int m, unsigned int d) {
@@ -184,48 +348,19 @@ public:
     }
 
     friend ostream & operator << (ostream & os, const CDate & rhs) {
-        DateConvertor convertor;
-        convertor.convertFromDays(rhs.days);
-        os << convertor.getYear() << "-" << setfill('0') << setw(2) << convertor.getMonth() << "-" << setw(2) << convertor.getDay();
-        return os;
+        if (os.iword(date_index) == 1) {
+            string formatString = *(static_cast<string *>(os.pword(date_index)));
+            return formatOutput(os, formatString, rhs);
+        }
+        return formatOutput(os, defaultFormat, rhs);
     }
 
     friend istream & operator >> (istream & is, CDate & rhs) {
-        char dummy1, dummy2;
-        int y, m, d;
-
-        is >> y >> dummy1;
-        if (dummy1 != '-') {
-            is.setstate(ios::failbit);
-            return is;
+        if (is.iword(date_index) == 1) {
+            string formatString = *(static_cast<string *>(is.pword(date_index)));
+            return formatInput(is, formatString, rhs);
         }
-        bool isPadded = false;
-        if (is.peek() == '0') {
-            isPadded = true;
-        }
-        is >> m >> dummy2;
-        if (dummy2 != '-' || (m < 10 && !isPadded)) {
-            is.setstate(ios::failbit);
-            return is;
-        }
-        isPadded = false;
-        if (is.peek() == '0') {
-            isPadded = true;
-        }
-        is >> d;
-        if (d < 10 && !isPadded) {
-            is.setstate(ios::failbit);
-            return is;
-        }
-
-        try {
-            CDate newDate(y, m, d);
-            rhs = newDate;
-        }
-        catch (InvalidDateException & e) {
-            is.setstate(ios::failbit);
-        }
-        return is;
+        return formatInput(is, defaultFormat, rhs);
     }
 
 };
@@ -329,7 +464,7 @@ int main(void) {
     //-----------------------------------------------------------------------------
     // bonus test examples
     //-----------------------------------------------------------------------------
-    /*
+
     CDate f(2000, 5, 12);
     oss.str("");
     oss << f;
@@ -356,6 +491,7 @@ int main(void) {
     oss << date_format("%Y-%m-%d") << f;
     assert(oss.str() == "2000-05-12");
     iss.clear();
+
     iss.str("2001-01-1");
     assert(!(iss >> f));
     oss.str("");
@@ -453,7 +589,7 @@ int main(void) {
     oss.str("");
     oss << g;
     assert(oss.str() == "2000-01-01");
-    */
+
     return EXIT_SUCCESS;
 }
 #endif /* __PROGTEST__ */
