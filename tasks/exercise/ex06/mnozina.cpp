@@ -234,12 +234,32 @@ struct CLinkedSetTester {
         assert(x1.Contains("Kadlecova Kvetslava"));
     }
 
+    static void test3() {
+        CLinkedSet x0;
+        CLinkedSet x1;
+        assert(x0.Insert("Jerabek Michal"));
+        assert(x0.Insert("Pavlik Ales"));
+        assert(x0.Insert("Dusek Zikmund"));
+        assert(x0.Remove("Dusek Zikmund"));
+        assert(!x0.Remove("Pavlik Jan"));
+        assert(x0.Remove("Jerabek Michal"));
+        assert(!x0.Remove("Pavlik Jan"));
+        x1 = x0;
+        assert(x0.Insert("Vodickova Saskie"));
+        assert(x1.Insert("Kadlecova Kvetslava"));
+        assert(x0.Remove("Vodickova Saskie"));
+        assert(!x1.Remove("Vodickova Saskie"));
+        assert(!x0.Remove("Kadlecova Kvetslava"));
+        assert(x1.Remove("Kadlecova Kvetslava"));
+    }
+
 };
 
 int main() {
     CLinkedSetTester::test0();
     CLinkedSetTester::test1();
     CLinkedSetTester::test2();
+    CLinkedSetTester::test3();
     return 0;
 }
 #endif /* __PROGTEST__ */
