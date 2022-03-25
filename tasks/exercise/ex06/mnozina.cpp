@@ -1,3 +1,4 @@
+
 #ifndef __PROGTEST__
 #include <cstring>
 using namespace std;
@@ -43,16 +44,6 @@ private:
 
     size_t size;
 
-    void deallocNodes() {
-        CNode * iter = m_Begin;
-        while (iter != nullptr) {
-            CNode * tmp = iter->m_Next;
-            delete iter;
-            iter = tmp;
-        }
-        m_Begin = nullptr;
-    }
-
 public:
 
     CLinkedSet() : m_Begin(nullptr), size(0) { }
@@ -72,9 +63,12 @@ public:
         }
     }
 
-    CLinkedSet & operator = (const CLinkedSet & toAssign) {
-        deallocNodes();
-        CLinkedSet copy(toAssign);
+    CLinkedSet & operator = (const CLinkedSet & toCopy) {
+        if (this == &toCopy) {
+            return *this;
+        }
+
+        CLinkedSet copy(toCopy);
 
         size = copy.size;
 
@@ -86,7 +80,14 @@ public:
     }
 
     ~CLinkedSet() {
-        deallocNodes();
+        CNode * iter = m_Begin;
+        while (iter != nullptr) {
+            CNode * tmp = iter->m_Next;
+            delete iter;
+            iter = tmp;
+        }
+        m_Begin = nullptr;
+        size = 0;
     }
 
     bool Insert(const char * value) {
