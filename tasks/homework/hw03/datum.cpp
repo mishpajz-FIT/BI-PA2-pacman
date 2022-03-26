@@ -1,3 +1,13 @@
+/**
+ * @file datum.cpp
+ * @author Michal Dobeš (dobesmic@fit.cvut.cz)
+ * @date 2022-03-26
+ *
+ * @brief Date representation, with stream modifier for formatted stream output/input
+ *
+ * @copyright Copyright (c) 2022
+ *
+ */
 #ifndef __PROGTEST__
 #include <cstdio>
 #include <cstdlib>
@@ -12,35 +22,60 @@
 using namespace std;
 #endif /* __PROGTEST__ */
 
-// a dummy exception class, keep this implementation
+/**
+ * @brief Dummy exception class
+ *
+ */
 class InvalidDateException : public invalid_argument {
 public:
     InvalidDateException() : invalid_argument("invalid date or format") { }
 };
 
-const int date_index = ios::xalloc();
-const string defaultFormat = "%Y-%m-%d";
+//Global values for custom stream manipulator
+const int date_index = ios::xalloc(); //Retrieve unique id in iword and pword arrays of streams
+const string defaultFormat = "%Y-%m-%d"; //Default formatting of CDate in stream
 
-struct date_format_handler {
-    string formatString;
-    void * currentStream;
+/**
+ * @brief Handler of formatting
+ *
+ * Instance of this object is kept by stream and used for storing formatting string
+ *
+ */
+struct DateFormatHandler {
+    string formatString; // Formatting string for CDate
+    void * currentStream; // Pointer to stream this object belongs to (only used to check for duplicate action on one stream)
 };
 
+/**
+ * @brief Stream maniplator, used for formatting CDate
+ *
+ * Supports input and output stream.
+ *
+ * Serves as functor.
+ * Utilized by passing this object to the stream which to modify.
+ * The prameter when creating should be the format string.
+ *
+ * The format string can have special symbols: %Y - will be replaced by year, %m -  will be replaced by month, %d -  will be replaced by day, all other symbols will be kept
+ *
+ */
 struct date_format {
-    const char * storedFormat;
-
-    date_format(const char * s) : storedFormat(s) { }
-
+private:
+    /**
+     * @brief std::event_callback method
+     *
+     * Reacts to callbacks, called when stream was registered by register_callback method
+     *
+     */
     static void caughtEvent(ios::event event, ios_base & stream, int index) {
         if (stream.iword(date_index) == 1) {
-            if (event == ios_base::erase_event) {
-                delete static_cast<date_format_handler *>(stream.pword(date_index));
+            if (event == ios_base::erase_event) { //On stream destructon, deallocate DateFormatHandler stored in streams pword
+                delete static_cast<DateFormatHandler *>(stream.pword(date_index));
                 stream.pword(date_index) = nullptr;
                 stream.iword(date_index) = 0;
-            } else if (event == ios_base::copyfmt_event) {
-                date_format_handler * formatHandler = static_cast<date_format_handler *>(stream.pword(date_index));
-                if (formatHandler->currentStream != (&stream)) {
-                    date_format_handler * newHandler = new date_format_handler();
+            } else if (event == ios_base::copyfmt_event) { //On stream copyfmt
+                DateFormatHandler * formatHandler = static_cast<DateFormatHandler *>(stream.pword(date_index));
+                if (formatHandler->currentStream != (&stream)) { //Check if this (possibly unknown, previously without format) stream has been processed (by checking stream in DateFormatHandler)
+                    DateFormatHandler * newHandler = new DateFormatHandler(); //If stream has not been processed, create deep copy of DateFormatHandler and assign it to this streams pword
                     newHandler->formatString = string(formatHandler->formatString);
                     newHandler->currentStream = &stream;
                     stream.pword(date_index) = static_cast<void *>(newHandler);
@@ -49,18 +84,29 @@ struct date_format {
         }
     }
 
+    /**
+     * @brief Store format string in stream
+     *
+     * @param stream Stream to modify
+     * @param format Modifier
+     */
     static void addFormatToStream(ios_base & stream, const date_format & format) {
-        if (stream.iword(date_index) == 1) {
-            delete static_cast<date_format_handler *>(stream.pword(date_index));
+        if (stream.iword(date_index) == 1) { //If stream already has modifier of this kind, dealloc it
+            delete static_cast<DateFormatHandler *>(stream.pword(date_index));
             stream.pword(date_index) = nullptr;
         }
-        stream.iword(date_index) = 1;
-        date_format_handler * newHandler = new date_format_handler();
+        stream.iword(date_index) = 1; //Raise flag in streams iword
+        DateFormatHandler * newHandler = new DateFormatHandler(); //Allocate new DateFormatHandler, assign it format string and stream pointer
         newHandler->formatString = string(format.storedFormat);
         newHandler->currentStream = static_cast<void *>(&stream);
-        stream.pword(date_index) = static_cast<void *>(newHandler);
-        stream.register_callback(caughtEvent, date_index);
+        stream.pword(date_index) = static_cast<void *>(newHandler); //Store DateFormatHandler in streams pword
+        stream.register_callback(caughtEvent, date_index); //Register callback on stream (for deallocing DateFormatHandler and deep copying when std::copyfmt is called)
     }
+
+public:
+    const char * storedFormat; //Format string stored before being stored in stream
+
+    date_format(const char * s) : storedFormat(s) { }
 
     friend ostream & operator << (ostream & os, const date_format & rhs) {
         addFormatToStream(os, rhs);
@@ -73,10 +119,21 @@ struct date_format {
     }
 };
 
+/**
+ * @brief Date representation
+ *
+ * Internally represented as days since bound date (01/01/2000)
+ * Can represent only dates since 01/01/2000 and gurantees valid representation only until 31/12/2030
+ *
+ */
 class CDate {
 private:
-    unsigned int days; // Days sice lower bound (01/01/2000) to the date this instance is representing
+    unsigned int days; //Days sice lower bound (01/01/2000) to the date this instance is representing
 
+    /**
+     * @brief Convertor used for caluclating other values (year, month and day) from internal representation (only days since date)
+     *
+     */
     class DateConvertor {
     private:
         unsigned int year;
@@ -84,36 +141,65 @@ private:
         unsigned int day;
 
     public:
+        /**
+         * @brief Returns leap years until year
+         *
+         * Works only for years over 2000, that have 2000 substracted from them (adds 1 for leap year 2000, which would be represented as 0).
+         *
+         * @param y year up to (including) calculate - 2000;
+         * @return unsigned int Number of leap years
+         */
         static unsigned int leapYearsUntil(unsigned int y) {
             return (y / 4) - (y / 100) + (y / 400) - (y / 4000) + 1;
         }
 
+        /**
+         * @brief Test if year is leap year
+         *
+         * Works for years over 2000, that have 2000 substracted from them (year 2000 is leap, which would be represented as 0).
+         *
+         * @param y year which should be checked - 2000
+         * @return true Year is leap
+         * @return false Year is not leap
+         */
         static bool leapYear(unsigned int y) {
             return ((y == 0) || (y % 4 == 0 && y % 100 != 0) || (y % 400 == 0 && y % 4000 != 0));
         }
 
+        /**
+         * @brief Days in month, including difference in leap years
+         *
+         * @param m Month
+         * @param y Year - 2000
+         * @return unsigned int Days in month
+         */
         static unsigned int daysInMonth(unsigned int m, unsigned int y) {
             unsigned int inMonth[12] = { 31, leapYear(y) ? (unsigned)(29) : (unsigned)(28), 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
             return inMonth[m - 1];
         }
 
+        /**
+         * @brief Takes amount of days since baseline date and converts to date with day, month and year (and stores them as internal variables)
+         *
+         * @param days Days since 01/01/2000
+         */
         void convertFromDays(unsigned int days) {
 
-            year = days / 365;
+            year = days / 365; //Figure out max year
+            day = (days - (365 * year)); //Substract years that were calculated from days
 
-            day = (days - (365 * year));
             if (year > 0) {
-                if (days % 365 < leapYearsUntil(year - 1)) {
+                if (days % 365 < leapYearsUntil(year - 1)) { //If counted one more year thanks to calculating with 365 days even for leap years, remove the year. 
                     year--;
                     day += 365;
                 }
-                if (year > 0) {
+                if (year > 0) { //Remove 366th day for already calculated leap years
                     day -= leapYearsUntil(year - 1);
                 }
             }
 
             month = 1;
-            while (day >= daysInMonth(month, year)) {
+            while (day >= daysInMonth(month, year)) { //Calculate day and month
                 day -= daysInMonth(month, year);
                 month++;
             }
@@ -132,20 +218,30 @@ private:
         }
     };
 
+    /**
+     * @brief Output formatted CDate values into stream
+     *
+     * The format string can have special symbols: %Y - will be replaced by year, %m -  will be replaced by month, %d -  will be replaced by day, all other character will be kept
+     *
+     * @param stream Stream to output into
+     * @param format Format string to format by
+     * @param date Date to output
+     * @return ostream& Stream where was CDate outputed
+     */
     static ostream & formatOutput(ostream & stream, const string & format, const CDate & date) {
         DateConvertor convertor;
-        convertor.convertFromDays(date.days);
+        convertor.convertFromDays(date.days); //Get date values from days
 
         bool modifierOnInput = false;;
-        for (auto iter = format.begin(); iter != format.end(); iter++) {
+        for (auto iter = format.begin(); iter != format.end(); iter++) { //Iterate through format string
             char c = *iter;
-            if (c == '%' && !modifierOnInput) {
+            if (c == '%' && !modifierOnInput) { //If encountered %, do not output anything but keep the information
                 modifierOnInput = true;
                 continue;
             } else {
                 if (modifierOnInput) {
                     modifierOnInput = false;
-                    if (c == 'd') {
+                    if (c == 'd') { //If d, m, or Y follows % output specified value
                         stream << setw(2) << setfill('0') << convertor.getDay();
                         continue;
                     } else if (c == 'm') {
@@ -156,18 +252,29 @@ private:
                         continue;
                     }
                 }
-                stream << c;
+                stream << c; //Output non-special character
             }
         }
         return stream;
     }
 
+    /**
+     * @brief From array of chars, (containing only characters between '0' - '9'), recreate numerical value
+     *
+     * @param to Where to store final value
+     * @param chars Array of chars
+     * @param size Length of array of chars
+     * @return true Conversion was successful
+     * @return false Conversion wasn't successful
+     */
     static bool processCharsToInt(int & to, char * chars, int size) {
-        to = 0;
-        int multiplier = 1;
+        int value = 0;
+
+        int multiplier = 1; // Multiplier specifing digit number
         for (int j = 1; j < size; j++) {
             multiplier *= 10;
         }
+
         for (int i = 0; i < size; i++) {
             if (chars[i] < '0' || chars[i] > '9') {
                 return false;
@@ -176,9 +283,20 @@ private:
             to += multiplier * (chars[i] - '0');
             multiplier /= 10;
         }
+
+        to = value;
         return true;
     }
 
+    /**
+     * @brief Extract chars from input stream into array of chars
+     *
+     * @param stream Stream to extract from
+     * @param to Array to store chars into
+     * @param count Number of chars to extract
+     * @return true Extraction was successful
+     * @return false Extraction was not successful
+     */
     static bool extractCharsFromStream(istream & stream, char * to, int count) {
         for (int j = 0; j < count; j++) {
             to[j] = stream.get();
@@ -190,20 +308,28 @@ private:
         return true;
     }
 
+    /**
+     * @brief Get CDate from stream using specified format
+     *
+     * @param stream Stream to input from
+     * @param format Format string to expect
+     * @param date Date to output
+     * @return istream& Stream where was CDate inputed
+     */
     static istream & formatInput(istream & stream, const string & format, CDate & date) {
-        int d = 0, m = 0, y = 0;
-        bool dIn = false, mIn = false, yIn = false;
-        bool modifierOnInput = false;
+        int d = 0, m = 0, y = 0; //Recieved values
+        bool dIn = false, mIn = false, yIn = false; //Variables specifing if values were recieved
 
-        for (auto iter = format.begin(); iter != format.end(); iter++) {
+        bool modifierOnInput = false;
+        for (auto iter = format.begin(); iter != format.end(); iter++) { //Iterate through format string
             char forChar = *iter;
-            if (forChar == '%' && !modifierOnInput) {
+            if (forChar == '%' && !modifierOnInput) { //If encountered %, do not input anything but keep the information
                 modifierOnInput = true;
                 continue;
             } else {
                 if (modifierOnInput) {
                     modifierOnInput = false;
-                    if (forChar == 'd') {
+                    if (forChar == 'd') { //If d, m, or Y follows % extract expected value
                         char day[2];
                         if (dIn || !extractCharsFromStream(stream, day, 2) || !processCharsToInt(d, day, 2)) {
                             stream.setstate(ios::failbit);
@@ -230,7 +356,7 @@ private:
                     }
                 }
 
-                char inChar = stream.get();
+                char inChar = stream.get(); //Extract non-special character and check if it conforms expected format
                 if (inChar != forChar || stream.fail()) {
                     stream.setstate(ios::failbit);
                     return stream;
@@ -238,12 +364,12 @@ private:
             }
         }
 
-        if (!dIn || !mIn || !yIn) {
+        if (!dIn || !mIn || !yIn) { //Check if all values have been inputted
             stream.setstate(ios::failbit);
             return stream;
         }
 
-        try {
+        try { // Try to create CDate from inputted variables
             CDate newDate(y, m, d);
             date = newDate;
         }
@@ -257,19 +383,22 @@ public:
     CDate(unsigned int y, unsigned int m, unsigned int d) {
         if (y < 2000 ||
             m > 12 || m == 0 ||
-            d > DateConvertor::daysInMonth(m, y) || d == 0) {
+            d > DateConvertor::daysInMonth(m, y) || d == 0) { //Input sanitization
             throw InvalidDateException();
         }
 
         y -= 2000;
-        days = y * 365;
+
+        days = y * 365; //Calculate total days from years
         if (y > 0) {
-            days += DateConvertor::leapYearsUntil(y - 1);
+            days += DateConvertor::leapYearsUntil(y - 1); //Add 366th day thanks to leap years
         }
-        for (unsigned int i = 1; i < m; i++) {
+
+        for (unsigned int i = 1; i < m; i++) { //Calculate total days from months
             days += DateConvertor::daysInMonth(i, y);
         }
-        days += (d - 1);
+
+        days += (d - 1); //Calculate total days from days
     }
 
     CDate(unsigned int d) : days(d) { }
@@ -355,8 +484,8 @@ public:
     }
 
     friend ostream & operator << (ostream & os, const CDate & rhs) {
-        if (os.iword(date_index) == 1) {
-            date_format_handler * formatHandler = static_cast<date_format_handler *>(os.pword(date_index));
+        if (os.iword(date_index) == 1) { //If stream contains flag, specifying format modifier has been used, retrieve format string from DateFormatHandler and format output using this string, else use default format
+            DateFormatHandler * formatHandler = static_cast<DateFormatHandler *>(os.pword(date_index));
             string formatString(formatHandler->formatString);
             return formatOutput(os, formatString, rhs);
         }
@@ -364,8 +493,8 @@ public:
     }
 
     friend istream & operator >> (istream & is, CDate & rhs) {
-        if (is.iword(date_index) == 1) {
-            date_format_handler * formatHandler = static_cast<date_format_handler *>(is.pword(date_index));
+        if (is.iword(date_index) == 1) { //If stream contains flag, specifying format modifier has been used, retrieve format string from DateFormatHandler and format input using this string, else use default format
+            DateFormatHandler * formatHandler = static_cast<DateFormatHandler *>(is.pword(date_index));
             string formatString(formatHandler->formatString);
             return formatInput(is, formatString, rhs);
         }
