@@ -312,6 +312,27 @@ private:
     }
 
     /**
+     * @brief Extracts numerical value from stream
+     *
+     * Limited to 4 digits.
+     *
+     * @param stream Stream to extract from
+     * @param extracted Has this value been extracted
+     * @param value Store extracted value into
+     * @param digits Number of digits to extract (max 4)
+     * @return true Extraction was successful
+     * @return false Extraction was not successful
+     */
+    static bool getDateValueFromStream(istream & stream, bool & extracted, int & value, int digits) {
+        char array[4];
+        if (extracted || !extractCharsFromStream(stream, array, digits) || !processCharsToInt(value, array, digits)) {
+            return false;
+        }
+        extracted = true;
+        return true;
+    }
+
+    /**
      * @brief Get CDate from stream using specified format
      *
      * @param stream Stream to input from
@@ -333,28 +354,22 @@ private:
                 if (modifierOnInput) {
                     modifierOnInput = false;
                     if (forChar == 'd') { //If d, m, or Y follows % extract expected value
-                        char day[2];
-                        if (dIn || !extractCharsFromStream(stream, day, 2) || !processCharsToInt(d, day, 2)) {
+                        if (!getDateValueFromStream(stream, dIn, d, 2)) {
                             stream.setstate(ios::failbit);
                             return stream;
                         }
-                        dIn = true;
                         continue;
                     } else if (forChar == 'm') {
-                        char month[2];
-                        if (mIn || !extractCharsFromStream(stream, month, 2) || !processCharsToInt(m, month, 2)) {
+                        if (!getDateValueFromStream(stream, mIn, m, 2)) {
                             stream.setstate(ios::failbit);
                             return stream;
                         }
-                        mIn = true;
                         continue;
                     } else if (forChar == 'Y') {
-                        char year[4];
-                        if (yIn || !extractCharsFromStream(stream, year, 4) || !processCharsToInt(y, year, 4)) {
+                        if (!getDateValueFromStream(stream, yIn, y, 4)) {
                             stream.setstate(ios::failbit);
                             return stream;
                         }
-                        yIn = true;
                         continue;
                     }
                 }
