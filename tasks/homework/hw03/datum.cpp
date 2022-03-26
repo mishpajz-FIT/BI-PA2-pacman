@@ -8,6 +8,7 @@
  * @copyright Copyright (c) 2022
  *
  */
+
 #ifndef __PROGTEST__
 #include <cstdio>
 #include <cstdlib>
@@ -31,10 +32,6 @@ public:
     InvalidDateException() : invalid_argument("invalid date or format") { }
 };
 
-//Global values for custom stream manipulator
-const int date_index = ios::xalloc(); //Retrieve unique id in iword and pword arrays of streams
-const string defaultFormat = "%Y-%m-%d"; //Default formatting of CDate in stream
-
 /**
  * @brief Handler of formatting
  *
@@ -42,8 +39,8 @@ const string defaultFormat = "%Y-%m-%d"; //Default formatting of CDate in stream
  *
  */
 struct DateFormatHandler {
-    string formatString; // Formatting string for CDate
-    void * currentStream; // Pointer to stream this object belongs to (only used to check for duplicate action on one stream)
+    string formatString; //Formatting string for CDate
+    void * currentStream; //Pointer to stream this object belongs to (only used to check for duplicate action on one stream)
 };
 
 /**
@@ -67,18 +64,18 @@ private:
      *
      */
     static void caughtEvent(ios::event event, ios_base & stream, int index) {
-        if (stream.iword(date_index) == 1) {
-            if (event == ios_base::erase_event) { //On stream destructon, deallocate DateFormatHandler stored in streams pword
-                delete static_cast<DateFormatHandler *>(stream.pword(date_index));
-                stream.pword(date_index) = nullptr;
-                stream.iword(date_index) = 0;
-            } else if (event == ios_base::copyfmt_event) { //On stream copyfmt
-                DateFormatHandler * formatHandler = static_cast<DateFormatHandler *>(stream.pword(date_index));
+        if (stream.iword(date_format::dateIndex) == 1) { //On stream destructon, deallocate DateFormatHandler stored in streams pword
+            if (event == ios_base::erase_event) {
+                delete static_cast<DateFormatHandler *>(stream.pword(date_format::dateIndex));
+                stream.pword(date_format::dateIndex) = nullptr;
+                stream.iword(date_format::dateIndex) = 0;
+            } else if (event == ios_base::copyfmt_event) { // On stream copyfmt
+                DateFormatHandler * formatHandler = static_cast<DateFormatHandler *>(stream.pword(date_format::dateIndex));
                 if (formatHandler->currentStream != (&stream)) { //Check if this (possibly unknown, previously without format) stream has been processed (by checking stream in DateFormatHandler)
-                    DateFormatHandler * newHandler = new DateFormatHandler(); //If stream has not been processed, create deep copy of DateFormatHandler and assign it to this streams pword
+                    DateFormatHandler * newHandler = new DateFormatHandler();  //If stream has not been processed, create deep copy of DateFormatHandler and assign it to this streams pword
                     newHandler->formatString = string(formatHandler->formatString);
                     newHandler->currentStream = &stream;
-                    stream.pword(date_index) = static_cast<void *>(newHandler);
+                    stream.pword(date_format::dateIndex) = static_cast<void *>(newHandler);
                 }
             }
         }
@@ -91,22 +88,26 @@ private:
      * @param format Modifier
      */
     static void addFormatToStream(ios_base & stream, const date_format & format) {
-        if (stream.iword(date_index) == 1) { //If stream already has modifier of this kind, dealloc it
-            delete static_cast<DateFormatHandler *>(stream.pword(date_index));
-            stream.pword(date_index) = nullptr;
+        if (stream.iword(date_format::dateIndex) == 1) { //If stream already has modifier of this kind, dealloc it
+            delete static_cast<DateFormatHandler *>(stream.pword(date_format::dateIndex));
+            stream.pword(date_format::dateIndex) = nullptr;
         }
-        stream.iword(date_index) = 1; //Raise flag in streams iword
+        stream.iword(date_format::dateIndex) = 1; //Raise flag in streams iword
         DateFormatHandler * newHandler = new DateFormatHandler(); //Allocate new DateFormatHandler, assign it format string and stream pointer
         newHandler->formatString = string(format.storedFormat);
         newHandler->currentStream = static_cast<void *>(&stream);
-        stream.pword(date_index) = static_cast<void *>(newHandler); //Store DateFormatHandler in streams pword
-        stream.register_callback(caughtEvent, date_index); //Register callback on stream (for deallocing DateFormatHandler and deep copying when std::copyfmt is called)
+        stream.pword(date_format::dateIndex) = static_cast<void *>(newHandler); //Store DateFormatHandler in streams pword
+        stream.register_callback(caughtEvent, date_format::dateIndex); //Register callback on stream (for deallocing DateFormatHandler and deep copying when std::copyfmt is called)
     }
 
 public:
     const char * storedFormat; //Format string stored before being stored in stream
 
     date_format(const char * s) : storedFormat(s) { }
+
+    //Global values for custom stream manipulator
+    static const int dateIndex; //Unique id for modifier in iword and pword arrays of streams
+    static const string defaultFormat; //Default formatting of CDate in stream
 
     friend ostream & operator << (ostream & os, const date_format & rhs) {
         addFormatToStream(os, rhs);
@@ -119,6 +120,9 @@ public:
     }
 };
 
+const int date_format::dateIndex = ios::xalloc(); //Retrieve unique id in iword and pword arrays of streams
+const string date_format::defaultFormat = "%Y-%m-%d"; //Default formatting of CDate in stream
+
 /**
  * @brief Date representation
  *
@@ -128,7 +132,7 @@ public:
  */
 class CDate {
 private:
-    unsigned int days; //Days sice lower bound (01/01/2000) to the date this instance is representing
+    unsigned int days;//Days sice lower bound (01/01/2000) to the date this instance is representing
 
     /**
      * @brief Convertor used for caluclating other values (year, month and day) from internal representation (only days since date)
@@ -185,7 +189,7 @@ private:
          */
         void convertFromDays(unsigned int days) {
 
-            year = days / 365; //Figure out max year
+            year = days / 365; //Calculate max year
             day = (days - (365 * year)); //Substract years that were calculated from days
 
             if (year > 0) {
@@ -268,9 +272,9 @@ private:
      * @return false Conversion wasn't successful
      */
     static bool processCharsToInt(int & to, char * chars, int size) {
-        int value = 0;
+        to = 0;
 
-        int multiplier = 1; // Multiplier specifing digit number
+        int multiplier = 1; //Multiplier specifing digit number
         for (int j = 1; j < size; j++) {
             multiplier *= 10;
         }
@@ -284,7 +288,6 @@ private:
             multiplier /= 10;
         }
 
-        to = value;
         return true;
     }
 
@@ -369,7 +372,7 @@ private:
             return stream;
         }
 
-        try { // Try to create CDate from inputted variables
+        try { //Try to create CDate from inputted variables
             CDate newDate(y, m, d);
             date = newDate;
         }
@@ -484,21 +487,21 @@ public:
     }
 
     friend ostream & operator << (ostream & os, const CDate & rhs) {
-        if (os.iword(date_index) == 1) { //If stream contains flag, specifying format modifier has been used, retrieve format string from DateFormatHandler and format output using this string, else use default format
-            DateFormatHandler * formatHandler = static_cast<DateFormatHandler *>(os.pword(date_index));
+        if (os.iword(date_format::dateIndex) == 1) { //If stream contains flag, specifying format modifier has been used, retrieve format string from DateFormatHandler and format output using this string, else use default format
+            DateFormatHandler * formatHandler = static_cast<DateFormatHandler *>(os.pword(date_format::dateIndex));
             string formatString(formatHandler->formatString);
             return formatOutput(os, formatString, rhs);
         }
-        return formatOutput(os, defaultFormat, rhs);
+        return formatOutput(os, date_format::defaultFormat, rhs);
     }
 
     friend istream & operator >> (istream & is, CDate & rhs) {
-        if (is.iword(date_index) == 1) { //If stream contains flag, specifying format modifier has been used, retrieve format string from DateFormatHandler and format input using this string, else use default format
-            DateFormatHandler * formatHandler = static_cast<DateFormatHandler *>(is.pword(date_index));
+        if (is.iword(date_format::dateIndex) == 1) { //If stream contains flag, specifying format modifier has been used, retrieve format string from DateFormatHandler and format input using this string, else use default format
+            DateFormatHandler * formatHandler = static_cast<DateFormatHandler *>(is.pword(date_format::dateIndex));
             string formatString(formatHandler->formatString);
             return formatInput(is, formatString, rhs);
         }
-        return formatInput(is, defaultFormat, rhs);
+        return formatInput(is, date_format::defaultFormat, rhs);
     }
 
 };
@@ -600,7 +603,7 @@ int main(void) {
     assert(oss.str() == "2000-02-29");
 
     //-----------------------------------------------------------------------------
-    // bonus test examples
+    // formattor test examples
     //-----------------------------------------------------------------------------
 
     CDate f(2000, 5, 12);
