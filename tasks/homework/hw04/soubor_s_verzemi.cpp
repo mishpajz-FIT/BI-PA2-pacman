@@ -20,7 +20,7 @@ private:
     void elongateTo(size_t newCapacity) {
         T * newData = new T[newCapacity];
         for (size_t i = 0; i < size; i++) {
-            newData[i] = data;
+            newData[i] = data[i];
         }
         capacity = newCapacity;
         delete [] data;
@@ -35,6 +35,24 @@ private:
 
 public:
     Vector() : data(nullptr), size(0), capacity(0) { }
+
+    Vector(Vector & toCopy) : size(toCopy.size), capacity(toCopy.size) {
+        data = new T[toCopy.size];
+        for (size_t i = 0; i < size; i++) {
+            data[i] = toCopy.data[i];
+        }
+    }
+
+    Vector & operator = (Vector toAssign) {
+        size = toAssign.size;
+        capacity = toAssign.capacity;
+
+        T * tmpData = toAssign.data;
+        toAssign.data = data;
+        data = tmpData;
+
+        return (*this);
+    }
 
     ~Vector() {
         delete [] data;
@@ -73,6 +91,17 @@ public:
         return data[i];
     }
 
+    T & top() {
+        if (size == 0) {
+            throw "Top on empty vector!";
+        }
+        return data[size - 1];
+    }
+
+    const T & top() const {
+        return (const_cast<Vector &>(*this).top());
+    }
+
     const T & at(size_t i) const {
         return (const_cast<Vector &>(*this).at(i));
     }
@@ -84,16 +113,19 @@ public:
     const T & operator [] (size_t i) const {
         return data[i];
     }
+
+    size_t getSize() const {
+        return size;
+    }
 };
 
 template<typename T>
 const size_t Vector<T>::growMultiplier = 2;
 
-
+/*
 class CFile {
 private:
     struct Bucket;
-    struct Data;
     struct Version;
 
 public:
@@ -124,18 +156,19 @@ struct CFile::Bucket {
 struct CFile::Version {
     unsigned int refCount;
 
-    CFile::Data * data;
+    Vector<Bucket *> data;
 
     class Iterator {
     private:
-        CFile::Bucket * bucket;
-        unsigned int positionInBucket;
+        size_t posInData;
+        size_t posInBucket;
     public:
 
     };
-};
+};*/
 
 #ifndef __PROGTEST__
+/*
 bool writeTest(CFile & x, const initializer_list<uint8_t> & data, uint32_t wrLen) {
     return x.write(data.begin(), data.size()) == wrLen;
 }
@@ -153,9 +186,36 @@ bool readTest(CFile & x, const initializer_list<uint8_t> & data, uint32_t rdLen)
         }
     }
     return true;
+}*/
+
+void vectorTest() {
+    Vector<int> v0;
+    v0.push(1);
+    v0.push(2);
+    v0.push(3);
+    assert(v0.top() == 3);
+    assert(v0.getSize() == 3);
+    assert(v0.at(1) == 2);
+    v0.insert(5, 1);
+    assert(v0.top() == 3);
+    assert(v0.getSize() == 4);
+    assert(v0[0] == 1);
+    assert(v0.at(1) == 5);
+    assert(v0[2] == 2);
+    Vector<int> v1;
+    v1 = v0;
+    v1.push(4);
+    assert(v0.pop() == 3);
+    assert(v1.getSize() == 5);
+    assert(v0.getSize() == 3);
+    assert(v1.pop() == 4);
 }
 
 int main(void) {
+
+    vectorTest();
+
+    /*
     CFile f0;
     assert(writeTest(f0, { 10, 20, 30 }, 3));
     assert(f0.fileSize() == 3);
@@ -190,6 +250,7 @@ int main(void) {
     assert(f1.undoVersion());
     assert(readTest(f1, { 4, 70, 80 }, 20));
     assert(!f1.undoVersion());
+    */
     return EXIT_SUCCESS;
 }
 #endif /* __PROGTEST__ */
