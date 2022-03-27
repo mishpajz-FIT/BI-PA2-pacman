@@ -8,7 +8,23 @@
 using namespace std;
 #endif /* __PROGTEST__ */
 
+template<typename T>
+class Vector {
+private:
+    T * data;
+    size_t capacity;
+    size_t size;
+public:
+
+};
+
+
 class CFile {
+private:
+    struct Bucket;
+    struct Data;
+    struct Version;
+
 public:
     CFile(void);
 
@@ -26,9 +42,34 @@ public:
     void addVersion(void);
 
     bool undoVersion(void);
+};
 
-private:
-    // TODO
+struct CFile::Bucket {
+    uint32_t size;
+    unsigned int refCount;
+    uint8_t * bytes;
+};
+
+struct CFile::Data {
+    unsigned int refCount;
+
+    CFile::Bucket * bucket;
+    CFile::Data * next;
+    CFile::Data * prev;
+};
+
+struct CFile::Version {
+    unsigned int refCount;
+
+    CFile::Data * data;
+
+    class Iterator {
+    private:
+        CFile::Data * dataWithBucket;
+        unsigned int positionInBucket;
+    public:
+
+    }
 };
 
 #ifndef __PROGTEST__
