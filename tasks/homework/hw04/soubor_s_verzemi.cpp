@@ -77,6 +77,17 @@ public:
         data[at] = t;
     }
 
+    void remove(size_t at) {
+        if (at >= size) {
+            throw "Remove behind last element of vector!";
+        }
+
+        for (size_t i = at; i + 1 < size; i++) {
+            data[i] = data[i + 1];
+        }
+        size--;
+    }
+
     void push(const T & t) {
         createNewCapacity();
         data[size++] = t;
@@ -173,6 +184,7 @@ struct CFile::Version {
 };*/
 
 #ifndef __PROGTEST__
+#include <iostream>
 /*
 bool writeTest(CFile & x, const initializer_list<uint8_t> & data, uint32_t wrLen) {
     return x.write(data.begin(), data.size()) == wrLen;
@@ -214,6 +226,26 @@ void vectorTest() {
     assert(v1.getSize() == 5);
     assert(v0.getSize() == 3);
     assert(v1.pop() == 4);
+    Vector<int> v2;
+    v2.push(0);
+    v2.push(1);
+    v2.push(2);
+    v2.push(3);
+    v2.push(4);
+    v2.push(5);
+    v2.push(6);
+    v2.remove(0);
+    assert(v2.at(0) == 1);
+    assert(v2.top() == 6);
+    assert(v2.getSize() == 6);
+    v2.remove(2);
+    assert(v2.at(2) == 4);
+    v2.remove(4);
+    assert(v2.top() == 5);
+    assert(v2.getSize() == 4);
+
+
+
 }
 
 int main(void) {
