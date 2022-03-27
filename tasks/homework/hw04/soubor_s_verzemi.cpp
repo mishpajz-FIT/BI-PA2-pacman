@@ -11,12 +11,83 @@ using namespace std;
 template<typename T>
 class Vector {
 private:
-    T * data;
-    size_t capacity;
-    size_t size;
-public:
+    static const size_t growMultiplier;
 
+    T * data;
+    size_t size;
+    size_t capacity;
+
+    void elongateTo(size_t newCapacity) {
+        T * newData = new T[newCapacity];
+        for (size_t i = 0; i < size; i++) {
+            newData[i] = data;
+        }
+        capacity = newCapacity;
+        delete [] data;
+        data = newData;
+    }
+
+    void createNewCapacity() {
+        if (size >= capacity) {
+            elongateTo((capacity * growMultiplier) + 2);
+        }
+    }
+
+public:
+    Vector() : data(nullptr), size(0), capacity(0) { }
+
+    ~Vector() {
+        delete [] data;
+    }
+
+    void insert(const T & t, size_t at) {
+        if (at > size) {
+            throw "Insert behind last element of vector!";
+        }
+        createNewCapacity();
+
+        for (size_t i = size; i > at; i--) {
+            data[i] = data[i - 1];
+        }
+        size++;
+
+        data[at] = t;
+    }
+
+    void push(const T & t) {
+        createNewCapacity();
+        data[size++] = t;
+    }
+
+    T pop() {
+        if (size == 0) {
+            throw "Pop on empty vector!";
+        }
+        return data[--size];
+    }
+
+    T & at(size_t i) {
+        if (i >= size) {
+            throw "Insert behind last element of vector!";
+        }
+        return data[i];
+    }
+
+    const T & at(size_t i) const {
+        return (const_cast<Vector &>(*this).at(i));
+    }
+
+    T & operator [] (size_t i) {
+        return data[i];
+    }
+
+    const T & operator [] (size_t i) const {
+        return data[i];
+    }
 };
+
+template<typename T>
+const size_t Vector<T>::growMultiplier = 2;
 
 
 class CFile {
@@ -50,14 +121,6 @@ struct CFile::Bucket {
     uint8_t * bytes;
 };
 
-struct CFile::Data {
-    unsigned int refCount;
-
-    CFile::Bucket * bucket;
-    CFile::Data * next;
-    CFile::Data * prev;
-};
-
 struct CFile::Version {
     unsigned int refCount;
 
@@ -65,11 +128,11 @@ struct CFile::Version {
 
     class Iterator {
     private:
-        CFile::Data * dataWithBucket;
+        CFile::Bucket * bucket;
         unsigned int positionInBucket;
     public:
 
-    }
+    };
 };
 
 #ifndef __PROGTEST__
