@@ -36,19 +36,24 @@ private:
 public:
     Vector() : data(nullptr), size(0), capacity(0) { }
 
-    Vector(Vector & toCopy) : size(toCopy.size), capacity(toCopy.size) {
+    Vector(const Vector & toCopy) : size(toCopy.size), capacity(toCopy.size) {
         data = new T[toCopy.size];
         for (size_t i = 0; i < size; i++) {
             data[i] = toCopy.data[i];
         }
     }
 
-    Vector & operator = (Vector toAssign) {
-        size = toAssign.size;
-        capacity = toAssign.capacity;
+    Vector & operator = (const Vector & toAssign) {
+        if (this == &toAssign) {
+            return (*this);
+        }
 
-        T * tmpData = toAssign.data;
-        toAssign.data = data;
+        Vector copy(toAssign);
+        size = copy.size;
+        capacity = copy.capacity;
+
+        T * tmpData = copy.data;
+        copy.data = data;
         data = tmpData;
 
         return (*this);
