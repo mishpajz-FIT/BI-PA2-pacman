@@ -8,6 +8,173 @@
 using namespace std;
 #endif /* __PROGTEST__ */
 
+
+template <typename T>
+class List {
+
+    struct Node {
+        T value;
+        Node * next;
+
+        Node(T newValue) : value(newValue), next(nullptr) { }
+
+        Node(const Node & toCopy) : value(toCopy.value) {
+            next = nullptr;
+        }
+    };
+
+    Node * head;
+    Node * tail;
+
+    size_t size;
+
+public:
+    struct ListIterator {
+        Node * ptr;
+
+        ListIterator(List & list, size_t position) : ptr(list.head) {
+            for (size_t i = 0; i < position; i++) {
+                ptr = ptr->next;
+            }
+        }
+
+        ListIterator(Node * pointer) : ptr(pointer) { }
+
+        T & operator * () {
+            return (*ptr).value;
+        }
+
+        const T & operator * () const {
+            return (*ptr).value;
+        }
+
+        ListIterator & operator ++() {
+            ptr = ptr->next;
+            return (*this);
+        }
+
+        ListIterator operator ++(int) {
+            ListIterator old(*this);
+            ++(*this);
+            return old;
+        }
+    };
+
+    List() : head(nullptr), tail(nullptr), size(0) { }
+
+    List(const List & copyFrom) : size(copyFrom.size) {
+        if (copyFrom.head != nullptr) {
+            head = new Node(*(copyFrom.head));
+            Node * iter = head;
+            Node * iterCopy = copyFrom.head->next;
+            while (iterCopy != nullptr) {
+                iter->next = new Node(*(iterCopy));
+                iter = iter->next;
+                iterCopy = iterCopy->next;
+            }
+            tail = iter;
+        } else {
+            head = nullptr;
+            tail = nullptr;
+        }
+    }
+
+    ~List() {
+        Node * iter = head;
+        while (iter != nullptr) {
+            Node * tmp = iter->next;
+            delete iter;
+            iter = tmp;
+        }
+        head = nullptr;
+        tail = nullptr;
+        size = 0;
+    }
+
+    List & operator = (List & toAssign) {
+        if (this == &toAssign) {
+            return *this;
+        }
+
+        List copy(toAssign);
+
+        size = copy.size;
+
+        Node * tmp = head;
+        head = copy.head;
+        copy.head = tmp;
+
+        tmp = tail;
+        tail = copy.tail;
+        copy.tail = tmp;
+
+        return (*this);
+    }
+
+    void insert(const ListIterator & after, const T & value) {
+        Node * newNode = new Node(value);
+
+        if (after.ptr == nullptr) {
+            newNode->next = head;
+            head = newNode;
+        } else {
+            newNode->next = (after.ptr)->next;
+            (after.ptr)->next = newNode;
+        }
+
+        if (newNode->next == nullptr) {
+            tail = newNode;
+        }
+
+        size++;
+    }
+
+    T remove(const ListIterator & after) {
+        Node * tmp;
+
+        if (after.ptr == nullptr) {
+            tmp = head;
+            head = head->next;
+        } else {
+            tmp = (after.ptr)->next;
+            (after.ptr)->next = tmp->next;
+        }
+
+        if (tmp->next == nullptr) {
+            tail = (after.ptr);
+        }
+
+        T value(tmp->value);
+        delete tmp;
+        size--;
+        return value;
+    }
+
+    void pushFront(const T & value) {
+        insert(ListIterator(nullptr), value);
+    }
+
+    T popFront() {
+        return remove(ListIterator(nullptr));
+    }
+
+    void pushBack(const T & value) {
+        insert(ListIterator(tail), value);
+    }
+
+    T & back() {
+        return tail->value;
+    }
+    T & front() {
+        return head->value;
+    }
+
+    size_t getSize() {
+        return size;
+    }
+};
+
+/*
 class CFile {
 private:
     struct Bucket;
@@ -160,10 +327,11 @@ public:
 
     class Iterator {
         size_t posInData;
-        size_t posIn
+        size_t posInBucket;
     };
 };
 
+*/
 #ifndef __PROGTEST__
 #include <iostream>
 /*
@@ -186,7 +354,53 @@ bool readTest(CFile & x, const initializer_list<uint8_t> & data, uint32_t rdLen)
     return true;
 }*/
 
+
+void listTest() {
+
+    List<int> l0;
+    l0.pushBack(0);
+    l0.pushBack(1);
+    l0.pushBack(2);
+    l0.pushBack(3);
+    assert(l0.back() == 3);
+    assert(l0.getSize() == 4);
+    List<int>::ListIterator i0(l0, 1);
+    assert(*(i0++) == 1);
+    assert(*i0 == 2);
+    assert(*(++i0) == 3);
+    i0 = List<int>::ListIterator(l0, 1);
+    l0.insert(i0, 10);
+    assert(*(++i0) == 10);
+    assert(l0.getSize() == 5);
+
+    List<int> l1(l0);
+    l1.remove(List<int>::ListIterator(l1, 1));
+    assert(l0.getSize() == 5);
+    assert(l1.getSize() == 4);
+    assert(l1.remove(nullptr) == 0);
+    assert(l1.getSize() == 3);
+    assert(l1.remove(List<int>::ListIterator(l1, 1)));
+
+    List<int> l2;
+
+    l2 = l1;
+    l2.insert(List<int>::ListIterator(l2, 1), 3);
+    assert(l1.getSize() == 2);
+    assert(l2.getSize() == 3);
+    assert(l2.popFront() == 1);
+    assert(l2.popFront() == 2);
+    assert(l2.popFront() == 3);
+    assert(l2.getSize() == 0);
+    l2.pushFront(10);
+    l2.pushFront(5);
+    assert(l2.back() == 10);
+    assert(l2.front() == 5);
+    assert(l2.getSize() == 2);
+}
+
 int main(void) {
+
+    listTest();
 
     /*
     CFile f0;
