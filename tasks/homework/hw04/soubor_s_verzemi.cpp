@@ -15,12 +15,11 @@ class List {
     struct Node {
         T value;
         Node * next;
+        Node * prev;
 
-        Node(T newValue) : value(newValue), next(nullptr) { }
+        Node(T newValue) : value(newValue), next(nullptr), prev(nullptr) { }
 
-        Node(const Node & toCopy) : value(toCopy.value) {
-            next = nullptr;
-        }
+        Node(const Node & toCopy) : value(toCopy.value), next(nullptr), prev(nullptr) { }
     };
 
     Node * head;
@@ -32,7 +31,7 @@ public:
     struct ListIterator {
         Node * ptr;
 
-        ListIterator(List & list, size_t position) : ptr(list.head) {
+        ListIterator(const List & list, size_t position) : ptr(list.head) {
             for (size_t i = 0; i < position; i++) {
                 ptr = ptr->next;
             }
@@ -48,6 +47,10 @@ public:
             return (*ptr).value;
         }
 
+        bool isAtEnd() {
+            return (ptr == nullptr);
+        }
+
         ListIterator & operator ++() {
             ptr = ptr->next;
             return (*this);
@@ -58,24 +61,33 @@ public:
             ++(*this);
             return old;
         }
+
+        ListIterator & operator --() {
+            ptr = ptr->prev;
+            return (*this);
+        }
+
+        ListIterator operator --(int) {
+            ListIterator old(*this);
+            --(*this);
+            return old;
+        }
     };
 
     List() : head(nullptr), tail(nullptr), size(0) { }
 
-    List(const List & copyFrom) : size(copyFrom.size) {
+    List(const List & copyFrom) : head(nullptr), tail(nullptr), size(copyFrom.size) {
         if (copyFrom.head != nullptr) {
             head = new Node(*(copyFrom.head));
             Node * iter = head;
             Node * iterCopy = copyFrom.head->next;
             while (iterCopy != nullptr) {
                 iter->next = new Node(*(iterCopy));
+                iter->next->prev = iter;
                 iter = iter->next;
                 iterCopy = iterCopy->next;
             }
             tail = iter;
-        } else {
-            head = nullptr;
-            tail = nullptr;
         }
     }
 
@@ -111,65 +123,107 @@ public:
         return (*this);
     }
 
-    void insert(const ListIterator & after, const T & value) {
+    void insert(Node * before, const T & value) {
         Node * newNode = new Node(value);
 
-        if (after.ptr == nullptr) {
-            newNode->next = head;
-            head = newNode;
-        } else {
-            newNode->next = (after.ptr)->next;
-            (after.ptr)->next = newNode;
+        if (before == nullptr) { //If inserting at end, set new tail
+            newNode->prev = tail;
+            tail = newNode;
+        } else { //Set new node's prev from 'before' node's prev, set before's node prev as new node
+            newNode->prev = before->prev;
+            before->prev = newNode;
         }
 
-        if (newNode->next == nullptr) {
-            tail = newNode;
+        if (newNode->prev == nullptr) { //If at begin, set new hail
+            head = newNode;
+        } else { //Set next of new node's prev to new node
+            (newNode->prev)->next = newNode;
         }
+        newNode->next = before; //Set next of new node to before
 
         size++;
     }
 
-    T remove(const ListIterator & after) {
-        Node * tmp;
+    void insert(ListIterator before, const T & value) {
+        insert(before.ptr, value);
+    }
 
-        if (after.ptr == nullptr) {
-            tmp = head;
-            head = head->next;
+    T remove(Node * at) {
+        T value(at->value);
+
+        if (at->prev != nullptr) {
+            at->prev->next = at->next;
         } else {
-            tmp = (after.ptr)->next;
-            (after.ptr)->next = tmp->next;
+            head = at->next;
         }
 
-        if (tmp->next == nullptr) {
-            tail = (after.ptr);
+        if (at->next != nullptr) {
+            at->next->prev = at->prev;
+        } else {
+            tail = at->prev;
         }
 
-        T value(tmp->value);
-        delete tmp;
+        delete at;
         size--;
+
         return value;
     }
 
+    T remove(ListIterator & at) {
+        ListIterator old = at;
+        if (at.ptr == tail) {
+            at--;
+        } else {
+            at++;
+        }
+        return remove(old.ptr);
+    }
+
     void pushFront(const T & value) {
-        insert(ListIterator(nullptr), value);
+        insert(head, value);
     }
 
     T popFront() {
-        return remove(ListIterator(nullptr));
+        return remove(head);
     }
 
     void pushBack(const T & value) {
-        insert(ListIterator(tail), value);
+        insert(nullptr, value);
+    }
+
+    T popBack() {
+        return remove(tail);
     }
 
     T & back() {
         return tail->value;
     }
+
+    const T & back() const {
+        return tail->value;
+    }
+
     T & front() {
         return head->value;
     }
 
-    size_t getSize() {
+    const T & front() const {
+        return head->value;
+    }
+
+    ListIterator begin() const {
+        return ListIterator(head);
+    }
+
+    ListIterator end() const {
+        return ListIterator(nullptr);
+    }
+
+    ListIterator iterator(size_t at = 0) const {
+        return ListIterator(*this, at);
+    }
+
+    size_t getSize() const {
         return size;
     }
 };
@@ -358,44 +412,45 @@ bool readTest(CFile & x, const initializer_list<uint8_t> & data, uint32_t rdLen)
 void listTest() {
 
     List<int> l0;
-    l0.pushBack(0);
+    assert(l0.getSize() == 0);
     l0.pushBack(1);
+    assert(l0.getSize() == 1);
+    l0.pushFront(0);
     l0.pushBack(2);
     l0.pushBack(3);
-    assert(l0.back() == 3);
-    assert(l0.getSize() == 4);
-    List<int>::ListIterator i0(l0, 1);
-    assert(*(i0++) == 1);
-    assert(*i0 == 2);
-    assert(*(++i0) == 3);
-    i0 = List<int>::ListIterator(l0, 1);
-    l0.insert(i0, 10);
-    assert(*(++i0) == 10);
-    assert(l0.getSize() == 5);
+    auto it0 = l0.begin();
+    assert(*(it0++) == 0);
+    assert(*it0 == 1);
+    assert(*(++it0) == 2);
+    assert(*(it0--) == 2);
+    assert(*(it0) == 1);
+    assert(*(--it0) == 0);
 
     List<int> l1(l0);
-    l1.remove(List<int>::ListIterator(l1, 1));
-    assert(l0.getSize() == 5);
-    assert(l1.getSize() == 4);
-    assert(l1.remove(nullptr) == 0);
-    assert(l1.getSize() == 3);
-    assert(l1.remove(List<int>::ListIterator(l1, 1)));
+    l1.pushBack(4);
+    assert(l0.getSize() == 4);
+    assert(l1.getSize() == 5);
+    assert(l0.back() == 3);
+    assert(l1.back() == 4);
 
     List<int> l2;
-
     l2 = l1;
-    l2.insert(List<int>::ListIterator(l2, 1), 3);
-    assert(l1.getSize() == 2);
+    assert(l2.popFront() == 0);
+    assert(l1.getSize() == 5);
+    assert(l2.getSize() == 4);
+
+    auto it1 = l2.iterator(1); //1, 2, 3, 4
+    l2.remove(it1);
     assert(l2.getSize() == 3);
-    assert(l2.popFront() == 1);
-    assert(l2.popFront() == 2);
-    assert(l2.popFront() == 3);
-    assert(l2.getSize() == 0);
-    l2.pushFront(10);
-    l2.pushFront(5);
-    assert(l2.back() == 10);
-    assert(l2.front() == 5);
-    assert(l2.getSize() == 2);
+    auto it2 = l2.begin();
+    assert(*(it2++) == 1);
+    assert(*(it2) == 3);
+    l2.insert(it2, 10);
+    it2 = l2.begin();
+    assert(*(it2++) == 1);
+    assert(*(it2++) == 10);
+    assert(*(it2) == 3);
+
 }
 
 int main(void) {
