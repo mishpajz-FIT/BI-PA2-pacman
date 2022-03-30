@@ -37,7 +37,7 @@ public:
             }
         }
 
-        ListIterator(Node * pointer) : ptr(pointer) { }
+        ListIterator(Node * pointer = nullptr) : ptr(pointer) { }
 
         T & operator * () {
             return (*ptr).value;
@@ -144,8 +144,13 @@ public:
         size++;
     }
 
-    void insert(ListIterator before, const T & value) {
+    void insert(ListIterator & before, const T & value) {
         insert(before.ptr, value);
+        if (before.ptr == nullptr) {
+            before.ptr = tail;
+        } else {
+            before.ptr = (before.ptr)->prev;
+        }
     }
 
     T remove(Node * at) {
@@ -171,11 +176,7 @@ public:
 
     T remove(ListIterator & at) {
         ListIterator old = at;
-        if (at.ptr == tail) {
-            at--;
-        } else {
-            at++;
-        }
+        at++;
         return remove(old.ptr);
     }
 
@@ -228,167 +229,285 @@ public:
     }
 };
 
-/*
 class CFile {
 private:
-    struct Bucket;
-    struct Data;
-    class Version;
+    struct Bucket {
+        unsigned int refCount;
+
+        uint32_t size;
+        uint8_t * bytes;
+
+        void createBytesFrom(const uint8_t * fromBytes, uint32_t inSize) {
+            bytes = new uint8_t[size];
+            for (uint32_t i = 0; i < size; i++) {
+                bytes[i] = fromBytes[i];
+            }
+        }
+
+        Bucket(const uint8_t * fromBytes, uint32_t inSize) : refCount(0), size(inSize) {
+            createBytesFrom(fromBytes, inSize);
+        }
+
+        Bucket(const Bucket & toCopy) : refCount(0) {
+            createBytesFrom(toCopy.bytes, toCopy.size);
+        }
+
+        ~Bucket() {
+            delete [] bytes;
+        }
+
+        Bucket & operator = (const Bucket & toAssign) {
+            if (this == &toAssign) {
+                return (*this);
+            }
+
+            delete [] bytes;
+            createBytesFrom(toAssign.bytes, toAssign.size);
+
+            return (*this);
+        }
+    };
+
+    struct Data {
+        unsigned int refCount;
+
+        List<CFile::Bucket *> buckets;
+        uint32_t totalBytes;
+
+        void releaseBucket(CFile::Bucket * bucket) {
+            if (--(bucket->refCount) == 0) {
+                delete bucket;
+            }
+        }
+
+        Data() : refCount(0), buckets(), totalBytes(0) { }
+
+        Data(const Data & toCopy) : refCount(0), buckets(toCopy.buckets), totalBytes(toCopy.totalBytes) {
+            auto iter = buckets.begin();
+            while (!iter.isAtEnd()) {
+                (*(iter++))->refCount++;
+            }
+        }
+
+        ~Data() {
+            auto iter = buckets.begin();
+            while (!iter.isAtEnd()) {
+                releaseBucket(*(iter++));
+            }
+        }
+
+        Data & operator = (const Data & toAssign) {
+            if (this == &toAssign) {
+                return (*this);
+            }
+
+            auto iter = buckets.begin();
+            while (!iter.isAtEnd()) {
+                releaseBucket(*(iter++));
+            }
+
+            //buckets = toAssign.buckets;
+            iter = buckets.begin();
+            while (!iter.isAtEnd()) {
+                (*(iter++))->refCount++;
+            }
+
+            totalBytes = toAssign.totalBytes;
+
+            return (*this);
+        }
+    };
+
+    class Version {
+        Data * data;
+
+        void releaseData() {
+            if (--(data->refCount) == 0) {
+                delete data;
+            }
+        }
+
+    public:
+
+        Version() : posInBucket(0) {
+            data = new Data();
+            data->refCount = 1;
+            posInData = data->buckets.begin();
+        }
+
+        Version(const Version & toCopy) {
+            data = toCopy.data;
+            (data->refCount)++;
+
+        }
+
+        ~Version() {
+            releaseData();
+        }
+
+        Version & operator = (const Version & toAssign) {
+            if (this == &toAssign) {
+                return *this;
+            }
+
+            releaseData();
+            data = toAssign.data;
+            (data->refCount)++;
+
+            return(*this);
+        }
+
+        void prepareEdit() {
+            if ((*data).refCount > 1) {
+                Data * newData = new Data(*data);
+                (data->refCount)--;
+                data = newData;
+                data->refCount = 1;
+            }
+        }
+
+        List<CFile::Bucket *>::ListIterator posInData;
+        uint32_t posInBucket;
+
+        uint32_t totalPosInBytes;
+
+        bool seek(uint32_t to) {
+            if (to > data->totalBytes) {
+                return false;
+            }
+
+            posInBucket = to;
+            posInData = (data->buckets).begin();
+            while (!posInData.isAtEnd()) {
+                if ((posInBucket >= ((*posInData)->size))) {
+                    posInBucket -= ((*(posInData)++)->size);
+                } else {
+                    break;
+                }
+            }
+            totalPosInBytes = to;
+            return true;
+        }
+
+        size_t read(uint8_t * dst, uint32_t bytes) {
+            if (totalPosInBytes == data->totalBytes) {
+                return 0;
+            }
+
+            uint32_t i = 0;
+            while (i < bytes) {
+                dst[i++] = (*posInData)->bytes[posInBucket++];
+                totalPosInBytes++;
+                if (posInBucket >= (*posInData)->size) {
+                    posInBucket = 0;
+                    posInData++;
+                }
+
+                if (totalPosInBytes >= data->totalBytes) {
+                    break;
+                }
+            }
+            return i;
+        }
+
+        void write(const uint8_t * src, uint32_t bytes) {
+            uint32_t bytesRemaining = bytes;
+            if (posInBucket != 0) {
+                Bucket * newBucket = new Bucket((*posInData)->bytes, posInBucket);
+                newBucket->refCount = 1;
+                data->buckets.insert(posInData, newBucket);
+                data->totalBytes += posInBucket;
+                posInData++;
+            }
+
+            if (!posInData.isAtEnd()) {
+                while (bytesRemaining > 0) {
+                    if (((*posInData)->size - posInBucket) > bytesRemaining) {
+                        Bucket * newBucket = new Bucket((*posInData)->bytes + posInBucket + bytesRemaining, ((*posInData)->size - (posInBucket + bytesRemaining)));
+                        newBucket->refCount = 1;
+                        data->totalBytes += ((*posInData)->size - (bytesRemaining + posInBucket));
+                        data->totalBytes -= ((*posInData)->size);
+                        data->releaseBucket(*posInData);
+                        data->buckets.remove(posInData);
+                        data->buckets.insert(posInData, newBucket);
+                        break;
+                    } else {
+                        bytesRemaining -= ((*posInData)->size - posInBucket);
+                        data->totalBytes -= ((*posInData)->size);
+                        data->releaseBucket(*posInData);
+                        data->buckets.remove(posInData);
+                    }
+
+                    posInBucket = 0;
+                    if (posInData.isAtEnd()) {
+                        break;
+                    }
+                }
+            }
+
+            Bucket * newBucket = new Bucket(src, bytes);
+            newBucket->refCount = 1;
+            data->buckets.insert(posInData, newBucket);
+            posInData++;
+            posInBucket = 0;
+            data->totalBytes += bytes;
+            totalPosInBytes += bytes;
+        }
+
+        void print() const {
+            auto iter = data->buckets.begin();
+            while (!iter.isAtEnd()) {
+                for (uint32_t i = 0; i < (*(*iter)).size; i++) {
+                    cout << int((*(*iter)).bytes[i]) << endl;
+                }
+                iter++;
+            }
+        }
+
+        uint32_t size() const {
+            return data->totalBytes;
+        }
+    };
+
+    List<Version> versions;
 
 public:
-    CFile(void);
+    CFile() {
+        versions.pushBack(Version());
+    }
 
     // TODO: copy cons, dtor, op=
-    bool seek(uint32_t offset);
+    bool seek(uint32_t offset) {
+        return versions.back().seek(offset);
+    }
 
-    uint32_t read(uint8_t * dst, uint32_t bytes);
+    uint32_t read(uint8_t * dst, uint32_t bytes) {
+        return versions.back().read(dst, bytes);
+    }
 
-    uint32_t write(const uint8_t * src, uint32_t bytes);
+    uint32_t write(const uint8_t * src, uint32_t bytes) {
+        versions.back().write(src, bytes);
+        return bytes;
+    }
 
     void truncate(void);
 
-    uint32_t fileSize(void) const;
+    uint32_t fileSize(void) const {
+        return versions.back().size();
+    }
 
     void addVersion(void);
 
     bool undoVersion(void);
-};
 
-struct CFile::Bucket {
-    unsigned int refCount;
-
-    uint32_t size;
-    uint8_t * bytes;
-
-    void createBytesFrom(uint8_t * fromBytes, uint32_t inSize) {
-        bytes = new uint8_t[size];
-        for (uint32_t i = 0; i < size; i++) {
-            bytes[i] = fromBytes[i];
-        }
-    }
-
-    Bucket(uint8_t * fromBytes, uint32_t inSize) : size(inSize), refCount(0) {
-        createBytesFrom(fromBytes, inSize);
-    }
-
-    Bucket(const Bucket & toCopy) : refCount(0) {
-        createBytesFrom(toCopy.bytes, toCopy.size);
-    }
-
-    ~Bucket() {
-        delete [] bytes;
-    }
-
-    Bucket & operator = (const Bucket & toAssign) {
-        if (this == &toAssign) {
-            return (*this);
-        }
-
-        delete [] bytes;
-        createBytesFrom(toAssign.bytes, toAssign.size);
-
-        return (*this);
+    void print() {
+        versions.back().print();
     }
 };
 
-struct CFile::Data {
-    unsigned int refCount;
-
-    Vector<CFile::Bucket *> * buckets;
-
-    Data() : refCount(0) {
-        buckets = new Vector<CFile::Bucket *>();
-    }
-
-    Data(const Data & toCopy) : refCount(0) {
-        buckets = new Vector<CFile::Bucket *>(*(toCopy.buckets));
-        for (size_t i = 0; i < (*buckets).getSize(); i++) {
-            ((*buckets)[i]->refCount)++;
-        }
-    }
-
-    ~Data() {
-        delete [] buckets;
-    }
-
-    void releaseBucket(CFile::Bucket * bucket) {
-        if (--(bucket->refCount) == 0) {
-            delete bucket;
-        }
-    }
-
-    Data & operator = (const Data & toAssign) {
-        if (this == &toAssign) {
-            return (*this);
-        }
-
-        for (size_t i = 0; i < (*buckets).getSize(); i++) {
-            releaseBucket((*buckets)[i]);
-        }
-        delete buckets;
-
-        buckets = new Vector<CFile::Bucket *>(*(toAssign.buckets));
-        for (size_t i = 0; i < (*buckets).getSize(); i++) {
-            ((*buckets)[i]->refCount)++;
-        }
-    }
-};
-
-class CFile::Version {
-    Data * data;
-
-    void releaseData() {
-        if (--(data->refCount) == 0) {
-            delete data;
-        }
-    }
-
-public:
-
-    Version() {
-        data = new Data();
-        data->refCount = 1;
-    }
-
-    Version(const Version & toCopy) {
-        data = toCopy.data;
-        (data->refCount)++;
-    }
-
-    ~Version() {
-        releaseData();
-    }
-
-    Version & operator = (const Version & toAssign) {
-        if (this == &toAssign) {
-            return *this;
-        }
-
-        releaseData();
-        data = toAssign.data;
-        (data->refCount)++;
-
-        return(*this);
-    }
-
-    void prepareEdit() {
-        if ((*data).refCount > 1) {
-            Data * newData = new Data(*data);
-            (data->refCount)--;
-            data = newData;
-        }
-    }
-
-    class Iterator {
-        size_t posInData;
-        size_t posInBucket;
-    };
-};
-
-*/
 #ifndef __PROGTEST__
 #include <iostream>
-/*
+
 bool writeTest(CFile & x, const initializer_list<uint8_t> & data, uint32_t wrLen) {
     return x.write(data.begin(), data.size()) == wrLen;
 }
@@ -406,7 +525,7 @@ bool readTest(CFile & x, const initializer_list<uint8_t> & data, uint32_t rdLen)
         }
     }
     return true;
-}*/
+}
 
 
 void listTest() {
@@ -442,7 +561,7 @@ void listTest() {
     auto it1 = l2.iterator(1); //1, 2, 3, 4
     l2.remove(it1);
     assert(l2.getSize() == 3);
-    auto it2 = l2.begin();
+    auto it2 = l2.begin(); //1, 3, 4
     assert(*(it2++) == 1);
     assert(*(it2) == 3);
     l2.insert(it2, 10);
@@ -457,7 +576,6 @@ int main(void) {
 
     listTest();
 
-    /*
     CFile f0;
     assert(writeTest(f0, { 10, 20, 30 }, 3));
     assert(f0.fileSize() == 3);
@@ -469,6 +587,54 @@ int main(void) {
     assert(f0.seek(1));
     assert(readTest(f0, { 20, 5, 4, 70, 80 }, 7));
     assert(f0.seek(3));
+
+    CFile f001;
+    assert(f001.fileSize() == 0);
+    assert(!f001.seek(1));
+    assert(f001.seek(0));
+    assert(writeTest(f001, { 1, 2, 3 }, 3));
+    assert(f001.fileSize() == 3);
+    assert(writeTest(f001, { 4, 5, 6 }, 3));
+    assert(f001.fileSize() == 6);
+    assert(writeTest(f001, { 7, 8, 9, 10 }, 4));
+    assert(f001.fileSize() == 10);
+    assert(f001.seek(4));
+    assert(readTest(f001, { 5, 6, 7, 8, 9, 10 }, 6));
+    assert(f001.seek(0));
+    assert(writeTest(f001, { 10, 20 }, 2));
+    assert(f001.fileSize() == 10);
+    assert(f001.seek(0));
+    assert(readTest(f001, { 10, 20, 3, 4, 5, 6, 7, 8, 9, 10 }, 15));
+    assert(f001.seek(3));
+    assert(writeTest(f001, { 40, 50, 60 }, 3));
+    assert(f001.seek(3));
+    assert(readTest(f001, { 40, 50, 60 }, 3));
+    assert(f001.fileSize() == 10);
+    assert(f001.seek(0));
+    assert(readTest(f001, { 10, 20, 3, 40, 50, 60, 7, 8, 9, 10 }, 15));
+    assert(f001.seek(7));
+    assert(writeTest(f001, { 80 }, 1));
+    assert(f001.seek(0));
+    assert(readTest(f001, { 10, 20, 3, 40, 50, 60, 7, 80, 9, 10 }, 15));
+    assert(f001.seek(9));
+    assert(writeTest(f001, { 100 }, 1));
+    assert(writeTest(f001, { 110 }, 1));
+    assert(f001.fileSize() == 11);
+    assert(f001.seek(0));
+    assert(readTest(f001, { 10, 20, 3, 40, 50, 60, 7, 80, 9, 100, 110 }, 15));
+    assert(f001.seek(2));
+    assert(writeTest(f001, { 30, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, 13));
+    assert(f001.fileSize() == 15);
+    assert(f001.seek(0));
+    assert(readTest(f001, { 10, 20, 30, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, 15));
+    assert(!f001.seek(16));
+    assert(f001.seek(15));
+    assert(readTest(f001, { }, 100));
+    assert(f001.seek(14));
+    assert(readTest(f001, { 0 }, 100));
+
+
+/*
     f0.addVersion();
     assert(f0.seek(6));
     assert(writeTest(f0, { 100, 101, 102, 103 }, 4));
