@@ -10,7 +10,7 @@ https://courses.fit.cvut.cz/BI-PA2/
 |hw |points
 
 |hw01
-|
+|7.15/5.00
 
 |hw02
 |
@@ -40,7 +40,7 @@ https://courses.fit.cvut.cz/BI-PA2/
 |ex |points
 
 |ex03
-|0.1/0.1
+|0.10/0.10
 
 |ex04
 |0.15/0.15
