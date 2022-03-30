@@ -1,10 +1,20 @@
+/**
+ * @file soubor_s_verzemi.cpp
+ * @author Michal Dobeš
+ * @date 2022-03-30
+ *
+ * @brief Binary file represented as class, with write, read and seek abilites. For faster copyiing supports copy-on-write on several levels.
+ *
+ * @copyright Copyright (c) 2022
+ *
+ */
+
 #ifndef __PROGTEST__
 #include <cassert>
 #include <cstring>
 #include <cstdlib>
 #include <cstdio>
 #include <cstdint>
-#include <iostream>
 using namespace std;
 #endif /* __PROGTEST__ */
 
@@ -337,13 +347,32 @@ public:
     }
 };
 
+/**
+ * @brief Representation of binary file.
+ *
+ * Supports operations as seek, write, read, truncate.
+ * Has the ability of simple version control, with saving and reverting to versions.
+ *
+ * Prioritised for copy speed.
+ *
+ */
 class CFile {
-private:
-    struct Bucket {
-        unsigned int refCount;
+    /**
+     * File contains List of Versions. This contains all Versions including current one (at back).
+     * Each Version has Data. Data is reference counted and is copied on write.
+     * Data contains List of Buckets. Bucket is reference counted and is copied on write. Each Bucket contains array of bytes.
+     */
 
-        uint32_t size;
-        uint8_t * bytes;
+private:
+    /**
+     * @brief Bucket containing array of bytes
+     *
+     */
+    struct Bucket {
+        unsigned int refCount; // Reference counter for copy-on-write
+
+        uint32_t size; // Size of array of bytes
+        uint8_t * bytes; // Array of bytes
 
         void createBytesFrom(const uint8_t * fromBytes, uint32_t inSize) {
             bytes = new uint8_t[size];
@@ -376,12 +405,23 @@ private:
         }
     };
 
+    /**
+     * @brief Container for List of Buckets
+     *
+     */
     struct Data {
-        unsigned int refCount;
+        unsigned int refCount; // Reference counter for copy-on-write
 
-        List<CFile::Bucket *> buckets;
-        uint32_t totalBytes;
+        List<CFile::Bucket *> buckets; // List of Buckets
+        uint32_t totalBytes; // Total bytes in every bucket (update at each write/delete)
 
+        /**
+         * @brief Update reference counter of Bucket in List of Buckets (buckets)
+         *
+         * If needed bucket is deallocated.
+         *
+         * @param bucket Pointer to bucket which should be released
+         */
         void releaseBucket(CFile::Bucket * bucket) {
             if (--(bucket->refCount) == 0) {
                 delete bucket;
@@ -390,7 +430,7 @@ private:
 
         Data() : refCount(0), buckets(), totalBytes(0) { }
 
-        Data(const Data & toCopy) : refCount(0), buckets(toCopy.buckets), totalBytes(toCopy.totalBytes) {
+        Data(const Data & toCopy) : refCount(0), buckets(toCopy.buckets), totalBytes(toCopy.totalBytes) { // Copy buckets and update references
             auto iter = buckets.begin();
             while (!iter.isAtEnd()) {
                 (*(iter++))->refCount++;
@@ -398,7 +438,7 @@ private:
         }
 
         ~Data() {
-            auto iter = buckets.begin();
+            auto iter = buckets.begin(); // Release all buckets
             while (!iter.isAtEnd()) {
                 releaseBucket(*(iter++));
             }
@@ -409,12 +449,12 @@ private:
                 return (*this);
             }
 
-            auto iter = buckets.begin();
+            auto iter = buckets.begin(); // Release all buckets
             while (!iter.isAtEnd()) {
                 releaseBucket(*(iter++));
             }
 
-            buckets = toAssign.buckets;
+            buckets = toAssign.buckets; // Copy buckets and update references
             iter = buckets.begin();
             while (!iter.isAtEnd()) {
                 (*(iter++))->refCount++;
@@ -425,13 +465,29 @@ private:
             return (*this);
         }
 
+        /**
+         * @brief Create new bucket and insert it before Iterator
+         *
+         * Iterator is moved to inserted bucket.
+         *
+         * @param to Iterator before which new bucket should be inserted
+         * @param data Data with whom should new bucket be created
+         * @param size Size of data
+         */
         void insertNewBucket(List<CFile::Bucket *>::ListIterator & to, const uint8_t * data, uint32_t size) {
             Bucket * newBucket = new Bucket(data, size);
-            newBucket->refCount = 1;
+            newBucket->refCount = 1; // Update buckets reference count 
             buckets.insert(to, newBucket);
             totalBytes += size;
         }
 
+        /**
+         * @brief Remove bucket at Iterator
+         *
+         * Iterator is moved to next bucket.
+         *
+         * @param at Iterator of bucket which should be removed
+         */
         void removeBucket(List<CFile::Bucket *>::ListIterator & at) {
             totalBytes -= ((*at)->size);
             releaseBucket(*at);
@@ -440,31 +496,41 @@ private:
     };
 
     class Version {
-        Data * data;
+        Data * data; // Data of version
 
-        List<CFile::Bucket *>::ListIterator posInData;
-        uint32_t posInBucket;
+        List<CFile::Bucket *>::ListIterator posInData; // List Iterator for List of Buckets in data
+        uint32_t posInBucket; // Position in bucket pointed to by posInData
 
-        uint32_t posAtByteInVersion;
+        uint32_t posAtByteInVersion; // Total position in data by bytes
 
+        /**
+         * @brief Update reference counter in data and dealloc if needed
+         *
+         */
         void releaseData() {
             if (--(data->refCount) == 0) {
                 delete data;
             }
         }
 
+        /**
+         * @brief Copy data if needed
+         *
+         * Should be called before operation that edits data.
+         * By using copy-on-write principle copy data if needed.
+         *
+         */
         void prepareEdit() {
-            if ((*data).refCount > 1) {
+            if ((*data).refCount > 1) { // If data is referenced by more versions, copy data and update reference count
                 Data * newData = new Data(*data);
                 (data->refCount)--;
                 data = newData;
                 data->refCount = 1;
-                seek(posAtByteInVersion);
+                seek(posAtByteInVersion); // Update posInData Iterator to be in newly allocated data
             }
         }
 
     public:
-
         Version() : posInBucket(0), posAtByteInVersion(0) {
             data = new Data();
             data->refCount = 1;
@@ -496,6 +562,15 @@ private:
             return(*this);
         }
 
+        /**
+         * @brief Move current position to byte
+         *
+         * Byte needs to be in range [0, data size in bytes]
+         *
+         * @param to Byte to which move position to
+         * @return true Position is in range
+         * @return false Position is out of range and was not moved
+         */
         bool seek(uint32_t to) {
             if (to > data->totalBytes) {
                 return false;
@@ -514,45 +589,62 @@ private:
             return true;
         }
 
+        /**
+         * @brief Read bytes from data
+         *
+         * If requested amount of bytes is larger than bytes available, stops at end.
+         *
+         * @param dst Where should be read bytes copied to
+         * @param bytes Amount of bytes to read
+         * @return size_t Bytes read
+         */
         size_t read(uint8_t * dst, uint32_t bytes) {
-            if (posAtByteInVersion == data->totalBytes) {
+            if (posAtByteInVersion == data->totalBytes) { // If position is at end of file return 0
                 return 0;
             }
 
             uint32_t i = 0;
-            while (i < bytes) {
-                dst[i++] = (*posInData)->bytes[posInBucket++];
-                posAtByteInVersion++;
-                if (posInBucket >= (*posInData)->size) {
+            while (i < bytes) { // Copy bytes while possible and while requested
+                dst[i++] = (*posInData)->bytes[posInBucket++]; // Copy byte
+                posAtByteInVersion++; // Update current position in file
+                if (posInBucket >= (*posInData)->size) { // If reached end of bucket in data, move to next bucket
                     posInBucket = 0;
                     posInData++;
                 }
 
-                if (posAtByteInVersion >= data->totalBytes) {
+                if (posAtByteInVersion >= data->totalBytes) { // If reached end of file, return
                     break;
                 }
             }
             return i;
         }
 
+        /**
+         * @brief Write bytes into file
+         *
+         * Writes from current position, bytes are overwritten or (if at end of file) appended
+         *
+         * @param src Source of bytes that should be written
+         * @param bytes Size of src
+         */
         void write(const uint8_t * src, uint32_t bytes) {
-            prepareEdit();
+            prepareEdit(); // If needed copy data (copy-on-write principle)
 
-            uint32_t bytesRemaining = bytes;
-            if (posInBucket != 0) {
+            uint32_t bytesRemainingToOverwrite = bytes;
+            if (posInBucket != 0) { // If position is in middle of bucket, create new bucket out of the part of bucket that should not be overwritten
                 data->insertNewBucket(posInData, (*posInData)->bytes, posInBucket);
                 posInData++;
             }
 
             if (!posInData.isAtEnd()) {
-                while (bytesRemaining > 0) {
-                    if (((*posInData)->size - posInBucket) > bytesRemaining) {
-                        data->insertNewBucket(posInData, (*posInData)->bytes + posInBucket + bytesRemaining, ((*posInData)->size - (posInBucket + bytesRemaining)));
-                        auto removeBucketAt = posInData;
-                        data->removeBucket(++removeBucketAt);
+                while (bytesRemainingToOverwrite > 0) { // While there are bytes that should be overwritten
+                    if (((*posInData)->size - posInBucket) > bytesRemainingToOverwrite) { // If current bucket is larger than bytes that remain to be overwriten
+                        data->insertNewBucket(posInData, (*posInData)->bytes + posInBucket + bytesRemainingToOverwrite, ((*posInData)->size - (posInBucket + bytesRemainingToOverwrite))); // Create new bucket from part that should be kept. (posInBucket is included in case all overwritten data are in one bucket, thus data that were already copied cannot be copied again)
+                        auto removeBucketAt = posInData; // After insertion of new bucket, old bucket is after new bucket, threfore the Iterator needs to be temporarily raised
+                        data->removeBucket(++removeBucketAt); // Remove the old bucket
                         break;
-                    } else {
-                        bytesRemaining -= ((*posInData)->size - posInBucket);
+                    } else { // If bucket is smaller than bytes that remain to overwriten, remove bucket
+                        bytesRemainingToOverwrite -= ((*posInData)->size - posInBucket);
                         data->removeBucket(posInData);
                     }
 
@@ -563,42 +655,41 @@ private:
                 }
             }
 
-            data->insertNewBucket(posInData, src, bytes);
-            posInData++;
+            data->insertNewBucket(posInData, src, bytes); // Create new bucket from bytes that should be written and insert it into data (if overwritten data ends in middle of bucket, new bucket is inserted before this bucket, else is at end)
+            posInData++; // Update Iterators
             posInBucket = 0;
             posAtByteInVersion += bytes;
         }
 
+        /**
+         * @brief Get count of bytes that is stored in data
+         *
+         * @return uint32_t Stored bytes
+         */
         uint32_t size() const {
             return data->totalBytes;
         }
 
+        /**
+         * @brief Remove all bytes after current position
+         *
+         */
         void truncate() {
-            prepareEdit();
+            prepareEdit(); // If needed copy data (copy-on-write principle)
 
-            if (posInBucket != 0) {
+            if (posInBucket != 0) { // If position is in middle of bucket, create new bucket out of the part of bucket that should not be overwritten
                 data->insertNewBucket(posInData, (*posInData)->bytes, posInBucket);
                 posInData++;
             }
             posInBucket = 0;
 
-            while (!posInData.isAtEnd()) {
+            while (!posInData.isAtEnd()) { // Remove all other buckets in data
                 data->removeBucket(posInData);
-            }
-        }
-
-        void print() const {
-            auto iter = data->buckets.begin();
-            while (!iter.isAtEnd()) {
-                for (uint32_t i = 0; i < (*(*iter)).size; i++) {
-                    cout << int((*(*iter)).bytes[i]) << endl;
-                }
-                iter++;
             }
         }
     };
 
-    List<Version> versions;
+    List<Version> versions; // List of all versions, current version is at back
 
 public:
     CFile() {
@@ -615,31 +706,81 @@ public:
         return (*this);
     }
 
+    /**
+     * @brief Seek in current version
+     *
+     * Move current position to byte.
+     * Byte needs to be in range [0, data size in bytes].
+     *
+     * @param offset Byte to which move position to
+     * @return true Position is in range
+     * @return false Position is out of range and was not moved
+     */
     bool seek(uint32_t offset) {
         return versions.back().seek(offset);
     }
 
+    /**
+     * @brief Read bytes from current version
+     *
+     * Reads from current position.
+     * If requested amount of bytes is larger than bytes available, stops at end.
+     *
+     * @param dst Where should be read bytes copied to
+     * @param bytes Amount of bytes to read
+     * @return uint32_t Bytes read
+     */
     uint32_t read(uint8_t * dst, uint32_t bytes) {
         return versions.back().read(dst, bytes);
     }
 
+    /**
+     * @brief Write bytes into current version
+     *
+     * Writes from current position, bytes are overwritten or (if at end of file) appended.
+     *
+     * @param src Source of bytes that should be written
+     * @param bytes Size of src
+     * @return uint32_t Amount of bytes that were written
+     */
     uint32_t write(const uint8_t * src, uint32_t bytes) {
         versions.back().write(src, bytes);
         return bytes;
     }
 
+    /**
+     * @brief Remove all bytes after current position in version
+     *
+     */
     void truncate(void) {
         versions.back().truncate();
     }
 
+    /**
+     * @brief Get count of bytes that is stored in current version
+     *
+     * @return uint32_t Stored bytes
+     */
     uint32_t fileSize(void) const {
         return versions.back().size();
     }
 
+    /**
+     * @brief Archives the current version and sets its copy as the current version
+     *
+     */
     void addVersion(void) {
         versions.pushBack(versions.back());
     }
 
+    /**
+     * @brief Removes the current version and sets the previous version as the current version
+     *
+     * Available only if archived version exists.
+     *
+     * @return true Version was reverted
+     * @return false Version could not be reverted
+     */
     bool undoVersion(void) {
         if (versions.getSize() <= 1) {
             return false;
@@ -647,14 +788,12 @@ public:
         versions.popBack();
         return true;
     }
-
-    void print() {
-        versions.back().print();
-    }
 };
 
 #ifndef __PROGTEST__
 #include <iostream>
+
+// @section Tests
 
 bool writeTest(CFile & x, const initializer_list<uint8_t> & data, uint32_t wrLen) {
     return x.write(data.begin(), data.size()) == wrLen;
@@ -674,7 +813,6 @@ bool readTest(CFile & x, const initializer_list<uint8_t> & data, uint32_t rdLen)
     }
     return true;
 }
-
 
 void listTest() {
 
