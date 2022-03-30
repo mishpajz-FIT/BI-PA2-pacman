@@ -1,3 +1,13 @@
+/**
+ * @file telefonniseznam.cpp
+ * @author Michal Dobeš
+ * @date 2022-03-02
+ *
+ * @brief Implements method, that stores names from files, performs searches on them and returns amount of matches
+ *
+ * @copyright Copyright (c) 2022
+ *
+ */
 #ifndef __PROGTEST__
 #include <iostream>
 #include <iomanip>
