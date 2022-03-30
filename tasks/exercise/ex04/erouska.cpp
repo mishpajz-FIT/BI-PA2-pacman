@@ -1,7 +1,7 @@
 /**
  * @file erouska.cpp
  * @author Michal Dobeš
- * @date 2022-03-30
+ * @date 2022-03-08
  *
  * @brief Implementation of timestamp class, contact class (represents contact between two persons and timestamp) and facemask class, which is used for managing contacts
  *
