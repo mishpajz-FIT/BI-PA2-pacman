@@ -31,26 +31,12 @@ public:
 
     CDate(unsigned int y, unsigned int m, unsigned int d) : year(y), month(m), day(d) { }
 
-    bool isEqual(const CDate & otherDate) const {
-        return ((year == otherDate.year) && (month == otherDate.month) && (day == otherDate.day));
-    }
-
     bool operator == (const CDate & rhs) const {
-        return isEqual(rhs);
+        return tie(year, month, day) == (rhs.year, rhs.month, rhs.day)
     }
 
     bool operator > (const CDate & rhs) const {
-
-        if (year == rhs.year) {
-            if (month == rhs.month) {
-                if (day == rhs.day) {
-                    return false;
-                }
-                return day > rhs.day;
-            }
-            return month > rhs.month;
-        }
-        return year > rhs.year;
+        return tie(year, month, day) > tie(rhs.year, rhs.month, rhs.day);
     }
 };
 
@@ -68,26 +54,12 @@ public:
 
     CTime(unsigned int h, unsigned int m, unsigned int s) : hour(h), minute(m), second(s) { }
 
-    bool isEqual(const CTime & otherTime) const {
-        return ((hour == otherTime.hour) && (minute == otherTime.minute) && (second == otherTime.second));
-    }
-
     bool operator == (const CTime & rhs) const {
-        return isEqual(rhs);
+        return tie(hour, minute, second) == tie(otherTime.hour, otherTime.minute, otherTime.second);
     }
 
     bool operator > (const CTime & rhs) const {
-
-        if (hour == rhs.hour) {
-            if (minute == rhs.minute) {
-                if (second == rhs.second) {
-                    return false;
-                }
-                return second > rhs.second;
-            }
-            return minute > rhs.minute;
-        }
-        return hour > rhs.hour;
+        return tie(hour, minute, second) > tie(rhs.hour, rhs.minute, rhs.second);
     }
 };
 
@@ -102,23 +74,12 @@ public:
 
     CTimeStamp(unsigned int y, unsigned int mo, unsigned int d, unsigned int h, unsigned int mi, unsigned int s) : time(h, mi, s), date(y, mo, d) { }
 
-    bool isEqual(const CTimeStamp & otherTimestamp) const {
-        return ((time == otherTimestamp.time) && (date == otherTimestamp.date));
-    }
-
     bool operator == (const CTimeStamp & rhs) const {
-        return isEqual(rhs);
+        return tie(date, time) == tie(rhs.date, rhs.time);
     }
 
     bool operator >= (const CTimeStamp & rhs) const {
-
-        if (date == rhs.date) {
-            if (time == rhs.time) {
-                return true;
-            }
-            return time > rhs.time;
-        }
-        return date > rhs.date;
+        return tie(date, time) > tie(rhs.date, rhs.time);
     }
 };
 
