@@ -1,6 +1,6 @@
 /**
  * @file kontrolnihlaseni.cpp
- * @author Michal Dobeš (dobesmic@fit.cvut.cz)
+ * @author Michal Dobeš
  * @date 2022-03-13
  *
  * @brief Registry of values, each value is specified by two uniqe identificators
