@@ -1,3 +1,14 @@
+/**
+ * @file erouskav2.cpp
+ * @author Michal Dobeš
+ * @date 2022-03-31
+ *
+ * @brief Implementation of timestamp class, contact class (represents contact between two persons and timestamp) and facemask class, which is used for managing contacts
+ * Implements search for the most occuring value in vector of pairs, pairs need to be unique
+ *
+ * @copyright Copyright (c) 2022
+ *
+ */
 #ifndef __PROGTEST__
 #include <iostream>
 #include <iomanip>
@@ -93,7 +104,7 @@ public:
  */
 class CContact {
     CTimeStamp timestamp;
-    int person1; // ID of person1
+    int person1; // ID of person1, should always be smaller than person 2
     int person2; // ID of person2
 
 public:
@@ -122,6 +133,14 @@ class CEFaceMask {
 public:
     CEFaceMask() { }
 
+    /**
+     * @brief Store new contact
+     *
+     * Note contact is not added if both persons in contact are not different
+     *
+     * @param contact Contact to store
+     * @return CEFaceMask& this object
+     */
     CEFaceMask & addContact(const CContact & contact) {
         if (contact.firstPerson() != contact.secondPerson()) {
             contacts.push_back(contact);
@@ -129,24 +148,33 @@ public:
         return *this;
     }
 
+    /**
+     * @brief Search through all contact between timestamps and get id of persons, that had most contacts
+     *
+     * Contact with two same persons is counted only once (even if happend at different time)
+     *
+     * @param from Timestamp to look from
+     * @param to Tinmestamp to look to
+     * @return vector<int>
+     */
     vector<int> getSuperSpreaders(const CTimeStamp & from, const CTimeStamp & to) {
-        vector<int> results;
+        vector<int> results; // Vector to return
 
-        set<pair<int, int>> processedContacts;
+        set<pair<int, int>> processedContacts; // Unique pairs of persons (contacts)
         for (auto & c : contacts) {
-            if (from <= c.getTimestamp() && c.getTimestamp() <= to) {
-                processedContacts.emplace(make_pair(c.firstPerson(), c.secondPerson()));
+            if (from <= c.getTimestamp() && c.getTimestamp() <= to) { // Get all contacts between specified timestamps and create pairs out of persons in contact
+                processedContacts.emplace(make_pair(c.firstPerson(), c.secondPerson())); // Insert pairs into set, so the contacts that are counted are uniqe and there are no duplicits
             }
         }
 
-        map<int, unsigned int> processedPeople;
+        map<int, unsigned int> processedPeople; // Create map and raise value for each person that occurs in some contact
         for (auto & t : processedContacts) {
             processedPeople[t.first] += 1;
             processedPeople[t.second] += 1;
         }
 
         unsigned int currentMax = 1;
-        for (auto & p : processedPeople) {
+        for (auto & p : processedPeople) { // Find largest values in map and store them into result vector
             if (p.second >= currentMax) {
                 if (p.second > currentMax) {
                     results.clear();
