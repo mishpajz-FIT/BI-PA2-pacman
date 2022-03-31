@@ -30,37 +30,32 @@ using namespace std;
 
 
 /**
- * @brief Min or max heap of unsigned ints
+ * @brief Heap abstract template
  *
  */
+template <typename T>
 class LittleHeap {
 private:
-    vector<unsigned int> nodes; //Vector used for storing data
-    bool max; //Bool determining whether it is max or min heap
+    vector<T> nodes; //Vector used for storing data
 
-    bool compare(unsigned int & lhs, unsigned int rhs) const {
-        if (max) {
-            return lhs < rhs;
-        } else {
-            return lhs > rhs;
-        }
-    }
+    virtual bool compare(T & lhs, T rhs) const = 0; //Compare function supplied by ancestor
 
 public:
 
     /**
      * @brief Construct a new Heap object
      *
-     * @param isMaxHeap If true, object will be Max heap, else Min heap
      */
-    LittleHeap(bool isMaxHeap) : max(isMaxHeap) { }
+    LittleHeap() { }
+
+    virtual ~LittleHeap() = default;
 
     /**
      * @brief Add element into heap
      *
      * @param value
      */
-    void push(unsigned int value) {
+    void push(const T & value) {
         size_t currentIndex = nodes.size();
 
         nodes.push_back(value); //Add to the back of the vectors
@@ -90,12 +85,12 @@ public:
      *
      * @return unsigned int Removed element
      */
-    unsigned int pop() {
+    T pop() {
         if (nodes.size() == 0) {
             throw (-1);
         }
 
-        unsigned int value = nodes.front();
+        T value = nodes.front();
         //Remove root (first value), add last value as root
         nodes.front() = nodes.back();
         nodes.pop_back();
@@ -117,7 +112,7 @@ public:
             rightChild = (2 * currentIndex) + 2;
 
             if (nodes.size() > rightChild) { // If both childern are in the heap
-                if (compare(nodes[leftChild], nodes[rightChild])) { // Get childern with larger/smaller (depending if is min or max heap) value
+                if (compare(nodes[leftChild], nodes[rightChild])) { // Get childern with larger/smaller (depending on heap type) value
                     greaterNode = rightChild;
                     secondGreaterNode = leftChild;
                 } else {
@@ -125,12 +120,12 @@ public:
                     secondGreaterNode = rightChild;
                 }
 
-                if (compare(nodes[currentIndex], nodes[greaterNode])) { //If current node larger/smaller (depending if is min or max heap) than first childern, switch values
+                if (compare(nodes[currentIndex], nodes[greaterNode])) { //If current node larger/smaller (depending on heap type) than first childern, switch values
                     swap(nodes[currentIndex], nodes[greaterNode]);
 
                     currentIndex = greaterNode; //Move to the switched node for next loop
                     continue;
-                } else if (compare(nodes[currentIndex], nodes[secondGreaterNode])) { //If current node larger/smaller (depending if is min or max heap) than second childern, switch values
+                } else if (compare(nodes[currentIndex], nodes[secondGreaterNode])) { //If current node larger/smaller (depending on heap type) than second childern, switch values
                     swap(nodes[currentIndex], nodes[secondGreaterNode]);
 
                     currentIndex = secondGreaterNode;   //Move to the switched node for next loop
@@ -140,7 +135,7 @@ public:
                     break;
                 }
             } else if (nodes.size() > leftChild) { //If only one childern in the heap
-                if (compare(nodes[currentIndex], nodes[leftChild])) { //If current node larger/smaller (depending if is min or max heap) than childern, switch values
+                if (compare(nodes[currentIndex], nodes[leftChild])) { //If current node larger/smaller  (depending on heap type) than childern, switch values
                     swap(nodes[currentIndex], nodes[leftChild]);
 
                     currentIndex = leftChild;
@@ -165,15 +160,50 @@ public:
      *
      * @return unsigned int Top element
      */
-    unsigned int top() const {
+    T top() const {
         if (nodes.size() == 0) {
             throw (-1);
         }
         return nodes.front();
     }
 
+    /**
+     * @brief Get amount of elements in heap
+     *
+     * @return size_t amount of elements in heap
+     */
     size_t size() const {
         return nodes.size();
+    }
+};
+
+/**
+ * @brief Min heap
+ *
+ * Adds compare function, rest of logic is handled by LittleHeap
+ * @see LittleHeap
+ *
+ * @tparam T Heap data type
+ */
+template <typename T>
+class MinHeap : public LittleHeap<T> {
+    bool compare(T & lhs, T rhs) const override {
+        return lhs > rhs;
+    }
+};
+
+/**
+ * @brief Max heap
+ *
+ * Adds compare function, rest of logic is handled by LittleHeap
+ * @see LittleHeap
+ *
+ * @tparam T Heap data type
+ */
+template <typename T>
+class MaxHeap : public  LittleHeap<T> {
+    bool compare(T & lhs, T rhs) const override {
+        return lhs < rhs;
     }
 };
 
@@ -248,8 +278,8 @@ private:
     vector<CompanyID> companyIds; //Storage of unique ids (with pointers to values), sorted alphabetically
 
     //The median is calculated quickly thanks to splitting all values into two halves
-    LittleHeap medianLowerHalf; //Values from the lower half are stored in the Max heap.
-    LittleHeap medianUpperHalf; //values from the upper half are stored in the Min heap.
+    MaxHeap<unsigned int> medianLowerHalf; //Values from the lower half are stored in the Max heap.
+    MinHeap<unsigned int> medianUpperHalf; //values from the upper half are stored in the Min heap.
 
     /**
      * @brief Get iterator to searched contact from CVATRegister#companyContacts
@@ -321,7 +351,7 @@ private:
     }
 
 public:
-    CVATRegister(void) : medianLowerHalf(true), medianUpperHalf(false) { }
+    CVATRegister(void) : medianLowerHalf(), medianUpperHalf() { }
 
     ~CVATRegister(void) {
         for (auto & a : companyIds) {
@@ -656,7 +686,9 @@ int main(void) {
     assert(b2.cancelCompany("ACME", "Kolejni"));
     assert(!b2.cancelCompany("ACME", "Kolejni"));
 
-    LittleHeap lhMax(true);
+
+    // Heap tests
+    MaxHeap<int> lhMax;
     assert(lhMax.size() == 0);
     lhMax.push(1);
     assert(lhMax.size() == 1);
@@ -684,7 +716,7 @@ int main(void) {
     assert(lhMax.pop() == 1000);
     assert(lhMax.pop() == 347);
 
-    LittleHeap lhMin(false);
+    MinHeap<int> lhMin;
     assert(lhMin.size() == 0);
     lhMin.push(1);
     assert(lhMin.size() == 1);
