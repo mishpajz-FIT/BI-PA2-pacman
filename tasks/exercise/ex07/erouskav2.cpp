@@ -32,11 +32,11 @@ public:
     CDate(unsigned int y, unsigned int m, unsigned int d) : year(y), month(m), day(d) { }
 
     bool operator == (const CDate & rhs) const {
-        return tie(year, month, day) == (rhs.year, rhs.month, rhs.day)
+        return tie(year, month, day) == tie(rhs.year, rhs.month, rhs.day);
     }
 
-    bool operator > (const CDate & rhs) const {
-        return tie(year, month, day) > tie(rhs.year, rhs.month, rhs.day);
+    bool operator < (const CDate & rhs) const {
+        return tie(year, month, day) < tie(rhs.year, rhs.month, rhs.day);
     }
 };
 
@@ -55,11 +55,11 @@ public:
     CTime(unsigned int h, unsigned int m, unsigned int s) : hour(h), minute(m), second(s) { }
 
     bool operator == (const CTime & rhs) const {
-        return tie(hour, minute, second) == tie(otherTime.hour, otherTime.minute, otherTime.second);
+        return tie(hour, minute, second) == tie(rhs.hour, rhs.minute, rhs.second);
     }
 
-    bool operator > (const CTime & rhs) const {
-        return tie(hour, minute, second) > tie(rhs.hour, rhs.minute, rhs.second);
+    bool operator < (const CTime & rhs) const {
+        return tie(hour, minute, second) < tie(rhs.hour, rhs.minute, rhs.second);
     }
 };
 
@@ -78,8 +78,12 @@ public:
         return tie(date, time) == tie(rhs.date, rhs.time);
     }
 
-    bool operator >= (const CTimeStamp & rhs) const {
-        return tie(date, time) > tie(rhs.date, rhs.time);
+    bool operator < (const CTimeStamp & rhs) const {
+        return tie(date, time) < tie(rhs.date, rhs.time);
+    }
+
+    bool operator <= (const CTimeStamp & rhs) const {
+        return (*this < rhs) || (*this == rhs);
     }
 };
 
@@ -88,63 +92,65 @@ public:
  *
  */
 class CContact {
-    const CTimeStamp timestamp;
-    const unsigned long person1; // ID of person1
-    const unsigned long person2; // ID of person2
+    CTimeStamp timestamp;
+    int person1; // ID of person1
+    int person2; // ID of person2
 
 public:
     CContact(const CTimeStamp & ts, int p1, int p2) : timestamp(ts), person1(p1), person2(p2) { }
 
-    /**
-     * @brief Method to determine if contact contains person id
-     *
-     * @param p Person id to look for
-     * @return true Person is part of this contact
-     * @return false Person is not part of this contact
-     */
-    bool containsPerson(unsigned int p) const {
-        return ((person1 == p) || (person2 == p));
+    int firstPerson() const {
+        return person1;
     }
 
-    /**
-     * @brief Method to determine if contact contains person id and is between specified timestamps
-     *
-     * @param p Person id to look for
-     * @param fromT Timestamp to look from
-     * @param toT Timestamp to look to
-     * @return true Person is part of this contact
-     * @return false Person is not part of this contact
-     */
-    bool containsPerson(unsigned int p, const CTimeStamp & fromT, const CTimeStamp & toT) const {
-        return (containsPerson(p) && (timestamp >= fromT && toT >= timestamp));
+    int secondPerson() const {
+        return person2;
     }
 
-    /**
-     * @brief Method to get the second person of this contact
-     *
-     * Throws if contact does not contain searched person, or if contact contains only searched person .
-     *
-     * @param to Person in this contact
-     * @return unsigned long Person in this contact other than person in 'to'
-     */
-    unsigned long otherPerson(unsigned int to) const {
-        if (to != person1 && to == person2) {
-            return person1;
-        } else if (to == person1 && to != person2) {
-            return person2;
-        }
-
-        throw "No other person";
+    CTimeStamp getTimestamp() const {
+        return timestamp;
     }
 };
 
-
 class CEFaceMask {
+    vector<CContact> contacts; // Storage of all contacts
+
 public:
-  // default constructor
-  // addContact ( contact )
-  // getSuperSpreaders ( from, to )
-  // TODO
+    CEFaceMask() { }
+
+    CEFaceMask & addContact(const CContact & contact) {
+        if (contact.firstPerson() != contact.secondPerson()) {
+            contacts.push_back(contact);
+        }
+        return *this;
+    }
+
+    vector<int> getSuperSpreaders(const CTimeStamp & from, const CTimeStamp & to) {
+        vector<int> results;
+
+        map<int, unsigned int> processedPeople;
+
+        for (auto & c : contacts) {
+            if (from <= c.getTimestamp() && c.getTimestamp() <= to) {
+                processedPeople[c.firstPerson()] += 1;
+                processedPeople[c.secondPerson()] += 1;
+            }
+        }
+
+        unsigned int currentMax = 0;
+
+        for (auto & p : processedPeople) {
+            if (p.second >= currentMax) {
+                if (p.second > currentMax) {
+                    results.clear();
+                    currentMax = p.second;
+                }
+                results.push_back(p.first);
+            }
+        }
+
+        return results;
+    }
 };
 
 #ifndef __PROGTEST__
