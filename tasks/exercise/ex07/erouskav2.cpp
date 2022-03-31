@@ -97,7 +97,11 @@ class CContact {
     int person2; // ID of person2
 
 public:
-    CContact(const CTimeStamp & ts, int p1, int p2) : timestamp(ts), person1(p1), person2(p2) { }
+    CContact(const CTimeStamp & ts, int p1, int p2) : timestamp(ts), person1(p1), person2(p2) {
+        if (p1 > p2) {
+            std::swap(person1, person2);
+        }
+    }
 
     int firstPerson() const {
         return person1;
@@ -128,17 +132,20 @@ public:
     vector<int> getSuperSpreaders(const CTimeStamp & from, const CTimeStamp & to) {
         vector<int> results;
 
-        map<int, unsigned int> processedPeople;
-
+        set<pair<int, int>> processedContacts;
         for (auto & c : contacts) {
             if (from <= c.getTimestamp() && c.getTimestamp() <= to) {
-                processedPeople[c.firstPerson()] += 1;
-                processedPeople[c.secondPerson()] += 1;
+                processedContacts.emplace(make_pair(c.firstPerson(), c.secondPerson()));
             }
         }
 
-        unsigned int currentMax = 0;
+        map<int, unsigned int> processedPeople;
+        for (auto & t : processedContacts) {
+            processedPeople[t.first] += 1;
+            processedPeople[t.second] += 1;
+        }
 
+        unsigned int currentMax = 1;
         for (auto & p : processedPeople) {
             if (p.second >= currentMax) {
                 if (p.second > currentMax) {
