@@ -1,3 +1,14 @@
+/**
+ * @file vector.cpp
+ * @author Michal Dobeš
+ * @date 2022-03-31
+ *
+ * @brief Implementation of std-like Vector template
+ *
+ * @copyright Copyright (c) 2022
+ *
+ */
+
 #include <cstdlib>
 #include <cassert>
 
