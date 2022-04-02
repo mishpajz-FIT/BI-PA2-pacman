@@ -66,14 +66,138 @@ public:
 };
 
 class CSupermarket {
-public:
-    // default constructor
-    // store   ( name, expiryDate, count )
-    // sell    ( shoppingList )
-    // expired ( date ) const
-
 private:
-    // todo
+    struct CItem {
+        CDate date;
+        unsigned int amount;
+
+        CItem(CDate d, unsigned int a) : date(d), amount(a) { }
+    };
+
+    struct CShoplistItem {
+        pair<string, int> nameAndAmount;
+        bool exists;
+        string key;
+
+        CShoplistItem(pair<string, int> & na, bool e = false, string k = "") : nameAndAmount(na), exists(e), key(move(k)) { }
+    };
+
+    struct keysCompare {
+    private:
+        static unsigned int calculateHash(const string & s) {
+            unsigned int result = 0;
+            for (auto c : s) {
+                result += c;
+            }
+            return result;
+        }
+    public:
+        bool operator() (const string & rhs, const string & lhs) const {
+            if (rhs.length() == lhs.length()) {
+                return calculateHash(rhs) < calculateHash(lhs);
+            }
+            return rhs.length() < lhs.length();
+        }
+    };
+    set<string, keysCompare> keys;
+
+    struct itemCompare {
+        bool operator() (const CItem & rhs, const CItem & lhs) const {
+            return rhs.date > lhs.date;
+        }
+    };
+    unordered_map<string, priority_queue<CItem, vector<CItem>, itemCompare>> items;
+
+    static bool hasStringMaxMismatch(const string & s, const string & compareTo) {
+        int mismatches = 0;
+        for (size_t i = 0; i < s.length(); i++) {
+            if (s[i] != compareTo[i]) {
+                mismatches++;
+            }
+            if (mismatches > 1) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    void findInKeys(string & key, bool & found) {
+        string boundString = key;
+        boundString[0] = static_cast<char>(0);
+        auto lowerIter = keys.lower_bound(boundString);
+        boundString[0] = static_cast<char>(127);
+        auto upperIter = keys.lower_bound(boundString);
+
+        found = false;
+        string keyToFind = key;
+        while (lowerIter != upperIter) {
+
+            if (hasStringMaxMismatch(keyToFind, (*lowerIter))) {
+                if (!found) {
+                    found = true;
+                    key = (*lowerIter);
+                } else {
+                    found = false;
+                    break;
+                }
+            }
+            lowerIter++;
+        }
+    }
+
+public:
+    CSupermarket() { }
+
+    CSupermarket & store(string name, CDate expireDate, unsigned int count) {
+        items[name].push(CItem(move(expireDate), count));
+        keys.emplace(move(name));
+        return (*this);
+    }
+
+    void sell(list<pair<string, int>> & shoppingList) {
+
+        list<CShoplistItem> processedList;
+        for (auto & i : shoppingList) {
+            if (items.find(i.first) == items.end()) {
+                bool found = false;
+                string correctKey = i.first;
+                findInKeys(correctKey, found);
+
+                processedList.emplace_back(i, found, correctKey);
+
+            } else {
+                processedList.emplace_back(i, true, i.first);
+            }
+        }
+
+        shoppingList.clear();
+        for (auto & i : processedList) {
+
+            if (!(i.exists)) {
+                shoppingList.emplace_back(i.nameAndAmount);
+                continue;
+            }
+
+            while (i.nameAndAmount.second >= 0) {
+                if (items[i.key].size() == 0) {
+                    shoppingList.emplace_back(i.nameAndAmount);
+                    items.erase(i.key);
+                    keys.erase(i.key);
+                    break;
+                }
+
+                if (i.nameAndAmount.second >= static_cast<int>(items[i.key].top().amount)) {
+                    i.nameAndAmount.second -= items[i.key].top().amount;
+                    items[i.key].pop();
+                } else {
+                    const_cast<CItem &>(items[i.key].top()).amount -= i.nameAndAmount.second;
+                    break;
+                }
+            }
+        }
+    }
+
+    // expired ( date ) const
 };
 
 #ifndef __PROGTEST__
@@ -84,16 +208,16 @@ int main(void) {
         .store("beer", CDate(2016, 8, 10), 50)
         .store("bread", CDate(2016, 4, 25), 100)
         .store("okey", CDate(2016, 7, 18), 5);
-
+    /*
     list<pair<string, int> > l0 = s.expired(CDate(2018, 4, 30));
     assert(l0.size() == 4);
     assert((l0 == list<pair<string, int> > { { "bread", 200 }, { "beer", 50 }, { "butter", 10 }, { "okey", 5 } }));
-
+    */
     list<pair<string, int> > l1 { { "bread", 2 }, { "Coke", 5 }, { "butter", 20 } };
     s.sell(l1);
     assert(l1.size() == 2);
     assert((l1 == list<pair<string, int> > { { "Coke", 5 }, { "butter", 10 } }));
-
+    /*
     list<pair<string, int> > l2 = s.expired(CDate(2016, 4, 30));
     assert(l2.size() == 1);
     assert((l2 == list<pair<string, int> > { { "bread", 98 } }));
@@ -101,56 +225,56 @@ int main(void) {
     list<pair<string, int> > l3 = s.expired(CDate(2016, 5, 20));
     assert(l3.size() == 1);
     assert((l3 == list<pair<string, int> > { { "bread", 198 } }));
-
+    */
     list<pair<string, int> > l4 { { "bread", 105 } };
     s.sell(l4);
     assert(l4.size() == 0);
     assert((l4 == list<pair<string, int> > {  }));
-
+    /*
     list<pair<string, int> > l5 = s.expired(CDate(2017, 1, 1));
     assert(l5.size() == 3);
     assert((l5 == list<pair<string, int> > { { "bread", 93 }, { "beer", 50 }, { "okey", 5 } }));
-
+    */
     s.store("Coke", CDate(2016, 12, 31), 10);
 
     list<pair<string, int> > l6 { { "Cake", 1 }, { "Coke", 1 }, { "cake", 1 }, { "coke", 1 }, { "cuke", 1 }, { "Cokes", 1 } };
     s.sell(l6);
     assert(l6.size() == 3);
     assert((l6 == list<pair<string, int> > { { "cake", 1 }, { "cuke", 1 }, { "Cokes", 1 } }));
-
+    /*
     list<pair<string, int> > l7 = s.expired(CDate(2017, 1, 1));
     assert(l7.size() == 4);
     assert((l7 == list<pair<string, int> > { { "bread", 93 }, { "beer", 50 }, { "Coke", 7 }, { "okey", 5 } }));
-
+    */
     s.store("cake", CDate(2016, 11, 1), 5);
 
     list<pair<string, int> > l8 { { "Cake", 1 }, { "Coke", 1 }, { "cake", 1 }, { "coke", 1 }, { "cuke", 1 } };
     s.sell(l8);
     assert(l8.size() == 2);
     assert((l8 == list<pair<string, int> > { { "Cake", 1 }, { "coke", 1 } }));
-
+    /*
     list<pair<string, int> > l9 = s.expired(CDate(2017, 1, 1));
     assert(l9.size() == 5);
     assert((l9 == list<pair<string, int> > { { "bread", 93 }, { "beer", 50 }, { "Coke", 6 }, { "okey", 5 }, { "cake", 3 } }));
-
+    */
     list<pair<string, int> > l10 { { "cake", 15 }, { "Cake", 2 } };
     s.sell(l10);
     assert(l10.size() == 2);
     assert((l10 == list<pair<string, int> > { { "cake", 12 }, { "Cake", 2 } }));
-
+    /*
     list<pair<string, int> > l11 = s.expired(CDate(2017, 1, 1));
     assert(l11.size() == 4);
     assert((l11 == list<pair<string, int> > { { "bread", 93 }, { "beer", 50 }, { "Coke", 6 }, { "okey", 5 } }));
-
+    */
     list<pair<string, int> > l12 { { "Cake", 4 } };
     s.sell(l12);
     assert(l12.size() == 0);
     assert((l12 == list<pair<string, int> > {  }));
-
+    /*
     list<pair<string, int> > l13 = s.expired(CDate(2017, 1, 1));
     assert(l13.size() == 4);
     assert((l13 == list<pair<string, int> > { { "bread", 93 }, { "beer", 50 }, { "okey", 5 }, { "Coke", 2 } }));
-
+    */
     list<pair<string, int> > l14 { { "Beer", 20 }, { "Coke", 1 }, { "bear", 25 }, { "beer", 10 } };
     s.sell(l14);
     assert(l14.size() == 1);
