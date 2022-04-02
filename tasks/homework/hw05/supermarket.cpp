@@ -46,6 +46,23 @@ public:
         month = m;
         day = d;
     }
+
+    friend bool operator < (const CDate & lhs, const CDate & rhs) {
+        return tie(lhs.year, lhs.month, lhs.day) < tie(rhs.year, rhs.month, rhs.day);
+    }
+
+    friend bool operator > (const CDate & lhs, const CDate & rhs) { return rhs < lhs; }
+
+    friend bool operator <= (const CDate & lhs, const CDate & rhs) { return !(lhs > rhs); }
+
+    friend bool operator >= (const CDate & lhs, const CDate & rhs) { return !(rhs < lhs); }
+
+    friend bool operator == (const CDate & lhs, const CDate & rhs) {
+        return tie(lhs.year, lhs.month, lhs.day) == tie(rhs.year, rhs.month, rhs.day);
+    }
+
+    friend bool operator != (const CDate & lhs, const CDate & rhs) { return !(rhs == lhs); }
+
 };
 
 class CSupermarket {
