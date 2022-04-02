@@ -21,9 +21,31 @@ using namespace std;
 #endif /* __PROGTEST__ */
 
 class CDate {
+private:
+    unsigned int year;
+    unsigned int month;
+    unsigned int day;
+
+    static bool leapYear(unsigned int y) {
+        return ((y % 4 == 0 && y % 100 != 0) || (y % 400 == 0 && y % 4000 != 0));
+    }
+
+    static unsigned int daysInMonth(unsigned int y, unsigned int m) {
+        unsigned int inMonth[12] = { 31, leapYear(y) ? (unsigned)(29) : (unsigned)(28), 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+        return inMonth[m - 1];
+    }
+
 public:
-    // CDate ( y, m, d )
-    // todo
+    CDate(unsigned int y, unsigned int m, unsigned int d) {
+        if (m > 12 || m == 0 ||
+            d > daysInMonth(y, m) || d == 0) {
+            throw "Invalid CDate";
+        }
+
+        year = y;
+        month = m;
+        day = d;
+    }
 };
 
 class CSupermarket {
