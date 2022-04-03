@@ -1,3 +1,13 @@
+/**
+ * @file supermarket.cpp
+ * @author Michal Dobeš
+ * @date 2022-04-03
+ *
+ * @brief
+ *
+ * @copyright Copyright (c) 2022
+ *
+ */
 #ifndef __PROGTEST__
 #include <cstring>
 #include <cstdlib>
@@ -20,22 +30,52 @@
 using namespace std;
 #endif /* __PROGTEST__ */
 
+/**
+ * @brief Date
+ *
+ * Storage for year, month, days.
+ * Has comparison operators.
+ *
+ */
 class CDate {
 private:
     unsigned int year;
     unsigned int month;
     unsigned int day;
 
+    /**
+     * @brief Is year leap
+     *
+     * @param y Year
+     * @return true Is leap
+     * @return false Isn't leap
+     */
     static bool leapYear(unsigned int y) {
         return ((y % 4 == 0 && y % 100 != 0) || (y % 400 == 0 && y % 4000 != 0));
     }
 
+    /**
+     * @brief Days in month (calculates with differce for leap year)
+     *
+     * @param y Year
+     * @param m Month
+     * @return unsigned int Days in month
+     */
     static unsigned int daysInMonth(unsigned int y, unsigned int m) {
         unsigned int inMonth[12] = { 31, leapYear(y) ? (unsigned)(29) : (unsigned)(28), 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
         return inMonth[m - 1];
     }
 
 public:
+    /**
+     * @brief Construct a new CDate object
+     *
+     * Throws if parameters are invalid
+     *
+     * @param y Year
+     * @param m Month
+     * @param d Day
+     */
     CDate(unsigned int y, unsigned int m, unsigned int d) {
         if (m > 12 || m == 0 ||
             d > daysInMonth(y, m) || d == 0) {
@@ -46,6 +86,8 @@ public:
         month = m;
         day = d;
     }
+
+    // SECTION: Comparison operators
 
     friend bool operator < (const CDate & lhs, const CDate & rhs) {
         return tie(lhs.year, lhs.month, lhs.day) < tie(rhs.year, rhs.month, rhs.day);
@@ -67,73 +109,125 @@ public:
 
 class CSupermarket {
 private:
+
+    /**
+     * @brief Item data storage in CSupermarket::items map
+     *
+     */
     struct Item {
         CDate date;
         int amount;
 
-        unsigned int expiringSerial;
+        unsigned int expiringSerial; //< Helper id for lookup in CSupermarket::expiring map, should be unique in combination with Date
 
         Item(CDate d, int a, unsigned int s) : date(d), amount(a), expiringSerial(s) { }
 
+        /**
+         * @brief Comparison operator for priority queue ordering
+         *
+         * Item with older date is larger
+         *
+         * @param rhs another Item
+         * @return true Date is younger (or same) than rhs
+         * @return false Date is older than rhs
+         */
         bool operator < (const Item & rhs) const {
             return date > rhs.date;
         }
     };
 
+    /**
+     * @brief Item data storage for processing selling
+     *
+     */
     struct ShoplistItem {
-        pair<string, int> nameAndAmount;
-        bool exists;
-        string key;
+        pair<string, int> nameAndAmount; //< Item name (can contain mismatch) and count - Inputted variables
+        bool exists; //< Does unique item with same name or similar name exist in  CSupermarket::items
+        string key; //< Correct name of item (without mismatches)
 
         ShoplistItem(pair<string, int> & na, bool e = false, string k = "") : nameAndAmount(na), exists(e), key(move(k)) { }
     };
 
+    /**
+     * @brief Item data storage for CSupermarket::expiring map
+     *
+     */
     struct ExpiredItem {
-        string name;
-        int amount;
+        string name; //< Name of item
+        int amount; //< Amount of item
 
-        ExpiredItem() { }
+        ExpiredItem() { } //< Empty constructor (needed for easier handling of map elements)
 
         ExpiredItem(string & n, int a) : name(n), amount(a) { }
     };
 
+    /**
+     * @brief Comparison functor for CSupermarket::keys set
+     *
+     */
     struct KeysCompare {
-    private:
-        static unsigned int calculateHash(const string & s) {
-            unsigned int result = 0;
-            for (auto c : s) {
-                result += c;
-            }
-            return result;
-        }
-    public:
-        bool operator() (const string & lhs, const string & rhs) const {
+        bool operator() (const string & lhs, const string & rhs) const { //< Compares two string keys by length
             if (lhs.length() == rhs.length()) {
                 return lhs < rhs;
             }
             return lhs.length() < rhs.length();
         }
     };
-    set<string, KeysCompare> keys;
+    set<string, KeysCompare> keys; //< Set containing correct keys for map CSupermarket::items
 
     unordered_map<string, priority_queue<Item, vector<Item>>> items;
 
+    /**
+     * @brief Key in map CSupermarket::expiring
+     *
+     * Keys are sorted by date, then serial
+     */
     struct ExpiredKey {
         CDate date;
-        unsigned int expiredSerial;
+        unsigned int expiredSerial; //< Helper id for lookup, should be unique in combination with Date
 
+        /**
+         * @brief Construct a new Expired Key object
+         *
+         * @param d Date
+         * @param s Serial, should be unique in combination with Date
+         */
         ExpiredKey(CDate d, unsigned int s) : date(move(d)), expiredSerial(s) { }
 
+        /**
+         * @brief Comparison for keys, compared first by date, then by serial
+         *
+         * @param rhs
+         * @return true
+         * @return false
+         */
         bool operator < (const ExpiredKey & rhs) const {
             return tie(date, expiredSerial) < tie(rhs.date, rhs.expiredSerial);
         }
     };
-    map<ExpiredKey, ExpiredItem> expiring;
-    unsigned int expiringSerial;
+    map<ExpiredKey, ExpiredItem> expiring; //< Map containing all items and their count, sorted by date 
+    unsigned int expiringSerial; //< Unique value, should be retrieved by CSupermarket::getExpiringSerial
+    /**
+     * @brief Get the expiringSerial value and update it for next use
+     *
+     * Raises expiring serial value so it is kept unique
+     *
+     * @return unsigned int
+     */
     unsigned int getExpiringSerial() {
         return expiringSerial++;
     }
 
+    /**
+     * @brief Check if strings have maximum of one mismatch
+     *
+     * Strings need to have same length.
+     *
+     * @param s String
+     * @param compareTo String
+     * @return true Zero or one mismatches
+     * @return false More mismatches than one
+     */
     static bool hasStringMaxMismatch(const string & s, const string & compareTo) {
         if (s.length() != compareTo.length()) {
             return false;
@@ -151,6 +245,15 @@ private:
         return true;
     }
 
+    /**
+     * @brief Find key in CSupermarket::keys
+     *
+     * Key can contain max one mismatch.
+     * Key must match only one string, else is not found.
+     *
+     * @param key Key to find
+     * @param found Has been found
+     */
     void findInKeys(string & key, bool & found) {
         auto lowerIter = keys.lower_bound(string(key.length(), 0));
         auto upperIter = keys.upper_bound(string(key.length(), 127));
