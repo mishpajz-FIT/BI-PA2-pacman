@@ -74,6 +74,10 @@ private:
         unsigned int expiringSerial;
 
         Item(CDate d, int a, unsigned int s) : date(d), amount(a), expiringSerial(s) { }
+
+        bool operator < (const Item & rhs) const {
+            return date > rhs.date;
+        }
     };
 
     struct ShoplistItem {
@@ -93,7 +97,7 @@ private:
         ExpiredItem(string & n, int a) : name(n), amount(a) { }
     };
 
-    struct keysCompare {
+    struct KeysCompare {
     private:
         static unsigned int calculateHash(const string & s) {
             unsigned int result = 0;
@@ -110,14 +114,9 @@ private:
             return lhs.length() < rhs.length();
         }
     };
-    set<string, keysCompare> keys;
+    set<string, KeysCompare> keys;
 
-    struct itemCompare {
-        bool operator() (const Item & lhs, const Item & rhs) const {
-            return lhs.date > rhs.date;
-        }
-    };
-    unordered_map<string, priority_queue<Item, vector<Item>, itemCompare>> items;
+    unordered_map<string, priority_queue<Item, vector<Item>>> items;
 
     struct ExpiredKey {
         CDate date;
@@ -125,11 +124,9 @@ private:
 
         ExpiredKey(CDate d, unsigned int s) : date(move(d)), expiredSerial(s) { }
 
-        bool operator < (const ExpiredKey & lhs) const {
-            return tie(date, lhs.expiredSerial) < tie(lhs.date, expiredSerial);
+        bool operator < (const ExpiredKey & rhs) const {
+            return tie(date, expiredSerial) < tie(rhs.date, rhs.expiredSerial);
         }
-
-
     };
     map<ExpiredKey, ExpiredItem> expiring;
     unsigned int expiringSerial;
@@ -175,7 +172,7 @@ private:
     }
 
 public:
-    CSupermarket() { }
+    CSupermarket() : expiringSerial(0) { }
 
     CSupermarket & store(string name, CDate expireDate, int count) {
         unsigned int generatedExpiringSerial = getExpiringSerial();
@@ -212,7 +209,9 @@ public:
 
             while (i.nameAndAmount.second >= 0) {
                 if (items[i.key].size() == 0) {
-                    shoppingList.emplace_back(i.nameAndAmount);
+                    if (i.nameAndAmount.second > 0) {
+                        shoppingList.emplace_back(i.nameAndAmount);
+                    }
                     items.erase(i.key);
                     keys.erase(i.key);
                     break;
@@ -233,7 +232,7 @@ public:
 
     list<pair<string, int>> expired(const CDate & date) const {
 
-        auto upper = expiring.upper_bound(ExpiredKey(date, 0));
+        auto upper = expiring.lower_bound(ExpiredKey(date, 0));
 
         unordered_map<string, int> processedExpiring;
         auto iter = expiring.begin();
