@@ -67,19 +67,30 @@ public:
 
 class CSupermarket {
 private:
-    struct CItem {
+    struct Item {
         CDate date;
-        unsigned int amount;
+        int amount;
 
-        CItem(CDate d, unsigned int a) : date(d), amount(a) { }
+        unsigned int expiringSerial;
+
+        Item(CDate d, int a, unsigned int s) : date(d), amount(a), expiringSerial(s) { }
     };
 
-    struct CShoplistItem {
+    struct ShoplistItem {
         pair<string, int> nameAndAmount;
         bool exists;
         string key;
 
-        CShoplistItem(pair<string, int> & na, bool e = false, string k = "") : nameAndAmount(na), exists(e), key(move(k)) { }
+        ShoplistItem(pair<string, int> & na, bool e = false, string k = "") : nameAndAmount(na), exists(e), key(move(k)) { }
+    };
+
+    struct ExpiredItem {
+        string name;
+        int amount;
+
+        ExpiredItem() { }
+
+        ExpiredItem(string & n, int a) : name(n), amount(a) { }
     };
 
     struct keysCompare {
@@ -92,21 +103,39 @@ private:
             return result;
         }
     public:
-        bool operator() (const string & rhs, const string & lhs) const {
-            if (rhs.length() == lhs.length()) {
-                return calculateHash(rhs) < calculateHash(lhs);
+        bool operator() (const string & lhs, const string & rhs) const {
+            if (lhs.length() == rhs.length()) {
+                return calculateHash(lhs) < calculateHash(rhs);
             }
-            return rhs.length() < lhs.length();
+            return lhs.length() < rhs.length();
         }
     };
     set<string, keysCompare> keys;
 
     struct itemCompare {
-        bool operator() (const CItem & rhs, const CItem & lhs) const {
-            return rhs.date > lhs.date;
+        bool operator() (const Item & lhs, const Item & rhs) const {
+            return lhs.date > rhs.date;
         }
     };
-    unordered_map<string, priority_queue<CItem, vector<CItem>, itemCompare>> items;
+    unordered_map<string, priority_queue<Item, vector<Item>, itemCompare>> items;
+
+    struct ExpiredKey {
+        CDate date;
+        unsigned int expiredSerial;
+
+        ExpiredKey(CDate d, unsigned int s) : date(move(d)), expiredSerial(s) { }
+
+        bool operator < (const ExpiredKey & lhs) const {
+            return tie(date, lhs.expiredSerial) < tie(lhs.date, expiredSerial);
+        }
+
+
+    };
+    map<ExpiredKey, ExpiredItem> expiring;
+    unsigned int expiringSerial;
+    unsigned int getExpiringSerial() {
+        return expiringSerial++;
+    }
 
     static bool hasStringMaxMismatch(const string & s, const string & compareTo) {
         int mismatches = 0;
@@ -148,15 +177,18 @@ private:
 public:
     CSupermarket() { }
 
-    CSupermarket & store(string name, CDate expireDate, unsigned int count) {
-        items[name].push(CItem(move(expireDate), count));
+    CSupermarket & store(string name, CDate expireDate, int count) {
+        unsigned int generatedExpiringSerial = getExpiringSerial();
+
+        expiring[ExpiredKey(expireDate, generatedExpiringSerial)] = ExpiredItem(name, count);
+        items[name].push(Item(move(expireDate), count, generatedExpiringSerial));
         keys.emplace(move(name));
         return (*this);
     }
 
     void sell(list<pair<string, int>> & shoppingList) {
 
-        list<CShoplistItem> processedList;
+        list<ShoplistItem> processedList;
         for (auto & i : shoppingList) {
             if (items.find(i.first) == items.end()) {
                 bool found = false;
@@ -188,16 +220,38 @@ public:
 
                 if (i.nameAndAmount.second >= static_cast<int>(items[i.key].top().amount)) {
                     i.nameAndAmount.second -= items[i.key].top().amount;
+                    expiring.erase(ExpiredKey(items[i.key].top().date, items[i.key].top().expiringSerial));
                     items[i.key].pop();
                 } else {
-                    const_cast<CItem &>(items[i.key].top()).amount -= i.nameAndAmount.second;
+                    const_cast<Item &>(items[i.key].top()).amount -= i.nameAndAmount.second;
+                    expiring[ExpiredKey(items[i.key].top().date, items[i.key].top().expiringSerial)].amount = items[i.key].top().amount;
                     break;
                 }
             }
         }
     }
 
-    // expired ( date ) const
+    list<pair<string, int>> expired(const CDate & date) const {
+
+        auto upper = expiring.upper_bound(ExpiredKey(date, 0));
+
+        unordered_map<string, int> processedExpiring;
+        auto iter = expiring.begin();
+        while (iter != upper) {
+            processedExpiring[(*iter).second.name] += (*iter).second.amount;
+            iter++;
+        }
+
+        vector<pair<string, int>> preparedResult;
+        preparedResult.resize(processedExpiring.size());
+        copy(processedExpiring.begin(), processedExpiring.end(), preparedResult.begin());
+        sort(preparedResult.begin(), preparedResult.end(), [ ](const pair<string, int> & lhs, const pair<string, int> & rhs) { return lhs.second > rhs.second; });
+
+        list<pair<string, int>> result;
+        copy(preparedResult.begin(), preparedResult.end(), back_inserter(result));
+
+        return result;
+    }
 };
 
 #ifndef __PROGTEST__
@@ -208,11 +262,11 @@ int main(void) {
         .store("beer", CDate(2016, 8, 10), 50)
         .store("bread", CDate(2016, 4, 25), 100)
         .store("okey", CDate(2016, 7, 18), 5);
-    /*
+
     list<pair<string, int> > l0 = s.expired(CDate(2018, 4, 30));
     assert(l0.size() == 4);
     assert((l0 == list<pair<string, int> > { { "bread", 200 }, { "beer", 50 }, { "butter", 10 }, { "okey", 5 } }));
-    */
+
     list<pair<string, int> > l1 { { "bread", 2 }, { "Coke", 5 }, { "butter", 20 } };
     s.sell(l1);
     assert(l1.size() == 2);
