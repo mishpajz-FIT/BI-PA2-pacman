@@ -109,7 +109,7 @@ private:
     public:
         bool operator() (const string & lhs, const string & rhs) const {
             if (lhs.length() == rhs.length()) {
-                return calculateHash(lhs) < calculateHash(rhs);
+                return lhs < rhs;
             }
             return lhs.length() < rhs.length();
         }
@@ -135,6 +135,10 @@ private:
     }
 
     static bool hasStringMaxMismatch(const string & s, const string & compareTo) {
+        if (s.length() != compareTo.length()) {
+            return false;
+        }
+
         int mismatches = 0;
         for (size_t i = 0; i < s.length(); i++) {
             if (s[i] != compareTo[i]) {
@@ -148,11 +152,8 @@ private:
     }
 
     void findInKeys(string & key, bool & found) {
-        string boundString = key;
-        boundString[0] = static_cast<char>(0);
-        auto lowerIter = keys.lower_bound(boundString);
-        boundString[0] = static_cast<char>(127);
-        auto upperIter = keys.lower_bound(boundString);
+        auto lowerIter = keys.lower_bound(string(key.length(), 0));
+        auto upperIter = keys.upper_bound(string(key.length(), 127));
 
         found = false;
         string keyToFind = key;
