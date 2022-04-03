@@ -270,7 +270,7 @@ int main(void) {
     s.sell(l1);
     assert(l1.size() == 2);
     assert((l1 == list<pair<string, int> > { { "Coke", 5 }, { "butter", 10 } }));
-    /*
+
     list<pair<string, int> > l2 = s.expired(CDate(2016, 4, 30));
     assert(l2.size() == 1);
     assert((l2 == list<pair<string, int> > { { "bread", 98 } }));
@@ -278,56 +278,56 @@ int main(void) {
     list<pair<string, int> > l3 = s.expired(CDate(2016, 5, 20));
     assert(l3.size() == 1);
     assert((l3 == list<pair<string, int> > { { "bread", 198 } }));
-    */
+
     list<pair<string, int> > l4 { { "bread", 105 } };
     s.sell(l4);
     assert(l4.size() == 0);
     assert((l4 == list<pair<string, int> > {  }));
-    /*
+
     list<pair<string, int> > l5 = s.expired(CDate(2017, 1, 1));
     assert(l5.size() == 3);
     assert((l5 == list<pair<string, int> > { { "bread", 93 }, { "beer", 50 }, { "okey", 5 } }));
-    */
+
     s.store("Coke", CDate(2016, 12, 31), 10);
 
     list<pair<string, int> > l6 { { "Cake", 1 }, { "Coke", 1 }, { "cake", 1 }, { "coke", 1 }, { "cuke", 1 }, { "Cokes", 1 } };
     s.sell(l6);
     assert(l6.size() == 3);
     assert((l6 == list<pair<string, int> > { { "cake", 1 }, { "cuke", 1 }, { "Cokes", 1 } }));
-    /*
+
     list<pair<string, int> > l7 = s.expired(CDate(2017, 1, 1));
     assert(l7.size() == 4);
     assert((l7 == list<pair<string, int> > { { "bread", 93 }, { "beer", 50 }, { "Coke", 7 }, { "okey", 5 } }));
-    */
+
     s.store("cake", CDate(2016, 11, 1), 5);
 
     list<pair<string, int> > l8 { { "Cake", 1 }, { "Coke", 1 }, { "cake", 1 }, { "coke", 1 }, { "cuke", 1 } };
     s.sell(l8);
     assert(l8.size() == 2);
     assert((l8 == list<pair<string, int> > { { "Cake", 1 }, { "coke", 1 } }));
-    /*
+
     list<pair<string, int> > l9 = s.expired(CDate(2017, 1, 1));
     assert(l9.size() == 5);
     assert((l9 == list<pair<string, int> > { { "bread", 93 }, { "beer", 50 }, { "Coke", 6 }, { "okey", 5 }, { "cake", 3 } }));
-    */
+
     list<pair<string, int> > l10 { { "cake", 15 }, { "Cake", 2 } };
     s.sell(l10);
     assert(l10.size() == 2);
     assert((l10 == list<pair<string, int> > { { "cake", 12 }, { "Cake", 2 } }));
-    /*
+
     list<pair<string, int> > l11 = s.expired(CDate(2017, 1, 1));
     assert(l11.size() == 4);
     assert((l11 == list<pair<string, int> > { { "bread", 93 }, { "beer", 50 }, { "Coke", 6 }, { "okey", 5 } }));
-    */
+
     list<pair<string, int> > l12 { { "Cake", 4 } };
     s.sell(l12);
     assert(l12.size() == 0);
     assert((l12 == list<pair<string, int> > {  }));
-    /*
+
     list<pair<string, int> > l13 = s.expired(CDate(2017, 1, 1));
     assert(l13.size() == 4);
     assert((l13 == list<pair<string, int> > { { "bread", 93 }, { "beer", 50 }, { "okey", 5 }, { "Coke", 2 } }));
-    */
+
     list<pair<string, int> > l14 { { "Beer", 20 }, { "Coke", 1 }, { "bear", 25 }, { "beer", 10 } };
     s.sell(l14);
     assert(l14.size() == 1);
@@ -341,6 +341,85 @@ int main(void) {
     s.sell(l15);
     assert(l15.size() == 1);
     assert((l15 == list<pair<string, int> > { { "ccccc", 10 } }));
+
+
+
+    CSupermarket s01;
+    s01.store("aaaaaa", CDate(2001, 10, 14), 10);
+    s01.store("aaaaaa", CDate(2020, 4, 3), 10);
+
+    list<pair<string, int>> l001 { { "aaaaaa", 10 } };
+    s01.sell(l001);
+    assert(l001.size() == 0);
+    l001 = s01.expired(CDate(2022, 1, 1));
+    assert(l001.size() == 1);
+    assert((l001 == list<pair<string, int> > { { "aaaaaa", 10 } }));
+    l001 = s01.expired(CDate(2020, 1, 1));
+    assert(l001.size() == 0);
+
+    l001 = s01.expired(CDate(2020, 4, 3));
+    assert(l001.size() == 0);
+    l001 = s01.expired(CDate(2020, 4, 4));
+    assert(l001.size() == 1);
+
+
+    CSupermarket s02;
+    list<pair<string, int>> l002 { { "aaaaaa", 10 }, { "hhhhhhh", 10 }, { "oooooo", 10 }, { "jjjjjjj", 10 } };
+    s02.sell(l002);
+    assert((l002 == list<pair<string, int> > { { "aaaaaa", 10 }, { "hhhhhhh", 10 }, { "oooooo", 10 }, { "jjjjjjj", 10 } }));
+
+    s02.store("aaaa", CDate(2200, 10, 10), 35);
+    l002 = { { "aaab", 10 }, { "aaac", 10 }, { "aaad", 10 }, { "aaaf", 10 }, { "aaaa", 10 } };
+    s02.sell(l002);
+    assert((l002 == list<pair<string, int> > { { "aaaf", 5 }, { "aaaa", 10 } }));
+
+    l002 = s02.expired(CDate(4000, 10, 10));
+    assert(l002.size() == 0);
+    l002 = s02.expired(CDate(1890, 10, 10));
+    assert(l002.size() == 0);
+
+    s02.store("aaaa", CDate(2200, 10, 10), 35);
+    l002 = { { "aaaa", 35 }, { "aaac", 100 } };
+    s02.sell(l002);
+    assert((l002 == list<pair<string, int> > { { "aaac", 100 } }));
+
+    s02.store("aaaa", CDate(2200, 10, 10), 20);
+    l002 = { { "aaac", 100 }, { "aaac", 35 } };
+    s02.sell(l002);
+    assert((l002 == list<pair<string, int> > { { "aaac", 80 }, { "aaac", 35 } }));
+
+    s02.store("a", CDate(2200, 10, 10), 20)
+        .store("b", CDate(2200, 10, 10), 20)
+        .store("c", CDate(2200, 10, 10), 20)
+        .store("d", CDate(2200, 10, 10), 20);
+
+    l002 = { { "a", 20 }, { "e", 20 }, { "b", 25 } };
+    s02.sell(l002);
+    assert((l002 == list<pair<string, int> > { { "e", 20 }, { "b", 5 } }));
+
+    l002 = { { "a", 20 }, { "c", 20 }, { "e", 25 } };
+    s02.sell(l002);
+    assert((l002 == list<pair<string, int> > { { "a", 20 }, { "e", 25 } }));
+
+    l002 = { { "a", 20 } };
+    s02.sell(l002);
+    assert((l002 == list<pair<string, int> > { }));
+
+    s02.store("a", CDate(2200, 10, 10), 20);
+    l002 = { { "a", 0 } };
+    s02.sell(l002);
+    assert((l002 == list<pair<string, int> > { }));
+
+    l002 = s02.expired(CDate(4000, 10, 10));
+    assert((l002 == list<pair<string, int> > { { "a", 20 } }));
+
+    l002 = { { "a", 20 }, { "e", 20 } };
+    s02.sell(l002);
+    assert((l002 == list<pair<string, int> > { { "e", 20 } }));
+
+    l002 = s02.expired(CDate(4000, 10, 10));
+    assert(l002.size() == 0);
+    assert((l002 == list<pair<string, int> > { }));
 
     return EXIT_SUCCESS;
 }
