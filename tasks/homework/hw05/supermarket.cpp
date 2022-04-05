@@ -162,18 +162,74 @@ private:
     };
 
     /**
-     * @brief Comparison functor for CSupermarket::keys set
+     * @brief Storage for key stored in CSupermarket::keys
      *
+     * Includes semi-hash functions for faster comparison
      */
-    struct KeysCompare {
-        bool operator() (const string & lhs, const string & rhs) const { //< Compares two string keys by length
-            if (lhs.length() == rhs.length()) {
-                return lhs < rhs;
+    struct ValidKey {
+    private:
+        string key; //< Key itself 
+        unsigned int asciiValue; //< Precalculated ascii values
+
+        /**
+         * @brief Calculate sum of ascii values of key
+         *
+         * @return unsigned int
+         */
+        unsigned int calculateAsciiValue() {
+            unsigned int result = 0;
+            for (auto & c : key) {
+                result += c;
             }
-            return lhs.length() < rhs.length();
+            return result;
+        }
+
+
+    public:
+
+        /**
+         * @brief Construct a new Valid Key object
+         *
+         * @param k String that serves as key
+         * @param hashModif Modify calculated hash by this value
+         */
+        ValidKey(const string & k, int hashModif = 0) : key(k) {
+            unsigned int calculatedHash = calculateAsciiValue();
+            if (hashModif < 0 && static_cast<unsigned int>(hashModif < 0 ? -hashModif : hashModif) > calculatedHash) {
+                calculatedHash = 0;
+            } else {
+                calculatedHash += hashModif;
+            }
+            asciiValue = calculatedHash;
+        }
+
+        /**
+         * @brief Comparison for set ordering
+         *
+         * Values are firstly compared by key length, then hash and finally by whole keys
+         *
+         * @param lhs ValidKey
+         * @param rhs ValidKey
+         * @return true lhs is smaller
+         * @return false lhs is equal or greater
+         */
+        friend bool operator < (const ValidKey & lhs, const ValidKey & rhs) {
+            size_t lhsLength = lhs.key.length();
+            size_t rhsLength = rhs.key.length();
+
+            return tie(lhsLength, lhs.asciiValue, lhs.key) < tie(rhsLength, rhs.asciiValue, rhs.key);
+        }
+
+        const string & getKey() const {
+            return key;
+        }
+
+        unsigned int getAsciiValue() const {
+            return asciiValue;
         }
     };
-    set<string, KeysCompare> keys; //< Set containing correct keys for map CSupermarket::items
+
+    set<ValidKey> keys; //< Set containing correct keys for map CSupermarket::items
 
     unordered_map<string, priority_queue<Item, vector<Item>>> items;
 
@@ -228,15 +284,18 @@ private:
      * @return true Zero or one mismatches
      * @return false More mismatches than one
      */
-    static bool hasStringMaxMismatch(const string & s, const string & compareTo) {
-        if (s.length() != compareTo.length()) {
+    static bool hasKeyMaxMismatch(const ValidKey & key, const ValidKey & compareTo) {
+        if (key.getKey().length() != compareTo.getKey().length()) {
             return false;
         }
 
         int mismatches = 0;
-        for (size_t i = 0; i < s.length(); i++) {
-            if (s[i] != compareTo[i]) {
+        for (size_t i = 0; i < key.getKey().length(); i++) {
+            if (key.getKey()[i] != compareTo.getKey()[i]) {
                 mismatches++;
+                if (key.getAsciiValue() - key.getKey()[i] != compareTo.getAsciiValue() - compareTo.getKey()[i]) {
+                    return false;
+                }
             }
             if (mismatches > 1) {
                 return false;
@@ -255,17 +314,16 @@ private:
      * @param found Has been found
      */
     void findInKeys(string & key, bool & found) {
-        auto lowerIter = keys.lower_bound(string(key.length(), 0));
-        auto upperIter = keys.upper_bound(string(key.length(), 127));
+        auto lowerIter = keys.lower_bound(ValidKey(key, -0x7F));
+        auto upperIter = keys.upper_bound(ValidKey(key, +0x7F));
 
         found = false;
-        string keyToFind = key;
+        ValidKey keyToFind(key);
         while (lowerIter != upperIter) {
-
-            if (hasStringMaxMismatch(keyToFind, (*lowerIter))) {
+            if (hasKeyMaxMismatch(keyToFind, (*lowerIter))) {
                 if (!found) {
                     found = true;
-                    key = (*lowerIter);
+                    key = (*lowerIter).getKey();
                 } else {
                     found = false;
                     break;
