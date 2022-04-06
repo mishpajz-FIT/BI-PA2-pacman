@@ -94,7 +94,31 @@ class CDirectory : public CBase {
 public:
     CDirectory() : files() { }
 
-    virtual ~CDirectory() { }
+    CDirectory(const CDirectory & toCopy) : files() {
+        for (const auto & x : toCopy.files) {
+            files[x.first] = x.second->Clone();
+        }
+    }
+
+    CDirectory & operator = (const CDirectory & toCopy) {
+        for (const auto & x : files) {
+            delete x.second;
+        }
+        files.clear();
+
+        for (const auto & x : toCopy.files) {
+            files[x.first] = x.second->Clone();
+        }
+
+        return *this;
+    }
+
+    virtual ~CDirectory() {
+        for (const auto & x : files) {
+            delete x.second;
+        }
+        files.clear();
+    }
 
     virtual unsigned int Size() const {
         unsigned int sum = 0;
