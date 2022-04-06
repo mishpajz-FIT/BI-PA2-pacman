@@ -403,14 +403,10 @@ public:
             iter++;
         }
 
-        vector<pair<string, int>> preparedResult;
-        preparedResult.resize(processedExpiring.size());
-        copy(processedExpiring.begin(), processedExpiring.end(), preparedResult.begin());
+        vector<pair<string, int>> preparedResult(processedExpiring.begin(), processedExpiring.end());
         sort(preparedResult.begin(), preparedResult.end(), [ ](const pair<string, int> & lhs, const pair<string, int> & rhs) { return lhs.second > rhs.second; });
 
-        list<pair<string, int>> result;
-        copy(preparedResult.begin(), preparedResult.end(), back_inserter(result));
-
+        list<pair<string, int>> result(preparedResult.begin(), preparedResult.end());
         return result;
     }
 };
