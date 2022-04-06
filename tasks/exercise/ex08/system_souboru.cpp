@@ -22,35 +22,139 @@
 using namespace std;
 #endif /* __PROGTEST__ */
 
-class CFile {
+class CBase {
 public:
-    // constructor
+    virtual ~CBase() = 0;
 
-    // Size
+    virtual unsigned int Size() const = 0;
 
-    // Change
+    virtual CBase * Clone() const = 0;
+
+    virtual void Print(ostream & os) const = 0;
 };
 
-class CLink {
+CBase::~CBase() { }
+
+class CFile : public CBase {
+    string hash;
+    unsigned int filesize;
 public:
-    // constructor
+    CFile(const string & h, unsigned int f) : CBase(), hash(h), filesize(f) { }
 
-    // Size
+    virtual ~CFile() { }
 
-    // Change
+    virtual unsigned int Size() const {
+        return filesize;
+    }
+
+    virtual CFile * Clone() const {
+        return new CFile(*this);
+    }
+
+    virtual void Print(ostream & os) const {
+        os << " " << hash;
+    }
+
+    CFile & Change(const string & h, unsigned int f) {
+        hash = h;
+        filesize = f;
+
+        return (*this);
+    }
 };
 
-class CDirectory {
+class CLink : public CBase {
+    string path;
 public:
-    // constructor
+    CLink(const string & p) : CBase(), path(p) { }
 
-    // Size
+    virtual ~CLink() { }
 
-    // Change
+    virtual unsigned int Size() const {
+        return path.length() + 1;
+    }
 
-    // Get
+    virtual CLink * Clone() const {
+        return new CLink(*this);
+    }
 
-    // operator<<
+    virtual void Print(ostream & os) const {
+        os << " -> " << path;
+    }
+
+    CLink & Change(const string & p) {
+        path = p;
+
+        return (*this);
+    }
+};
+
+class CDirectory : public CBase {
+    map<string, CBase *> files;
+public:
+    CDirectory() : files() { }
+
+    virtual ~CDirectory() { }
+
+    virtual unsigned int Size() const {
+        unsigned int sum = 0;
+        for (const auto & x : files) {
+            sum += x.first.length();
+            sum += x.second->Size();
+        }
+        return sum;
+    }
+
+    virtual CDirectory * Clone() const {
+        return new CDirectory(*this);
+    }
+
+    CDirectory & Change(const string & filename, const CBase & file) {
+        if (files.find(filename) != files.end()) {
+            delete files[filename];
+        }
+
+        files[filename] = file.Clone();
+        return (*this);
+    }
+
+    CDirectory & Change(const string & filename, CBase * file) {
+        if (files.find(filename) != files.end()) {
+            delete files[filename];
+        }
+
+        if (file == nullptr) {
+            files.erase(filename);
+        } else {
+            files[filename] = file->Clone();
+        }
+        return (*this);
+    }
+
+    CBase & Get(const string & filename) {
+        auto iter = files.find(filename);
+        if (iter == files.end()) {
+            throw std::out_of_range("err");
+        }
+        return *((*iter).second);
+    }
+
+    const CBase & Get(const string & filename) const {
+        return const_cast<const CBase &>(Get(filename));
+    }
+
+    virtual void Print(ostream & os) const {
+        os << "/";
+    }
+
+    friend ostream & operator << (ostream & os, const CDirectory & directory) {
+        for (const auto & f : directory.files) {
+            os << f.second->Size() << "\t" << f.first;
+            f.second->Print(os);
+            os << endl;
+        }
+        return os;
+    }
 };
 
 #ifndef __PROGTEST__
