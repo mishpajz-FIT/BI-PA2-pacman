@@ -123,10 +123,11 @@ public:
     }
 
     CDirectory & Change(const string & filename, CBase * file) {
-        if (file == nullptr) {
+        CBase * filePtr = dynamic_cast<CBase *>(file);
+        if (filePtr == nullptr) {
             files.erase(filename);
         } else {
-            files[filename] = file->Clone();
+            files[filename] = filePtr->Clone();
         }
         return (*this);
     }
@@ -188,6 +189,21 @@ int main() {
         "71313\tfileB.txt kadwjkwajdwhoiwhduqwdqwuhd=\n"
         "8193\tfileC.txt aihdqhdqudqdiuwqhdquwdqhdi=\n");
     assert(inner.Size() == 81246);
+
+
+
+    CDirectory dir;
+    dir.Change("testfile", CFile("jhwadkhawkdhajwdhawhdaw=", 1623));
+    dir.Change("testfile", nullptr);
+
+
+    dir.Change("testfile", CFile("jhwadkhawkdhajwdhawhdaw=", 1623));
+    CDirectory dir2;
+    dir2 = dir;
+    dir2.Change("testfile", nullptr);
+    assert(dir.Size() == 1631);
+    assert(dir2.Size() == 0);
+
 
     return 0;
 }
