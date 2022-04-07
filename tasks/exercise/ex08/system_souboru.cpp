@@ -24,16 +24,16 @@ using namespace std;
 
 class CBase {
 public:
-    virtual ~CBase() = 0;
+    CBase() { }
+
+    virtual ~CBase() { }
 
     virtual unsigned int Size() const = 0;
 
-    virtual CBase * Clone() const = 0;
+    virtual shared_ptr<CBase> Clone() const = 0;
 
     virtual void Print(ostream & os) const = 0;
 };
-
-CBase::~CBase() { }
 
 class CFile : public CBase {
     string hash;
@@ -43,15 +43,15 @@ public:
 
     virtual ~CFile() { }
 
-    virtual unsigned int Size() const {
+    virtual unsigned int Size() const override {
         return filesize;
     }
 
-    virtual CFile * Clone() const {
-        return new CFile(*this);
+    virtual shared_ptr<CBase> Clone() const override {
+        return shared_ptr<CFile>(new CFile(*this));
     }
 
-    virtual void Print(ostream & os) const {
+    virtual void Print(ostream & os) const override {
         os << " " << hash;
     }
 
@@ -70,15 +70,15 @@ public:
 
     virtual ~CLink() { }
 
-    virtual unsigned int Size() const {
+    virtual unsigned int Size() const override {
         return path.length() + 1;
     }
 
-    virtual CLink * Clone() const {
-        return new CLink(*this);
+    virtual shared_ptr<CBase> Clone() const override {
+        return shared_ptr<CLink>(new CLink(*this));
     }
 
-    virtual void Print(ostream & os) const {
+    virtual void Print(ostream & os) const override {
         os << " -> " << path;
     }
 
@@ -90,37 +90,21 @@ public:
 };
 
 class CDirectory : public CBase {
-    map<string, CBase *> files;
+    map<string, shared_ptr<CBase>> files;
 public:
-    CDirectory() : files() { }
+    CDirectory() : CBase(), files() { }
 
-    CDirectory(const CDirectory & toCopy) : files() {
-        for (const auto & x : toCopy.files) {
-            files[x.first] = x.second->Clone();
-        }
-    }
+    CDirectory(const CDirectory & toCopy) : CBase(), files(toCopy.files) { }
+
+    virtual ~CDirectory() { }
 
     CDirectory & operator = (const CDirectory & toCopy) {
-        for (const auto & x : files) {
-            delete x.second;
-        }
         files.clear();
-
-        for (const auto & x : toCopy.files) {
-            files[x.first] = x.second->Clone();
-        }
-
+        files = toCopy.files;
         return *this;
     }
 
-    virtual ~CDirectory() {
-        for (const auto & x : files) {
-            delete x.second;
-        }
-        files.clear();
-    }
-
-    virtual unsigned int Size() const {
+    virtual unsigned int Size() const override {
         unsigned int sum = 0;
         for (const auto & x : files) {
             sum += x.first.length();
@@ -129,24 +113,16 @@ public:
         return sum;
     }
 
-    virtual CDirectory * Clone() const {
-        return new CDirectory(*this);
+    virtual shared_ptr<CBase> Clone() const override {
+        return shared_ptr<CDirectory>(new CDirectory(*this));
     }
 
     CDirectory & Change(const string & filename, const CBase & file) {
-        if (files.find(filename) != files.end()) {
-            delete files[filename];
-        }
-
         files[filename] = file.Clone();
         return (*this);
     }
 
     CDirectory & Change(const string & filename, CBase * file) {
-        if (files.find(filename) != files.end()) {
-            delete files[filename];
-        }
-
         if (file == nullptr) {
             files.erase(filename);
         } else {
@@ -167,7 +143,7 @@ public:
         return const_cast<const CBase &>(Get(filename));
     }
 
-    virtual void Print(ostream & os) const {
+    virtual void Print(ostream & os) const override {
         os << "/";
     }
 
