@@ -99,6 +99,10 @@ public:
     virtual ~CDirectory() { }
 
     CDirectory & operator = (const CDirectory & toCopy) {
+        if (this == &toCopy) {
+            return *this;
+        }
+
         files.clear();
         files = toCopy.files;
         return *this;
