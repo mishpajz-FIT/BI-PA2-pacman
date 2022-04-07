@@ -30,7 +30,7 @@ public:
 
     virtual unsigned int Size() const = 0;
 
-    virtual shared_ptr<CBase> Clone() const = 0;
+    virtual CBase * Clone() const = 0;
 
     virtual void Print(ostream & os) const = 0;
 };
@@ -47,8 +47,8 @@ public:
         return filesize;
     }
 
-    virtual shared_ptr<CBase> Clone() const override {
-        return shared_ptr<CFile>(new CFile(*this));
+    virtual CFile * Clone() const override {
+        return (new CFile(*this));
     }
 
     virtual void Print(ostream & os) const override {
@@ -74,8 +74,8 @@ public:
         return path.length() + 1;
     }
 
-    virtual shared_ptr<CBase> Clone() const override {
-        return shared_ptr<CLink>(new CLink(*this));
+    virtual CLink * Clone() const override {
+        return (new CLink(*this));
     }
 
     virtual void Print(ostream & os) const override {
@@ -90,21 +90,38 @@ public:
 };
 
 class CDirectory : public CBase {
-    map<string, shared_ptr<CBase>> files;
+    map<string, CBase *> files;
+
+    void deallocFiles() {
+        for (auto iter = files.begin(); iter != files.end(); iter++) {
+            delete (*iter).second;
+        }
+        files.clear();
+    }
 public:
     CDirectory() : CBase(), files() { }
 
-    CDirectory(const CDirectory & toCopy) : CBase(), files(toCopy.files) { }
+    CDirectory(const CDirectory & toCopy) : CBase() {
+        for (auto iter = toCopy.files.begin(); iter != toCopy.files.end(); iter++) {
+            files[(*iter).first] = (*iter).second->Clone();
+        }
+    }
 
-    virtual ~CDirectory() { }
+    virtual ~CDirectory() {
+        deallocFiles();
+    }
 
     CDirectory & operator = (const CDirectory & toCopy) {
         if (this == &toCopy) {
             return *this;
         }
 
-        files.clear();
-        files = toCopy.files;
+        deallocFiles();
+
+        for (auto iter = toCopy.files.begin(); iter != toCopy.files.end(); iter++) {
+            files[(*iter).first] = (*iter).second->Clone();
+        }
+
         return *this;
     }
 
@@ -117,21 +134,30 @@ public:
         return sum;
     }
 
-    virtual shared_ptr<CBase> Clone() const override {
-        return shared_ptr<CDirectory>(new CDirectory(*this));
+    virtual CDirectory * Clone() const override {
+        return (new CDirectory(*this));
     }
 
     CDirectory & Change(const string & filename, const CBase & file) {
-        files[filename] = file.Clone();
+        CBase * copy = file.Clone();
+
+        auto iter = files.find(filename);
+        if (iter != files.end()) {
+            delete (*iter).second;
+        }
+
+        files[filename] = copy;
         return (*this);
     }
 
-    CDirectory & Change(const string & filename, CBase * file) {
-        CBase * filePtr = dynamic_cast<CBase *>(file);
-        if (filePtr == nullptr) {
+    CDirectory & Change(const string & filename, void * file) {
+        if (file == nullptr) {
+            auto iter = files.find(filename);
+            if (iter != files.end()) {
+                delete (*iter).second;
+            }
+
             files.erase(filename);
-        } else {
-            files[filename] = filePtr->Clone();
         }
         return (*this);
     }
@@ -139,13 +165,17 @@ public:
     CBase & Get(const string & filename) {
         auto iter = files.find(filename);
         if (iter == files.end()) {
-            throw std::out_of_range("err");
+            throw std::out_of_range("");
         }
         return *((*iter).second);
     }
 
     const CBase & Get(const string & filename) const {
-        return const_cast<const CBase &>(Get(filename));
+        auto iter = files.find(filename);
+        if (iter == files.end()) {
+            throw std::out_of_range("");
+        }
+        return *((*iter).second);
     }
 
     virtual void Print(ostream & os) const override {
@@ -196,18 +226,28 @@ int main() {
 
 
 
-    CDirectory dir;
-    dir.Change("testfile", CFile("jhwadkhawkdhajwdhawhdaw=", 1623));
-    dir.Change("testfile", nullptr);
+    CDirectory dir1;
+    dir1.Change("testfile", CFile("jhwadkhawkdhajwdhawhdaw=", 1623));
+    dir1.Change("testfile", nullptr);
 
 
-    dir.Change("testfile", CFile("jhwadkhawkdhajwdhawhdaw=", 1623));
+    dir1.Change("testfile", CFile("jhwadkhawkdhajwdhawhdaw=", 1623));
     CDirectory dir2;
-    dir2 = dir;
+    dir2 = dir1;
     dir2.Change("testfile", nullptr);
-    assert(dir.Size() == 1631);
+    assert(dir1.Size() == 1631);
     assert(dir2.Size() == 0);
 
+    CDirectory dir3;
+    dir3.Change("self", dir3);
+    dir3.Change("self", dir3);
+
+    CDirectory dir4;
+    dir4.Change("folder", CDirectory());
+    CDirectory & dir4Folder = dynamic_cast<CDirectory &>(dir4.Get("folder"));
+    dir4Folder.Change("folder", nullptr);
+    dir4Folder.Change("folder", dir4);
+    dir4.Change("folder", dir4);
 
     return 0;
 }
