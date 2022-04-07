@@ -1,3 +1,13 @@
+/**
+ * @file system_souboru.cpp
+ * @author Michal Dobeš 
+ * @date 2022-04-07
+ *
+ * @brief A set of classes that represents the file system, with inheritance from abstract class
+ *
+ * @copyright Copyright (c) 2022
+ *
+ */
 
 #ifndef __PROGTEST__
 #include <iostream>
@@ -22,22 +32,47 @@
 using namespace std;
 #endif /* __PROGTEST__ */
 
+// SECTION: Implementation
+
+/**
+ * @brief Abstract class from which all parts of the file system inherit
+ *
+ */
 class CBase {
 public:
     CBase() { }
 
     virtual ~CBase() { }
 
+    /**
+     * @brief Size of element
+     *
+     * @return unsigned int Size
+     */
     virtual unsigned int Size() const = 0;
 
+    /**
+     * @brief Allocate new copy of this object and returns pointer to it
+     *
+     * @return CBase* Pointer to new copy
+     */
     virtual CBase * Clone() const = 0;
 
+    /**
+     * @brief Print information about object into stream
+     *
+     * @param os Stream to print into
+     */
     virtual void Print(ostream & os) const = 0;
 };
 
+/**
+ * @brief Representation of file
+ *
+ */
 class CFile : public CBase {
-    string hash;
-    unsigned int filesize;
+    string hash; //< Stored attribute of file, hash
+    unsigned int filesize; //< Stored size
 public:
     CFile(const string & h, unsigned int f) : CBase(), hash(h), filesize(f) { }
 
@@ -55,6 +90,13 @@ public:
         os << " " << hash;
     }
 
+    /**
+     * @brief Change object properties
+     *
+     * @param h Hash
+     * @param f File size
+     * @return CFile& This
+     */
     CFile & Change(const string & h, unsigned int f) {
         hash = h;
         filesize = f;
@@ -63,15 +105,19 @@ public:
     }
 };
 
+/**
+ * @brief Representation of symlink
+ *
+ */
 class CLink : public CBase {
-    string path;
+    string path; //< Stored attribute of symlink, path
 public:
     CLink(const string & p) : CBase(), path(p) { }
 
     virtual ~CLink() { }
 
     virtual unsigned int Size() const override {
-        return path.length() + 1;
+        return path.length() + 1; //< Size should be length of path + 1
     }
 
     virtual CLink * Clone() const override {
@@ -82,6 +128,12 @@ public:
         os << " -> " << path;
     }
 
+    /**
+     * @brief Change object properties
+     *
+     * @param p Path
+     * @return CLink& This
+     */
     CLink & Change(const string & p) {
         path = p;
 
@@ -89,9 +141,18 @@ public:
     }
 };
 
+/**
+ * @brief Representation of directory
+ *
+ * Can store other parts of filesystem
+ */
 class CDirectory : public CBase {
-    map<string, CBase *> files;
+    map<string, CBase *> files; //< Contents of this directory
 
+    /**
+     * @brief Deallocates all contents of this directory in CDirectory::files
+     *
+     */
     void deallocFiles() {
         for (auto iter = files.begin(); iter != files.end(); iter++) {
             delete (*iter).second;
@@ -101,7 +162,8 @@ class CDirectory : public CBase {
 public:
     CDirectory() : CBase(), files() { }
 
-    CDirectory(const CDirectory & toCopy) : CBase() {
+    CDirectory(const CDirectory & toCopy) : CBase() { //< Copy constructor
+        // Copy and allocate all contents of directory
         for (auto iter = toCopy.files.begin(); iter != toCopy.files.end(); iter++) {
             files[(*iter).first] = (*iter).second->Clone();
         }
@@ -112,13 +174,13 @@ public:
     }
 
     CDirectory & operator = (const CDirectory & toCopy) {
-        if (this == &toCopy) {
+        if (this == &toCopy) { //< Self-assignment check
             return *this;
         }
 
-        deallocFiles();
+        deallocFiles(); //< Deallocate current content of directory
 
-        for (auto iter = toCopy.files.begin(); iter != toCopy.files.end(); iter++) {
+        for (auto iter = toCopy.files.begin(); iter != toCopy.files.end(); iter++) { //< Copy and allocate all contents of directory
             files[(*iter).first] = (*iter).second->Clone();
         }
 
@@ -127,7 +189,7 @@ public:
 
     virtual unsigned int Size() const override {
         unsigned int sum = 0;
-        for (const auto & x : files) {
+        for (const auto & x : files) { //< Size is sum of path length and size of contents
             sum += x.first.length();
             sum += x.second->Size();
         }
@@ -138,18 +200,29 @@ public:
         return (new CDirectory(*this));
     }
 
+    /**
+     * @brief Changes (or adds) file to this directory
+     *
+     * @param filename Name of file
+     * @param file File to add/change
+     * @return CDirectory& This object
+     */
     CDirectory & Change(const string & filename, const CBase & file) {
-        CBase * copy = file.Clone();
+        CBase * copy = file.Clone(); //< Allocate file first (because of self-addition, copy needs to be created before any other action)
 
-        auto iter = files.find(filename);
-        if (iter != files.end()) {
-            delete (*iter).second;
-        }
+        Change(filename, nullptr); //< If file with this name exists, deallocate it
 
-        files[filename] = copy;
+        files[filename] = copy; //< Assign copy of the file
         return (*this);
     }
 
+    /**
+     * @brief Removes file from this directory
+     *
+     * @param filename Name of file
+     * @param file Nullptr if the file should be removed
+     * @return CDirectory& This object
+     */
     CDirectory & Change(const string & filename, void * file) {
         if (file == nullptr) {
             auto iter = files.find(filename);
@@ -162,7 +235,13 @@ public:
         return (*this);
     }
 
-    CBase & Get(const string & filename) {
+    /**
+     * @brief Get const reference to file in folder
+     *
+     * @param filename Name of file
+     * @return CBase& Const reference to file
+     */
+    const CBase & Get(const string & filename) const {
         auto iter = files.find(filename);
         if (iter == files.end()) {
             throw std::out_of_range("");
@@ -170,7 +249,13 @@ public:
         return *((*iter).second);
     }
 
-    const CBase & Get(const string & filename) const {
+    /**
+     * @brief Get reference to file in folder
+     *
+     * @param filename Name of file
+     * @return CBase& Reference to file
+     */
+    CBase & Get(const string & filename) {
         auto iter = files.find(filename);
         if (iter == files.end()) {
             throw std::out_of_range("");
@@ -183,7 +268,7 @@ public:
     }
 
     friend ostream & operator << (ostream & os, const CDirectory & directory) {
-        for (const auto & f : directory.files) {
+        for (const auto & f : directory.files) { //< Print each file
             os << f.second->Size() << "\t" << f.first;
             f.second->Print(os);
             os << endl;
@@ -191,6 +276,9 @@ public:
         return os;
     }
 };
+
+// !SECTION
+// SECTION: tests
 
 #ifndef __PROGTEST__
 int main() {
@@ -252,3 +340,5 @@ int main() {
     return 0;
 }
 #endif /* __PROGTEST__ */
+
+// !SECTION
