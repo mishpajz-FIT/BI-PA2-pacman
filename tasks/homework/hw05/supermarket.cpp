@@ -3,7 +3,9 @@
  * @author Michal Dobeš
  * @date 2022-04-03
  *
- * @brief
+ * @brief Storage management in supermarket
+ *
+ * Supports adding batches of items with expiration date, removal of items and counting the number of items that have an older expiration date.
  *
  * @copyright Copyright (c) 2022
  *
@@ -35,8 +37,8 @@ using namespace std;
 /**
  * @brief Date
  *
- * Storage for year, month, days.
- * Has comparison operators.
+ * Stores year, month, day.
+ * Contains comparison operators.
  *
  */
 class CDate {
@@ -46,18 +48,18 @@ private:
     unsigned int day;
 
     /**
-     * @brief Is year leap
+     * @brief Finds out if year is leap
      *
      * @param y Year
-     * @return true Is leap
-     * @return false Isn't leap
+     * @return true
+     * @return false
      */
     static bool leapYear(unsigned int y) {
         return ((y % 4 == 0 && y % 100 != 0) || (y % 400 == 0 && y % 4000 != 0));
     }
 
     /**
-     * @brief Days in month (calculates with differce for leap year)
+     * @brief Calculate days in month (accounting for differences in leap years)
      *
      * @param y Year
      * @param m Month
@@ -72,7 +74,7 @@ public:
     /**
      * @brief Construct a new CDate object
      *
-     * Throws if parameters are invalid
+     * Throws if date is invalid according to Gregorian calendar
      *
      * @param y Year
      * @param m Month
@@ -110,64 +112,67 @@ public:
     // !SECTION
 };
 
+/**
+ * @brief Supermarket storage management
+ *
+ */
 class CSupermarket {
+    /*
+        Items are separated into batches, with each batch having different expiration date and different amount.
+
+        Names of items are stored in CSupermarket::keys. -> If the name is entered inaccurately, it is searched for here
+        Batches are stored in CSupermarket::items and in CSupermarket::expiring. -> This dual information storage allows for both fast adding/removing batches and fast lookup of expired batches.
+            In CSupermarket::items, they are stored by their name, in priority queues where batch with the oldest expiration date has biggest priority.
+            In CSupermarket::expiring they are stored by their expiration date.
+    */
+
 private:
+    // SECTION: Data storage helper classes
 
     /**
-     * @brief Item data storage in CSupermarket::items map
+     * @brief Batch storage for priority queue in CSupermarket::items map
      *
      */
-    struct Item {
-        CDate date;
-        int amount;
+    struct CItemBatch {
+        CDate date; //< Expiration date
+        int amount; //< Amount
 
-        unsigned int expiringSerial; //< Helper id for lookup in CSupermarket::expiring map, should be unique in combination with Date
+        unsigned int expiringId; //< Helper id for lookup in CSupermarket::expiring map, should be unique in combination with Date
 
-        Item(CDate d, int a, unsigned int s) : date(d), amount(a), expiringSerial(s) { }
+        CItemBatch(CDate d, int a, unsigned int s) : date(d), amount(a), expiringId(s) { }
 
         /**
          * @brief Comparison operator for priority queue ordering
          *
-         * Item with older date is larger
+         * Batch with older date is larger
          *
-         * @param rhs another Item
+         * @param rhs Item
          * @return true Date is younger (or same) than rhs
          * @return false Date is older than rhs
          */
-        bool operator < (const Item & rhs) const {
+        bool operator < (const CItemBatch & rhs) const {
             return date > rhs.date;
         }
     };
 
     /**
-     * @brief Item data storage for processing selling
+     * @brief Item data storage helper for processing selling
      *
      */
-    struct ShoplistItem {
-        pair<string, int> nameAndAmount; //< Item name (can contain mismatch) and count - Inputted variables
-        bool exists; //< Does unique item with same name or similar name exist in  CSupermarket::items
+    struct CShoplistItem {
+        pair<string, int> nameAndAmount; //< Sell request (Item name (can contain mismatch) and amount)
+        bool exists; //< Does unique item with name or (similar enough name) exist in CSupermarket::items
         string key; //< Correct name of item (without mismatches)
 
-        ShoplistItem(pair<string, int> & na, bool e = false, string k = "") : nameAndAmount(na), exists(e), key(move(k)) { }
+        CShoplistItem(pair<string, int> & na, bool e = false, string k = "") : nameAndAmount(na), exists(e), key(move(k)) { }
     };
 
     /**
-     * @brief Item data storage for CSupermarket::expiring map
-     *
-     */
-    struct ExpiredItem {
-        string name; //< Name of item
-        int amount; //< Amount of item
-
-        ExpiredItem(string n, int a) : name(move(n)), amount(a) { }
-    };
-
-    /**
-     * @brief Storage for key stored in CSupermarket::keys
+     * @brief Key storage for CSupermarket::keys set
      *
      * Includes semi-hash functions for faster comparison
      */
-    struct ValidKey {
+    struct CValidKey {
     private:
         string key; //< Key itself 
         unsigned int asciiValue; //< Precalculated ascii values
@@ -175,7 +180,7 @@ private:
         /**
          * @brief Calculate sum of ascii values of key
          *
-         * @return unsigned int
+         * @return unsigned int Ascii value
          */
         unsigned int calculateAsciiValue() {
             unsigned int result = 0;
@@ -194,7 +199,7 @@ private:
          * @param k String that serves as key
          * @param hashModif Modify calculated hash by this value
          */
-        ValidKey(string k, int hashModif = 0) : key(move(k)) {
+        CValidKey(string k, int hashModif = 0) : key(move(k)) {
             unsigned int calculatedHash = calculateAsciiValue();
             if (hashModif < 0 && static_cast<unsigned int>(hashModif < 0 ? -hashModif : hashModif) > calculatedHash) {
                 calculatedHash = 0;
@@ -207,14 +212,14 @@ private:
         /**
          * @brief Comparison for set ordering
          *
-         * Values are firstly compared by key length, then hash and finally by whole keys
+         * Values are firstly compared by key length, then ascii value and finally by whole keys
          *
-         * @param lhs ValidKey
-         * @param rhs ValidKey
+         * @param lhs CValidKey
+         * @param rhs CValidKey
          * @return true lhs is smaller
          * @return false lhs is equal or greater
          */
-        friend bool operator < (const ValidKey & lhs, const ValidKey & rhs) {
+        friend bool operator < (const CValidKey & lhs, const CValidKey & rhs) {
             size_t lhsLength = lhs.key.length();
             size_t rhsLength = rhs.key.length();
 
@@ -229,27 +234,43 @@ private:
             return asciiValue;
         }
 
-        size_t getKeyLenght() const {
+        size_t getKeyLength() const {
             return key.length();
         }
 
+        /**
+         * @brief Get char in key
+         *
+         * @param at Index of char
+         * @return const char& Char
+         */
         const char & operator[] (size_t at) const {
             return key[at];
         }
     };
 
-    set<ValidKey> keys; //< Set containing correct keys for map CSupermarket::items
-
-    unordered_map<string, priority_queue<Item, vector<Item>>> items;
-
     /**
-     * @brief Key in map CSupermarket::expiring
+     * @brief Key in map CSupermarket::expiring map
      *
-     * Keys are sorted by date, then serial
+     * Keys are sorted by expiration date, then by serial
      */
-    struct ExpiredKey {
+    struct CExpiredKey {
+    private:
+        static unsigned int newExpiringSerial; //< Unique value, should be retrieved by CSupermarket::getNewExpiringSerial
+        /**
+        * @brief Get the CExpiredKey::newExpiringSerial value and update it for next use
+        *
+        * Raises expiring serial value so it is kept unique
+        *
+        * @return unsigned int
+        */
+        unsigned int getNewExpiringSerial() {
+            return newExpiringSerial++;
+        }
+
+    public:
         CDate date;
-        unsigned int expiredSerial; //< Helper id for lookup, should be unique in combination with Date
+        unsigned int expiredSerialID; //< Helper id for lookup, should be unique in combination with Date
 
         /**
          * @brief Construct a new Expired Key object
@@ -257,7 +278,16 @@ private:
          * @param d Date
          * @param s Serial, should be unique in combination with Date
          */
-        ExpiredKey(CDate d, unsigned int s) : date(move(d)), expiredSerial(s) { }
+        CExpiredKey(CDate d, unsigned int s) : date(move(d)), expiredSerialID(s) { }
+
+        /**
+         * @brief Construct a new Expired Key object
+         *
+         * Serial is generated to be unique
+         *
+         * @param d Date
+         */
+        CExpiredKey(CDate d) : date(move(d)), expiredSerialID(getNewExpiringSerial()) { }
 
         /**
          * @brief Comparison for keys, compared first by date, then by serial
@@ -266,43 +296,52 @@ private:
          * @return true
          * @return false
          */
-        bool operator < (const ExpiredKey & rhs) const {
-            return tie(date, expiredSerial) < tie(rhs.date, rhs.expiredSerial);
+        bool operator < (const CExpiredKey & rhs) const {
+            return tie(date, expiredSerialID) < tie(rhs.date, rhs.expiredSerialID);
         }
     };
-    map<ExpiredKey, ExpiredItem> expiring; //< Map containing all items and their count, sorted by date 
-    unsigned int expiringSerial; //< Unique value, should be retrieved by CSupermarket::getExpiringSerial
-    /**
-     * @brief Get the expiringSerial value and update it for next use
-     *
-     * Raises expiring serial value so it is kept unique
-     *
-     * @return unsigned int
-     */
-    unsigned int getExpiringSerial() {
-        return expiringSerial++;
-    }
 
     /**
-     * @brief Check if strings have maximum of one mismatch
+     * @brief Batch storage for CSupermarket::expiring map
      *
-     * Strings need to have same length.
+     */
+    struct CExpiredBatch {
+        string name; //< Name of item
+        int amount; //< Amount
+
+        CExpiredBatch(string n, int a) : name(move(n)), amount(a) { }
+    };
+
+    //!SECTION
+    //SECTION: Variables
+
+    set<CValidKey> keys; //< Set containing keys for map CSupermarket::items
+    unordered_map<string, priority_queue<CItemBatch, vector<CItemBatch>>> items; // Map with keys as item names and values as priority queues of batches, prioritised by oldest (by expiration date) batches
+    map<CExpiredKey, CExpiredBatch> expiring; //< Map with keys as expire dates and values as batches with names of item and and their amout, (is sorted by date for fast expired batches lookup)
+
+    //!SECTION
+    //SECTION: Methods
+
+    /**
+     * @brief Check if CValidKeys have maximum of one mismatch
      *
-     * @param s String
-     * @param compareTo String
+     * Keys need to have same length.
+     *
+     * @param key CValidKey
+     * @param compareTo CValidKey
      * @return true Zero or one mismatches
      * @return false More mismatches than one
      */
-    static bool hasKeyMaxMismatch(const ValidKey & key, const ValidKey & compareTo) {
-        if (key.getKeyLenght() != compareTo.getKeyLenght()) {
+    static bool hasKeyMaxMismatch(const CValidKey & key, const CValidKey & compareTo) {
+        if (key.getKeyLength() != compareTo.getKeyLength()) {
             return false;
         }
 
         int mismatches = 0;
-        for (size_t i = 0; i < key.getKeyLenght(); i++) {
+        for (size_t i = 0; i < key.getKeyLength(); i++) {
             if (key[i] != compareTo[i]) {
                 mismatches++;
-                if (key.getAsciiValue() - key[i] != compareTo.getAsciiValue() - compareTo[i]) {
+                if (key.getAsciiValue() - key[i] != compareTo.getAsciiValue() - compareTo[i]) { //< If ascii values are different after removing mismatch, rest of the string surely cannot be same
                     return false;
                 }
             }
@@ -317,23 +356,23 @@ private:
      * @brief Find key in CSupermarket::keys
      *
      * Key can contain max one mismatch.
-     * Key must match only one string, else is not found.
+     * Key must match only one key, if more keys match, key is not found.
      *
-     * @param key Key to find
-     * @param found Has been found
+     * @param [inout] key Key to find/found key
+     * @param [inout] found Has unique key been found
      */
     void findInKeys(string & key, bool & found) {
-        auto lowerIter = keys.lower_bound(ValidKey(key, -0x7F));
-        ValidKey upper(key, +0x7F);
+        auto lowerIter = keys.lower_bound(CValidKey(key, -0x7F)); //< Lowest key to search is searched key with substracted ascii value of 0x7f, which is max possible difference between two mismatching chars in case of a single mismatch
+        CValidKey upper(key, +0x7F); //< Highest key to search for is searched key with added ascii value of 0x7f (max possible difference between two chars in case of one mismatch)
 
         found = false;
-        ValidKey keyToFind(key);
+        CValidKey keyToFind(key);
         while ((lowerIter != keys.end()) && !(upper < (*lowerIter))) {
             if (hasKeyMaxMismatch(keyToFind, (*lowerIter))) {
                 if (!found) {
                     found = true;
                     key = (*lowerIter).getKey();
-                } else {
+                } else { //< If more than one key is matching return false
                     found = false;
                     break;
                 }
@@ -343,44 +382,62 @@ private:
     }
 
 public:
-    CSupermarket() : expiringSerial(0) { }
+    CSupermarket() { }
 
+    /**
+     * @brief Store batch of item
+     *
+     * @param name Name of item
+     * @param expireDate Expire date of batch
+     * @param count Amount in batch
+     * @return CSupermarket& this
+     */
     CSupermarket & store(string name, CDate expireDate, int count) {
-        unsigned int generatedExpiringSerial = getExpiringSerial();
+        CExpiredKey newExpiredKey(expireDate); // Create new key for CSupermarket::expiring
 
-        expiring.emplace(make_pair(ExpiredKey(expireDate, generatedExpiringSerial), ExpiredItem(name, count)));
-        items[name].push(Item(move(expireDate), count, generatedExpiringSerial));
-        keys.emplace(move(name));
+        expiring.emplace(make_pair(newExpiredKey, CExpiredBatch(name, count))); //< Add batch into CSupermarket::expiring
+        items[name].push(CItemBatch(move(expireDate), count, newExpiredKey.expiredSerialID)); //< Add batch into appropriate priority queue in CSupermarket::items
+        keys.emplace(move(name)); //< Add key (if is new) into CSupermarket::keys
         return (*this);
     }
 
+    /**
+     * @brief Sell items
+     *
+     * Removes items from CSupermarket.
+     * Items are removed by oldest (by expiring date) batches first.
+     * Performs name search for names that do not exactly match (up to one mismatch).
+     * Transactionally executed, all items are first found, then sold.
+     *
+     * @param [inout] shoppingList List of pair<string, int>, where string is name and int is count
+     */
     void sell(list<pair<string, int>> & shoppingList) {
 
-        list<ShoplistItem> processedList;
+        list<CShoplistItem> processedList; //< Helper struct for processing items
         for (auto & i : shoppingList) {
-            if (items.find(i.first) == items.end()) {
+            if (items.find(i.first) == items.end()) { //< If item isn't found, try to find correct item name and process it into processedList
                 bool found = false;
                 string correctKey = i.first;
                 findInKeys(correctKey, found);
 
                 processedList.emplace_back(i, found, correctKey);
 
-            } else {
+            } else { //< If item is found, process into processedList
                 processedList.emplace_back(i, true, i.first);
             }
         }
 
         shoppingList.clear();
-        for (auto & i : processedList) {
 
-            if (!(i.exists)) {
+        for (auto & i : processedList) {
+            if (!(i.exists)) { //< If item wasn't found, put it back into shopping list
                 shoppingList.emplace_back(i.nameAndAmount);
                 continue;
             }
 
-            while (i.nameAndAmount.second >= 0) {
-                if (items[i.key].size() == 0) {
-                    if (i.nameAndAmount.second > 0) {
+            while (i.nameAndAmount.second >= 0) { //< Remove batches of item from storage until shopping request is fulfilled
+                if (items[i.key].size() == 0) { //< If no more batches of item are stored, erase key in CSupermarket::keys and priority queue in CSupermarket::items
+                    if (i.nameAndAmount.second > 0) { //< If shopping list requested larger amount, return what wasn't fulfilled to list
                         shoppingList.emplace_back(i.nameAndAmount);
                     }
                     items.erase(i.key);
@@ -388,37 +445,50 @@ public:
                     break;
                 }
 
-                if (i.nameAndAmount.second >= static_cast<int>(items[i.key].top().amount)) {
-                    i.nameAndAmount.second -= items[i.key].top().amount;
-                    expiring.erase(ExpiredKey(items[i.key].top().date, items[i.key].top().expiringSerial));
+                if (i.nameAndAmount.second >= static_cast<int>(items[i.key].top().amount)) { //< If shopping list requests bigger amount than in oldest (by expiring date) batch of items, pop the batch from priority queue in CSupermarket::items (and remove from CSupermarket::expired)
+                    i.nameAndAmount.second -= items[i.key].top().amount; //< Update remaining amount to sell
+                    expiring.erase(CExpiredKey(items[i.key].top().date, items[i.key].top().expiringId));
                     items[i.key].pop();
-                } else {
-                    const_cast<Item &>(items[i.key].top()).amount -= i.nameAndAmount.second;
-                    expiring.at(ExpiredKey(items[i.key].top().date, items[i.key].top().expiringSerial)).amount = items[i.key].top().amount;
+                } else { //< If shopping list requests smaller amount than in oldest (by expiring date) batch of items, update amount in batch
+                    const_cast<CItemBatch &>(items[i.key].top()).amount -= i.nameAndAmount.second; //< Update amount in priority queue in CSupermarket::items
+                    expiring.at(CExpiredKey(items[i.key].top().date, items[i.key].top().expiringId)).amount = items[i.key].top().amount; //< Update amount in CSupermarket::expired
                     break;
                 }
             }
         }
     }
 
+    /**
+     * @brief Get list with items and their amount in batches that expire before the specified date
+     *
+     * Batches expiring on date itself are not included.
+     * Items are sorted descending by amount.
+     *
+     * @param date CDate to look before
+     * @return list<pair<string, int>>
+     */
     list<pair<string, int>> expired(const CDate & date) const {
 
-        auto upper = expiring.lower_bound(ExpiredKey(date, 0));
+        auto upper = expiring.lower_bound(CExpiredKey(date, 0)); //< Get batches up to this batch from CSupermarket::expiring
 
-        unordered_map<string, int> processedExpiring;
+        unordered_map<string, int> processedExpiring; //< Map containing name of item as key and expired amount as value 
         auto iter = expiring.begin();
         while (iter != upper) {
-            processedExpiring[(*iter).second.name] += (*iter).second.amount;
+            processedExpiring[(*iter).second.name] += (*iter).second.amount; //< Add each expired batch into map
             iter++;
         }
 
-        vector<pair<string, int>> preparedResult(processedExpiring.begin(), processedExpiring.end());
+        vector<pair<string, int>> preparedResult(processedExpiring.begin(), processedExpiring.end()); //< Convert map into vector and sort by amount.
         sort(preparedResult.begin(), preparedResult.end(), [ ](const pair<string, int> & lhs, const pair<string, int> & rhs) { return lhs.second > rhs.second; });
 
-        list<pair<string, int>> result(preparedResult.begin(), preparedResult.end());
+        list<pair<string, int>> result(preparedResult.begin(), preparedResult.end()); //< Convert vector into list
         return result;
     }
+
+    // !SECTION
 };
+
+unsigned int CSupermarket::CExpiredKey::newExpiringSerial = 1;
 
 // !SECTION
 // SECTION: Tests
