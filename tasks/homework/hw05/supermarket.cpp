@@ -30,6 +30,8 @@
 using namespace std;
 #endif /* __PROGTEST__ */
 
+// SECTION: Implementation
+
 /**
  * @brief Date
  *
@@ -105,6 +107,7 @@ public:
 
     friend bool operator != (const CDate & lhs, const CDate & rhs) { return !(rhs == lhs); }
 
+    // !SECTION
 };
 
 class CSupermarket {
@@ -156,9 +159,7 @@ private:
         string name; //< Name of item
         int amount; //< Amount of item
 
-        ExpiredItem() { } //< Empty constructor (needed for easier handling of map elements)
-
-        ExpiredItem(string & n, int a) : name(n), amount(a) { }
+        ExpiredItem(string n, int a) : name(move(n)), amount(a) { }
     };
 
     /**
@@ -193,7 +194,7 @@ private:
          * @param k String that serves as key
          * @param hashModif Modify calculated hash by this value
          */
-        ValidKey(const string & k, int hashModif = 0) : key(k) {
+        ValidKey(string k, int hashModif = 0) : key(move(k)) {
             unsigned int calculatedHash = calculateAsciiValue();
             if (hashModif < 0 && static_cast<unsigned int>(hashModif < 0 ? -hashModif : hashModif) > calculatedHash) {
                 calculatedHash = 0;
@@ -226,6 +227,14 @@ private:
 
         unsigned int getAsciiValue() const {
             return asciiValue;
+        }
+
+        size_t getKeyLenght() const {
+            return key.length();
+        }
+
+        const char & operator[] (size_t at) const {
+            return key[at];
         }
     };
 
@@ -285,15 +294,15 @@ private:
      * @return false More mismatches than one
      */
     static bool hasKeyMaxMismatch(const ValidKey & key, const ValidKey & compareTo) {
-        if (key.getKey().length() != compareTo.getKey().length()) {
+        if (key.getKeyLenght() != compareTo.getKeyLenght()) {
             return false;
         }
 
         int mismatches = 0;
-        for (size_t i = 0; i < key.getKey().length(); i++) {
-            if (key.getKey()[i] != compareTo.getKey()[i]) {
+        for (size_t i = 0; i < key.getKeyLenght(); i++) {
+            if (key[i] != compareTo[i]) {
                 mismatches++;
-                if (key.getAsciiValue() - key.getKey()[i] != compareTo.getAsciiValue() - compareTo.getKey()[i]) {
+                if (key.getAsciiValue() - key[i] != compareTo.getAsciiValue() - compareTo[i]) {
                     return false;
                 }
             }
@@ -315,11 +324,11 @@ private:
      */
     void findInKeys(string & key, bool & found) {
         auto lowerIter = keys.lower_bound(ValidKey(key, -0x7F));
-        auto upperIter = keys.upper_bound(ValidKey(key, +0x7F));
+        ValidKey upper(key, +0x7F);
 
         found = false;
         ValidKey keyToFind(key);
-        while (lowerIter != upperIter) {
+        while ((lowerIter != keys.end()) && !(upper < (*lowerIter))) {
             if (hasKeyMaxMismatch(keyToFind, (*lowerIter))) {
                 if (!found) {
                     found = true;
@@ -339,7 +348,7 @@ public:
     CSupermarket & store(string name, CDate expireDate, int count) {
         unsigned int generatedExpiringSerial = getExpiringSerial();
 
-        expiring[ExpiredKey(expireDate, generatedExpiringSerial)] = ExpiredItem(name, count);
+        expiring.emplace(make_pair(ExpiredKey(expireDate, generatedExpiringSerial), ExpiredItem(name, count)));
         items[name].push(Item(move(expireDate), count, generatedExpiringSerial));
         keys.emplace(move(name));
         return (*this);
@@ -385,7 +394,7 @@ public:
                     items[i.key].pop();
                 } else {
                     const_cast<Item &>(items[i.key].top()).amount -= i.nameAndAmount.second;
-                    expiring[ExpiredKey(items[i.key].top().date, items[i.key].top().expiringSerial)].amount = items[i.key].top().amount;
+                    expiring.at(ExpiredKey(items[i.key].top().date, items[i.key].top().expiringSerial)).amount = items[i.key].top().amount;
                     break;
                 }
             }
@@ -410,6 +419,9 @@ public:
         return result;
     }
 };
+
+// !SECTION
+// SECTION: Tests
 
 #ifndef __PROGTEST__
 int main(void) {
@@ -582,3 +594,5 @@ int main(void) {
     return EXIT_SUCCESS;
 }
 #endif /* __PROGTEST__ */
+
+// !SECTION
