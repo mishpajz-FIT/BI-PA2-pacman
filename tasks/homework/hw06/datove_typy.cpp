@@ -28,9 +28,11 @@ class CDataType {
 protected:
     virtual bool isEqualTo(const CDataType & rhs) const = 0;
 
-    virtual bool isNotEqualTo(const CDataType & rhs) const = 0;
-
-    virtual void print(ostream & stream) const = 0;
+    static void indentStream(ostream & stream, size_t level) {
+        while (level--) {
+            stream << "  ";
+        }
+    }
 
 public:
     CDataType() { }
@@ -44,24 +46,238 @@ public:
     }
 
     bool operator != (const CDataType & rhs) const {
-        return isNotEqualTo(rhs);
+        return !(isEqualTo(rhs));
     }
+
+    virtual CDataType * clone() const = 0;
+
+    virtual void print(ostream & stream, size_t level = 0) const = 0;
 
     friend ostream & operator << (ostream & stream, const CDataType & rhs) {
         rhs.print(stream);
         return stream;
     }
 };
-class CDataTypeDouble {
-  // todo
+
+class CDataTypeInt : public CDataType {
+protected:
+    bool isEqualTo(const CDataType & rhs) const override {
+        return (dynamic_cast<const CDataTypeInt *>(&rhs) != nullptr);
+    }
+
+    void print(ostream & stream, size_t level = 0) const override {
+        CDataType::indentStream(stream, level);
+        stream << "int";
+    }
+
+    CDataTypeInt * clone() const override {
+        return (new CDataTypeInt(*this));
+    }
+
+public:
+    size_t getSize() const override {
+        return 4;
+    }
 };
 
-class CDataTypeEnum {
-  // todo
+class CDataTypeDouble : public CDataType {
+protected:
+    bool isEqualTo(const CDataType & rhs) const override {
+        return (dynamic_cast<const CDataTypeDouble *>(&rhs) != nullptr);
+    }
+
+    void print(ostream & stream, size_t level = 0) const override {
+        CDataType::indentStream(stream, level);
+        stream << "double";
+    }
+
+    CDataTypeDouble * clone() const override {
+        return (new CDataTypeDouble(*this));
+    }
+
+public:
+    size_t getSize() const override {
+        return 8;
+    }
 };
 
-class CDataTypeStruct {
-  // todo
+class CDataTypeEnum : public CDataType {
+private:
+    vector<string> values;
+
+protected:
+    bool isEqualTo(const CDataType & rhs) const override {
+        const CDataTypeEnum * ptrRhs = dynamic_cast<const CDataTypeEnum *>(&rhs);
+        if ((ptrRhs == nullptr)
+            || (values.size() != ptrRhs->values.size())) {
+            return false;
+        }
+
+        for (size_t i = 0; i < values.size(); i++) {
+            if (values[i] != ptrRhs->values[i]) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    void print(ostream & stream, size_t level = 0) const override {
+        CDataType::indentStream(stream, level);
+        stream << "enum\n";
+
+        CDataType::indentStream(stream, level);
+        stream << "{\n";
+
+        for (size_t i = 0; i < values.size(); i++) {
+            CDataType::indentStream(stream, level + 1);
+            stream << values[i];
+            if (i + 1 < values.size()) {
+                stream << ",";
+            }
+            stream << "\n";
+        }
+
+        CDataType::indentStream(stream, level);
+        stream << "}";
+    }
+
+    CDataTypeEnum * clone() const override {
+        return (new CDataTypeEnum(*this));
+    }
+
+public:
+    size_t getSize() const override {
+        return 4;
+    }
+
+    CDataTypeEnum & add(const string & value) {
+        if (find(values.begin(), values.end(), value) != values.end()) {
+            throw std::invalid_argument("Duplicate enum value: " + value);
+        }
+
+        values.emplace_back(value);
+        return (*this);
+    }
+};
+
+class CDataTypeStruct : public CDataType {
+private:
+    vector<pair<string, CDataType *>> values;
+
+    void deallocValues() {
+        for (auto & v : values) {
+            delete v.second;
+        }
+        values.clear();
+    }
+
+    vector<pair<string, CDataType *>>::const_iterator findInValues(const string & name) const {
+        auto iter = values.begin();
+        for (; iter < values.end(); iter++) {
+            if ((*iter).first == name) {
+                break;
+            }
+        }
+
+        return iter;
+    }
+
+protected:
+    bool isEqualTo(const CDataType & rhs) const override {
+        const CDataTypeStruct * ptrRhs = dynamic_cast<const CDataTypeStruct *>(&rhs);
+        if ((ptrRhs == nullptr)
+            || (values.size() != ptrRhs->values.size())) {
+            return false;
+        }
+
+        for (size_t i = 0; i < values.size(); i++) {
+            if ((*values[i].second) != (*(ptrRhs->values[i].second))) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    void print(ostream & stream, size_t level = 0) const override {
+        CDataType::indentStream(stream, level);
+        stream << "struct\n";
+
+        CDataType::indentStream(stream, level);
+        stream << "{\n";
+
+        for (const auto & v : values) {
+            v.second->print(stream, level + 1);
+            stream << " " << v.first << ";\n";
+        }
+
+        CDataType::indentStream(stream, level);
+        stream << "}";
+
+    }
+
+    CDataTypeStruct * clone() const override {
+        return (new CDataTypeStruct(*this));
+    }
+
+public:
+    CDataTypeStruct() : CDataType() { }
+
+    CDataTypeStruct(const CDataTypeStruct & toCopy) : CDataType() {
+        for (auto & v : toCopy.values) {
+            values.push_back(make_pair(v.first, v.second->clone()));
+        }
+    }
+
+    ~CDataTypeStruct() {
+        deallocValues();
+    }
+
+    CDataTypeStruct & operator = (const CDataTypeStruct & toCopy) {
+        if (this == &toCopy) {
+            return *this;
+        }
+
+        deallocValues();
+
+        for (auto & v : toCopy.values) {
+            values.push_back(make_pair(v.first, v.second->clone()));
+        }
+
+        return (*this);
+    }
+
+    size_t getSize() const override {
+        size_t sum = 0;
+        for (auto & v : values) {
+            sum += v.second->getSize();
+        }
+        return sum;
+    }
+
+    CDataTypeStruct & addField(const string & name, const CDataType & value) {
+        auto iter = findInValues(name);
+
+        if (iter != values.end()) {
+            throw std::invalid_argument("Duplicate field: " + name);
+        }
+
+        CDataType * valueCopy = value.clone();
+        values.push_back(make_pair(name, valueCopy));
+
+        return (*this);
+    }
+
+    const CDataType & field(const string & name) const {
+        auto iter = findInValues(name);
+
+        if (iter == values.end()) {
+            throw std::invalid_argument("Unknown field: " + name);
+        }
+
+        return (*((*iter).second));
+    }
 };
 
 #ifndef __PROGTEST__
@@ -128,6 +344,7 @@ int main(void) {
             add("BROKEN") .
             add("DEAD")).
         addField("m_Ratio", CDataTypeInt());
+
     assert(whitespaceMatch(a, "struct\n"
         "{\n"
         "  int m_Length;\n"
