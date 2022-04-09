@@ -354,7 +354,7 @@ public:
     }
 
     size_t getSize() const override {
-        return type->getSize();
+        return (type->getSize() * count);
     }
 
     const CDataType & element() const override {
@@ -511,7 +511,6 @@ int main(void) {
             add("BROKEN") .
             add("DEAD")).
         addField("m_Ratio", CDataTypeInt());
-
     assert(whitespaceMatch(a, "struct\n"
         "{\n"
         "  int m_Length;\n"
