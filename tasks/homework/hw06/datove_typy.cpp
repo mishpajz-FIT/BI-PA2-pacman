@@ -24,15 +24,42 @@
 using namespace std;
 #endif /* __PROGTEST__ */
 
-class CDataTypeInt {
-  // todo
+class CDataType {
+protected:
+    virtual bool isEqualTo(const CDataType & rhs) const = 0;
+
+    virtual bool isNotEqualTo(const CDataType & rhs) const = 0;
+
+    virtual void print(ostream & stream) const = 0;
+
+public:
+    CDataType() { }
+
+    virtual ~CDataType() { }
+
+    virtual size_t getSize() const = 0;
+
+    bool operator == (const CDataType & rhs) const {
+        return isEqualTo(rhs);
+    }
+
+    bool operator != (const CDataType & rhs) const {
+        return isNotEqualTo(rhs);
+    }
+
+    friend ostream & operator << (ostream & stream, const CDataType & rhs) {
+        rhs.print(stream);
+        return stream;
+    }
 };
 class CDataTypeDouble {
   // todo
 };
+
 class CDataTypeEnum {
   // todo
 };
+
 class CDataTypeStruct {
   // todo
 };
