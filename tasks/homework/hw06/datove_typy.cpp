@@ -566,8 +566,6 @@ int main(void) {
     assert(a != b);
     assert(a == c);
     assert(a != d);
-    assert(a.field("m_Status") == CDataTypeEnum().add("NEW").add("FIXED").add("BROKEN").add("DEAD"));
-    assert(a.field("m_Status") != CDataTypeEnum().add("NEW").add("BROKEN").add("FIXED").add("DEAD"));
     assert(a != CDataTypeInt());
     assert(whitespaceMatch(a.field("m_Status"), "enum\n"
         "{\n"
@@ -577,14 +575,10 @@ int main(void) {
         "  DEAD\n"
         "}"));
 
-    CDataTypeStruct aOld = a;
-    b.addField("m_Other", CDataTypeDouble());
+    b.addField("m_Other", a);
 
     a.addField("m_Sum", CDataTypeInt());
 
-    assert(a != aOld);
-    assert(a != c);
-    assert(aOld == c);
     assert(whitespaceMatch(a, "struct\n"
         "{\n"
         "  int m_Length;\n"
@@ -610,34 +604,21 @@ int main(void) {
         "    READY\n"
         "  } m_Status;\n"
         "  double m_Ratio;\n"
-        "  double m_Other;\n"
+        "  struct\n"
+        "  {\n"
+        "    int m_Length;\n"
+        "    enum\n"
+        "    {\n"
+        "      NEW,\n"
+        "      FIXED,\n"
+        "      BROKEN,\n"
+        "      DEAD\n"
+        "    } m_Status;\n"
+        "    double m_Ratio;\n"
+        "  } m_Other;\n"
         "}"));
 
-    c.addField("m_Another", a.field("m_Status"));
-
-    assert(whitespaceMatch(c, "struct\n"
-        "{\n"
-        "  int m_First;\n"
-        "  enum\n"
-        "  {\n"
-        "    NEW,\n"
-        "    FIXED,\n"
-        "    BROKEN,\n"
-        "    DEAD\n"
-        "  } m_Second;\n"
-        "  double m_Third;\n"
-        "  enum\n"
-        "  {\n"
-        "    NEW,\n"
-        "    FIXED,\n"
-        "    BROKEN,\n"
-        "    DEAD\n"
-        "  } m_Another;\n"
-        "}"));
-
-    d.addField("m_Another", a.field("m_Ratio"));
-
-    assert(whitespaceMatch(d, "struct\n"
+    assert(whitespaceMatch(b.field("m_Other"), "struct\n"
         "{\n"
         "  int m_Length;\n"
         "  enum\n"
@@ -647,12 +628,219 @@ int main(void) {
         "    BROKEN,\n"
         "    DEAD\n"
         "  } m_Status;\n"
-        "  int m_Ratio;\n"
-        "  double m_Another;\n"
+        "  double m_Ratio;\n"
+        "}"));
+
+    assert(whitespaceMatch(b.field("m_Other").field("m_Status"), "enum\n"
+        "{\n"
+        "  NEW,\n"
+        "  FIXED,\n"
+        "  BROKEN,\n"
+        "  DEAD\n"
         "}"));
 
     assert(a.getSize() == 20);
-    assert(b.getSize() == 24);
+    assert(b.getSize() == 32);
+    b.addField("m_Other1", b);
+    b.addField("m_Other2", b);
+    b.addField("m_Other3", b);
+    assert(b.field("m_Other3").field("m_Other2").field("m_Other1") == b.field("m_Other1"));
+
+    assert(b.getSize() == 256);
+
+    assert(whitespaceMatch(b, "struct\n"
+        "{\n"
+        "  int m_Length;\n"
+        "  enum\n"
+        "  {\n"
+        "    NEW,\n"
+        "    FIXED,\n"
+        "    BROKEN,\n"
+        "    READY\n"
+        "  } m_Status;\n"
+        "  double m_Ratio;\n"
+        "  struct\n"
+        "  {\n"
+        "    int m_Length;\n"
+        "    enum\n"
+        "    {\n"
+        "      NEW,\n"
+        "      FIXED,\n"
+        "      BROKEN,\n"
+        "      DEAD\n"
+        "    } m_Status;\n"
+        "    double m_Ratio;\n"
+        "  } m_Other;\n"
+        "  struct\n"
+        "  {\n"
+        "    int m_Length;\n"
+        "    enum\n"
+        "    {\n"
+        "      NEW,\n"
+        "      FIXED,\n"
+        "      BROKEN,\n"
+        "      READY\n"
+        "    } m_Status;\n"
+        "    double m_Ratio;\n"
+        "    struct\n"
+        "    {\n"
+        "      int m_Length;\n"
+        "      enum\n"
+        "      {\n"
+        "        NEW,\n"
+        "        FIXED,\n"
+        "        BROKEN,\n"
+        "        DEAD\n"
+        "      } m_Status;\n"
+        "      double m_Ratio;\n"
+        "    } m_Other;\n"
+        "  } m_Other1;\n"
+        "  struct\n"
+        "  {\n"
+        "    int m_Length;\n"
+        "    enum\n"
+        "    {\n"
+        "      NEW,\n"
+        "      FIXED,\n"
+        "      BROKEN,\n"
+        "      READY\n"
+        "    } m_Status;\n"
+        "    double m_Ratio;\n"
+        "    struct\n"
+        "    {\n"
+        "      int m_Length;\n"
+        "      enum\n"
+        "      {\n"
+        "        NEW,\n"
+        "        FIXED,\n"
+        "        BROKEN,\n"
+        "        DEAD\n"
+        "      } m_Status;\n"
+        "      double m_Ratio;\n"
+        "    } m_Other;\n"
+        "    struct\n"
+        "    {\n"
+        "      int m_Length;\n"
+        "      enum\n"
+        "      {\n"
+        "        NEW,\n"
+        "        FIXED,\n"
+        "        BROKEN,\n"
+        "        READY\n"
+        "      } m_Status;\n"
+        "      double m_Ratio;\n"
+        "      struct\n"
+        "      {\n"
+        "        int m_Length;\n"
+        "        enum\n"
+        "        {\n"
+        "          NEW,\n"
+        "          FIXED,\n"
+        "          BROKEN,\n"
+        "          DEAD\n"
+        "        } m_Status;\n"
+        "        double m_Ratio;\n"
+        "      } m_Other;\n"
+        "    } m_Other1;\n"
+        "  } m_Other2;\n"
+        "  struct\n"
+        "  {\n"
+        "    int m_Length;\n"
+        "    enum\n"
+        "    {\n"
+        "      NEW,\n"
+        "      FIXED,\n"
+        "      BROKEN,\n"
+        "      READY\n"
+        "    } m_Status;\n"
+        "    double m_Ratio;\n"
+        "    struct\n"
+        "    {\n"
+        "      int m_Length;\n"
+        "      enum\n"
+        "      {\n"
+        "        NEW,\n"
+        "        FIXED,\n"
+        "        BROKEN,\n"
+        "        DEAD\n"
+        "      } m_Status;\n"
+        "      double m_Ratio;\n"
+        "    } m_Other;\n"
+        "    struct\n"
+        "    {\n"
+        "      int m_Length;\n"
+        "      enum\n"
+        "      {\n"
+        "        NEW,\n"
+        "        FIXED,\n"
+        "        BROKEN,\n"
+        "        READY\n"
+        "      } m_Status;\n"
+        "      double m_Ratio;\n"
+        "      struct\n"
+        "      {\n"
+        "        int m_Length;\n"
+        "        enum\n"
+        "        {\n"
+        "          NEW,\n"
+        "          FIXED,\n"
+        "          BROKEN,\n"
+        "          DEAD\n"
+        "        } m_Status;\n"
+        "        double m_Ratio;\n"
+        "      } m_Other;\n"
+        "    } m_Other1;\n"
+        "    struct\n"
+        "    {\n"
+        "      int m_Length;\n"
+        "      enum\n"
+        "      {\n"
+        "        NEW,\n"
+        "        FIXED,\n"
+        "        BROKEN,\n"
+        "        READY\n"
+        "      } m_Status;\n"
+        "      double m_Ratio;\n"
+        "      struct\n"
+        "      {\n"
+        "        int m_Length;\n"
+        "        enum\n"
+        "        {\n"
+        "          NEW,\n"
+        "          FIXED,\n"
+        "          BROKEN,\n"
+        "          DEAD\n"
+        "        } m_Status;\n"
+        "        double m_Ratio;\n"
+        "      } m_Other;\n"
+        "      struct\n"
+        "      {\n"
+        "        int m_Length;\n"
+        "        enum\n"
+        "        {\n"
+        "          NEW,\n"
+        "          FIXED,\n"
+        "          BROKEN,\n"
+        "          READY\n"
+        "        } m_Status;\n"
+        "        double m_Ratio;\n"
+        "        struct\n"
+        "        {\n"
+        "          int m_Length;\n"
+        "          enum\n"
+        "          {\n"
+        "            NEW,\n"
+        "            FIXED,\n"
+        "            BROKEN,\n"
+        "            DEAD\n"
+        "          } m_Status;\n"
+        "          double m_Ratio;\n"
+        "        } m_Other;\n"
+        "      } m_Other1;\n"
+        "    } m_Other2;\n"
+        "  } m_Other3;\n"
+        "}"));
+
     try {
         a.addField("m_Status", CDataTypeInt());
         assert("addField: missing exception!" == nullptr);
@@ -667,6 +855,28 @@ int main(void) {
     }
     catch (const invalid_argument & e) {
         assert(e.what() == "Unknown field: m_Fail"sv);
+    }
+
+    try {
+        cout << a.field("m_Length").field("m_Foo") << endl;
+        assert("field: missing exception!" == nullptr);
+    }
+    catch (const invalid_argument & e) {
+        assert(whitespaceMatch(e.what(), "Cannot use field() for type: int"));
+    }
+
+    try {
+        cout << a.field("m_Status").field("m_Foo") << endl;
+        assert("field: missing exception!" == nullptr);
+    }
+    catch (const invalid_argument & e) {
+        assert(whitespaceMatch(e.what(), "Cannot use field() for type: enum\n"
+            "{\n"
+            "  NEW,\n"
+            "  FIXED,\n"
+            "  BROKEN,\n"
+            "  DEAD\n"
+            "}"));
     }
 
     try {
@@ -844,13 +1054,6 @@ int main(void) {
             "    DEAD\n"
             "  } m_Second;\n"
             "  double m_Third;\n"
-            "  enum\n"
-            "  {\n"
-            "    NEW,\n"
-            "    FIXED,\n"
-            "    BROKEN,\n"
-            "    DEAD\n"
-            "  } m_Another;\n"
             "}"));
     }
 
