@@ -51,11 +51,23 @@ public:
 
     virtual CDataType * clone() const = 0;
 
-    virtual void print(ostream & stream, size_t level = 0) const = 0;
+    virtual void print(ostream & stream, size_t level = 0, string suffix = "") const = 0;
 
     friend ostream & operator << (ostream & stream, const CDataType & rhs) {
         rhs.print(stream);
         return stream;
+    }
+
+    virtual const CDataType & element() const {
+        stringstream ss;
+        print(ss);
+        throw std::invalid_argument("Cannot use element() for type: " + ss.str());
+    }
+
+    virtual const CDataType & field(const string & name) const {
+        stringstream ss;
+        print(ss);
+        throw std::invalid_argument("Cannot use field() for type: " + ss.str());
     }
 };
 
@@ -65,9 +77,10 @@ protected:
         return (dynamic_cast<const CDataTypeInt *>(&rhs) != nullptr);
     }
 
-    void print(ostream & stream, size_t level = 0) const override {
+    void print(ostream & stream, size_t level = 0, string suffix = "") const override {
         CDataType::indentStream(stream, level);
         stream << "int";
+        stream << suffix;
     }
 
     CDataTypeInt * clone() const override {
@@ -86,9 +99,10 @@ protected:
         return (dynamic_cast<const CDataTypeDouble *>(&rhs) != nullptr);
     }
 
-    void print(ostream & stream, size_t level = 0) const override {
+    void print(ostream & stream, size_t level = 0, string suffix = "") const override {
         CDataType::indentStream(stream, level);
         stream << "double";
+        stream << suffix;
     }
 
     CDataTypeDouble * clone() const override {
@@ -122,7 +136,7 @@ protected:
         return true;
     }
 
-    void print(ostream & stream, size_t level = 0) const override {
+    void print(ostream & stream, size_t level = 0, string suffix = "") const override {
         CDataType::indentStream(stream, level);
         stream << "enum\n";
 
@@ -140,6 +154,7 @@ protected:
 
         CDataType::indentStream(stream, level);
         stream << "}";
+        stream << suffix;
     }
 
     CDataTypeEnum * clone() const override {
@@ -200,7 +215,7 @@ protected:
         return true;
     }
 
-    void print(ostream & stream, size_t level = 0) const override {
+    void print(ostream & stream, size_t level = 0, string suffix = "") const override {
         CDataType::indentStream(stream, level);
         stream << "struct\n";
 
@@ -208,12 +223,15 @@ protected:
         stream << "{\n";
 
         for (const auto & v : values) {
-            v.second->print(stream, level + 1);
-            stream << " " << v.first << ";\n";
+            string newSuffix = " ";
+            newSuffix += v.first;
+            v.second->print(stream, level + 1, newSuffix);
+            stream << ";\n";
         }
 
         CDataType::indentStream(stream, level);
         stream << "}";
+        stream << suffix;
 
     }
 
@@ -269,7 +287,7 @@ public:
         return (*this);
     }
 
-    const CDataType & field(const string & name) const {
+    const CDataType & field(const string & name) const override {
         auto iter = findInValues(name);
 
         if (iter == values.end()) {
@@ -280,22 +298,172 @@ public:
     }
 };
 
+class CDataTypeArray : public CDataType {
+private:
+    CDataType * type;
+    size_t count;
+
+protected:
+    bool isEqualTo(const CDataType & rhs) const override {
+        const CDataTypeArray * ptrRhs = dynamic_cast<const CDataTypeArray *>(&rhs);
+        if ((ptrRhs == nullptr)
+            || (typeid(*(ptrRhs->type)) != typeid(*type))
+            || ptrRhs->count != count) {
+            return false;
+        }
+
+        return true;
+    }
+
+    void print(ostream & stream, size_t level = 0, string suffix = "") const override {
+        suffix += "[";
+        suffix += to_string(count);
+        suffix += "]";
+        type->print(stream, level, suffix);
+    }
+
+    CDataTypeArray * clone() const override {
+        return (new CDataTypeArray(*this));
+    }
+
+public:
+    CDataTypeArray(size_t s, const CDataType & t) : CDataType(), count(s) {
+        type = t.clone();
+    }
+
+    CDataTypeArray(const CDataTypeArray & toCopy) : CDataType(), count(toCopy.count) {
+        CDataType * clone = toCopy.type->clone();
+        type = clone;
+    }
+
+    ~CDataTypeArray() {
+        delete type;
+    }
+
+    CDataTypeArray & operator = (const CDataTypeArray & toCopy) {
+        if (this == &toCopy) {
+            return *this;
+        }
+
+        CDataType * clone = toCopy.type->clone();
+
+        delete type;
+        type = clone;
+
+        return (*this);
+    }
+
+    size_t getSize() const override {
+        return type->getSize();
+    }
+
+    const CDataType & element() const override {
+        return (*type);
+    }
+};
+
+class CDataTypePtr : public CDataType {
+private:
+    CDataType * type;
+
+protected:
+    bool isEqualTo(const CDataType & rhs) const override {
+        const CDataTypePtr * ptrRhs = dynamic_cast<const CDataTypePtr *>(&rhs);
+        if ((ptrRhs == nullptr)
+            || (typeid(*(ptrRhs->type)) != typeid(*type))) {
+            return false;
+        }
+
+        return true;
+    }
+
+    void print(ostream & stream, size_t level = 0, string suffix = "") const override {
+        bool pointingToArray = ((dynamic_cast<const CDataTypeArray *>(type) != nullptr) ? true : false);
+
+        CDataType::indentStream(stream, level);
+
+        string newSuffix = "";
+        if (pointingToArray) {
+            newSuffix = "(*";
+            newSuffix += suffix;
+            newSuffix += ")";
+        } else {
+            newSuffix = "*";
+            newSuffix += suffix;
+        };
+
+        type->print(stream, 0, newSuffix);
+    }
+
+    CDataTypePtr * clone() const override {
+        return (new CDataTypePtr(*this));
+    }
+
+public:
+    CDataTypePtr(const CDataType & t) : CDataType() {
+        type = t.clone();
+    }
+
+    CDataTypePtr(const CDataTypePtr & toCopy) : CDataType() {
+        CDataType * clone = toCopy.type->clone();
+        type = clone;
+    }
+
+    ~CDataTypePtr() {
+        delete type;
+    }
+
+    CDataTypePtr & operator = (const CDataTypePtr & toCopy) {
+        if (this == &toCopy) {
+            return *this;
+        }
+
+        CDataType * clone = toCopy.type->clone();
+
+        delete type;
+        type = clone;
+
+        return (*this);
+    }
+
+    size_t getSize() const override {
+        return 8;
+    }
+
+    const CDataType & element() const override {
+        return (*type);
+    }
+};
+
+
+
 #ifndef __PROGTEST__
 static bool whitespaceMatch(const string & a, const string & b) {
     string prepStringA = a;
     string prepStringB = b;
 
-    prepStringA.erase(remove_if(prepStringA.begin(), prepStringA.end(), [ ](char & c) { return isspace(c); }));
-    prepStringB.erase(remove_if(prepStringB.begin(), prepStringB.end(), [ ](char & c) { return isspace(c); }));
+    size_t aIt = 0;
+    size_t bIt = 0;
 
-    if (prepStringA.length() != prepStringB.length()) {
-        return false;
-    }
+    while (true) {
+        while (isspace(a[aIt])) {
+            aIt++;
+        }
 
-    for (size_t i = 0; i < prepStringA.length(); i++) {
-        if (prepStringA[i] != prepStringB[i]) {
+        while (isspace(b[bIt])) {
+            bIt++;
+        }
+
+        if (a[aIt] != b[bIt]) {
             return false;
         }
+
+        if (aIt + 1 >= a.length() || bIt + 1 >= b.length()) {
+            break;
+        }
+
+        aIt++;
+        bIt++;
     }
 
     return true;
@@ -308,7 +476,6 @@ static bool whitespaceMatch(const T_ & x, const string & ref) {
     return whitespaceMatch(oss.str(), ref);
 }
 int main(void) {
-
     CDataTypeStruct  a = CDataTypeStruct() .
         addField("m_Length", CDataTypeInt()) .
         addField("m_Status", CDataTypeEnum() .
@@ -678,6 +845,13 @@ int main(void) {
             "    DEAD\n"
             "  } m_Second;\n"
             "  double m_Third;\n"
+            "  enum\n"
+            "  {\n"
+            "    NEW,\n"
+            "    FIXED,\n"
+            "    BROKEN,\n"
+            "    DEAD\n"
+            "  } m_Another;\n"
             "}"));
     }
 
