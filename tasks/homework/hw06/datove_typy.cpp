@@ -514,6 +514,173 @@ int main(void) {
         assert(e.what() == "Duplicate enum value: FIRST"sv);
     }
 
+    CDataTypeArray ar1(10, CDataTypeInt());
+    assert(whitespaceMatch(ar1, "int[10]"));
+    assert(whitespaceMatch(ar1.element(), "int"));
+    CDataTypeArray ar2(11, ar1);
+    assert(whitespaceMatch(ar2, "int[11][10]"));
+    assert(whitespaceMatch(ar2.element(), "int[10]"));
+    assert(whitespaceMatch(ar2.element().element(), "int"));
+    CDataTypeArray ar3(10, CDataTypeArray(20, CDataTypePtr(CDataTypeInt())));
+    assert(whitespaceMatch(ar3, "int*[10][20]"));
+    assert(whitespaceMatch(ar3.element(), "int*[20]"));
+    assert(whitespaceMatch(ar3.element().element(), "int*"));
+    assert(whitespaceMatch(ar3.element().element().element(), "int"));
+    CDataTypePtr ar4(ar1.element());
+    assert(whitespaceMatch(ar4, "int*"));
+    assert(whitespaceMatch(ar4.element(), "int"));
+    CDataTypePtr ar5(b.field("m_Status"));
+    assert(whitespaceMatch(ar5, "enum\n"
+        "{\n"
+        "  NEW,\n"
+        "  FIXED,\n"
+        "  BROKEN,\n"
+        "  READY\n"
+        "}*"));
+    assert(whitespaceMatch(ar5.element(), "enum\n"
+        "{\n"
+        "  NEW,\n"
+        "  FIXED,\n"
+        "  BROKEN,\n"
+        "  READY\n"
+        "}"));
+    CDataTypePtr ar6(ar3.element().element());
+    assert(whitespaceMatch(ar6, "int**"));
+    assert(whitespaceMatch(ar6.element(), "int*"));
+    assert(whitespaceMatch(ar6.element().element(), "int"));
+    CDataTypePtr ar7(CDataTypeArray(50, ar6));
+    assert(whitespaceMatch(ar7, "int**(*)[50]"));
+    assert(whitespaceMatch(ar7.element(), "int**[50]"));
+    assert(whitespaceMatch(ar7.element().element(), "int**"));
+    assert(whitespaceMatch(ar7.element().element().element(), "int*"));
+    assert(whitespaceMatch(ar7.element().element().element().element(), "int"));
+    CDataTypeArray ar8(25, ar7);
+    assert(whitespaceMatch(ar8, "int**(*[25])[50]"));
+    CDataTypePtr ar9(ar8);
+    assert(whitespaceMatch(ar9, "int**(*(*)[25])[50]"));
+    a.addField("m_Ar1", ar1) .
+        addField("m_Ar2", ar2) .
+        addField("m_Ar3", ar3) .
+        addField("m_Ar4", ar4) .
+        addField("m_Ar5", ar5) .
+        addField("m_Ar6", ar6) .
+        addField("m_Ar7", ar7) .
+        addField("m_Ar8", ar8) .
+        addField("m_Ar9", ar9);
+    assert(whitespaceMatch(a, "struct\n"
+        "{\n"
+        "  int m_Length;\n"
+        "  enum\n"
+        "  {\n"
+        "    NEW,\n"
+        "    FIXED,\n"
+        "    BROKEN,\n"
+        "    DEAD\n"
+        "  } m_Status;\n"
+        "  double m_Ratio;\n"
+        "  int m_Sum;\n"
+        "  int m_Ar1[10];\n"
+        "  int m_Ar2[11][10];\n"
+        "  int* m_Ar3[10][20];\n"
+        "  int* m_Ar4;\n"
+        "  enum\n"
+        "  {\n"
+        "    NEW,\n"
+        "    FIXED,\n"
+        "    BROKEN,\n"
+        "    READY\n"
+        "  }* m_Ar5;\n"
+        "  int** m_Ar6;\n"
+        "  int**(* m_Ar7)[50];\n"
+        "  int**(* m_Ar8[25])[50];\n"
+        "  int**(*(* m_Ar9)[25])[50];\n"
+        "}"));
+    a.addField("m_Madness", CDataTypeArray(40, CDataTypePtr(a)));
+    assert(whitespaceMatch(a, "struct\n"
+        "{\n"
+        "  int m_Length;\n"
+        "  enum\n"
+        "  {\n"
+        "    NEW,\n"
+        "    FIXED,\n"
+        "    BROKEN,\n"
+        "    DEAD\n"
+        "  } m_Status;\n"
+        "  double m_Ratio;\n"
+        "  int m_Sum;\n"
+        "  int m_Ar1[10];\n"
+        "  int m_Ar2[11][10];\n"
+        "  int* m_Ar3[10][20];\n"
+        "  int* m_Ar4;\n"
+        "  enum\n"
+        "  {\n"
+        "    NEW,\n"
+        "    FIXED,\n"
+        "    BROKEN,\n"
+        "    READY\n"
+        "  }* m_Ar5;\n"
+        "  int** m_Ar6;\n"
+        "  int**(* m_Ar7)[50];\n"
+        "  int**(* m_Ar8[25])[50];\n"
+        "  int**(*(* m_Ar9)[25])[50];\n"
+        "  struct\n"
+        "  {\n"
+        "    int m_Length;\n"
+        "    enum\n"
+        "    {\n"
+        "      NEW,\n"
+        "      FIXED,\n"
+        "      BROKEN,\n"
+        "      DEAD\n"
+        "    } m_Status;\n"
+        "    double m_Ratio;\n"
+        "    int m_Sum;\n"
+        "    int m_Ar1[10];\n"
+        "    int m_Ar2[11][10];\n"
+        "    int* m_Ar3[10][20];\n"
+        "    int* m_Ar4;\n"
+        "    enum\n"
+        "    {\n"
+        "      NEW,\n"
+        "      FIXED,\n"
+        "      BROKEN,\n"
+        "      READY\n"
+        "    }* m_Ar5;\n"
+        "    int** m_Ar6;\n"
+        "    int**(* m_Ar7)[50];\n"
+        "    int**(* m_Ar8[25])[50];\n"
+        "    int**(*(* m_Ar9)[25])[50];\n"
+        "  }* m_Madness[40];\n"
+        "}"));
+    assert(a.field("m_Madness").element().element().field("m_Ar9") == a.field("m_Ar9"));
+    assert(a.field("m_Madness").element().element().field("m_Ar9") != a.field("m_Ar8"));
+    try {
+        cout << ar2.field("m_Foo") << endl;
+        assert("field: missing exception!" == nullptr);
+    }
+    catch (const invalid_argument & e) {
+        assert(whitespaceMatch(e.what(), "Cannot use field() for type: int[11][10]"));
+    }
+
+    try {
+        cout << c.element() << endl;
+        assert("element: missing exception!" == nullptr);
+    }
+    catch (const invalid_argument & e) {
+        assert(whitespaceMatch(e.what(), "Cannot use element() for type: struct\n"
+            "{\n"
+            "  int m_First;\n"
+            "  enum\n"
+            "  {\n"
+            "    NEW,\n"
+            "    FIXED,\n"
+            "    BROKEN,\n"
+            "    DEAD\n"
+            "  } m_Second;\n"
+            "  double m_Third;\n"
+            "}"));
+    }
+
     return EXIT_SUCCESS;
 }
 #endif /* __PROGTEST__ */
