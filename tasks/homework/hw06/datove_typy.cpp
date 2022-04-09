@@ -66,11 +66,27 @@ class CDataTypeStruct {
 
 #ifndef __PROGTEST__
 static bool whitespaceMatch(const string & a, const string & b) {
+    string prepStringA = a;
+    string prepStringB = b;
+
+    prepStringA.erase(remove_if(prepStringA.begin(), prepStringA.end(), [ ](char & c) { return isspace(c); }));
+    prepStringB.erase(remove_if(prepStringB.begin(), prepStringB.end(), [ ](char & c) { return isspace(c); }));
+
+    if (prepStringA.length() != prepStringB.length()) {
+        return false;
+    }
+
+    for (size_t i = 0; i < prepStringA.length(); i++) {
+        if (prepStringA[i] != prepStringB[i]) {
+            return false;
+        }
+    }
+
     return true;
 }
 
 template <typename T_>
-static bool        whitespaceMatch(const T_ & x, const string & ref) {
+static bool whitespaceMatch(const T_ & x, const string & ref) {
     ostringstream oss;
     oss << x;
     return whitespaceMatch(oss.str(), ref);
