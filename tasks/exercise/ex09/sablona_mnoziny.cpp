@@ -1,3 +1,13 @@
+/**
+ * @file sablona_mnoziny.cpp
+ * @author Michal Dobeš
+ * @date 2022-04-12
+ *
+ * @brief Implementation of Set (template) using linked list
+ *
+ * @copyright Copyright (c) 2022
+ *
+ */
 #ifndef __PROGTEST__
 #include <iostream>
 #include <iomanip>
@@ -19,20 +29,44 @@
 using namespace std;
 #endif /* __PROGTEST__ */
 
-
+/**
+ * @brief Set template
+ *
+ * Set is kept sorted
+ *
+ * Type T needs to have:
+ *  - copy constructor
+ *  - operator =
+ *  - operator <
+ */
 template <typename T>
 class CSet {
 private:
-
+    /**
+     * @brief Node of linked list
+     *
+     */
     struct CNode {
         CNode * next;
 
         T * value;
 
+        /**
+         * @brief Construct a new CNode object
+         *
+         * @param v Value to store
+         */
         CNode(const T & val) : next(nullptr) {
             value = new T(val);
         }
 
+        /**
+         * @brief Construct a new CNode object
+         *
+         * Value is copied, pointer to next CNode is set to null.
+         *
+         * @param copyFrom CNode to copy
+         */
         CNode(const CNode & copyFrom) : next(nullptr), value(nullptr) {
             if (copyFrom.value != nullptr) {
                 value = new T(*copyFrom.value);
@@ -78,6 +112,7 @@ public:
             return *this;
         }
 
+        // Assign using copying and then swapping all variables with the copy 
         CSet copy(toCopy);
 
         size = copy.size;
@@ -104,8 +139,8 @@ public:
         CNode * iter = begin;
         CNode * prevIter = nullptr;
         while (iter != nullptr) { // Search for correct place to insert new value to (set is sorted)
-            if (!(iter->Value() < value)) {
-                if (!(value < iter->Value())) { // If value is already contained return false
+            if (!(iter->Value() < value)) { // iter->Value() >= value
+                if (!(value < iter->Value())) { // If value is already contained (value == iter->Value()) return false
                     return false;
                 }
                 break;
@@ -135,8 +170,8 @@ public:
         CNode * iter = begin;
         CNode * prevIter = nullptr;
         while (iter != nullptr) { // Search for node with value to remove in set (set is sorted)
-            if (!(iter->Value() < value)) {
-                if (!(value < iter->Value())) { //Node is found, remove it from linked list
+            if (!(iter->Value() < value)) { // iter->Value() >= value
+                if (!(value < iter->Value())) { // Node is found (value == iter->Value()), remove it from linked list
                     if (prevIter == nullptr) {
                         begin = iter->next;
                     } else {
@@ -160,8 +195,8 @@ public:
     bool Contains(const T & value) const {
         CNode * iter = begin;
         while (iter != nullptr) { // Search for node with value set (set is sorted)
-            if (!(iter->Value() < value)) {
-                if (!(value < iter->Value())) { //Node was found
+            if (!(iter->Value() < value)) { // iter->Value() >= value
+                if (!(value < iter->Value())) { //Node was found (value == iter->Value())
                     return true;
                 }
                 break; //Got to max possible location where value could be but was not found
