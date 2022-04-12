@@ -1,6 +1,6 @@
 /**
  * @file datum.cpp
- * @author Michal Dobeš (dobesmic@fit.cvut.cz)
+ * @author Michal Dobeš
  * @date 2022-03-26
  *
  * @brief Date representation, with stream modifier for formatted stream output/input
