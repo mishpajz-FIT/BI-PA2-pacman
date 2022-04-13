@@ -34,6 +34,59 @@ using namespace std;
 
 // SECTION: Implementation
 
+class PrefixArray {
+private:
+    unordered_map<string, map
+        <string, set<char>>> keys;
+
+public:
+    PrefixArray() { }
+
+    void add(const string & s) {
+        for (size_t i = 0; i < s.length(); i++) {
+            keys[s.substr(0, i)][(s.substr(i + 1, s.length()))].emplace(s[i]);
+        }
+    }
+
+    void remove(const string & s) {
+        for (size_t i = 0; i < s.length(); i++) {
+            string prefixString = s.substr(0, i);
+            string suffixString = s.substr(i + 1, s.length());
+
+            keys[prefixString][suffixString].erase(s[i]);
+
+            if (keys[prefixString][suffixString].size() == 0) {
+                keys[prefixString].erase(suffixString);
+            }
+            if (keys[prefixString].size() == 0) {
+                keys.erase(prefixString);
+            }
+        }
+    }
+
+    bool findUnique(string & s) const {
+        string stringToFind = s;
+        bool found = false;
+        for (size_t i = 0; i < stringToFind.length(); i++) {
+            auto foundPrefix = keys.find(stringToFind.substr(0, i));
+            if (foundPrefix != keys.end()) {
+                auto foundSufix = foundPrefix->second.find(stringToFind.substr(i + 1, stringToFind.length()));
+                if (foundSufix != foundPrefix->second.end()) {
+                    for (auto & c : (foundSufix->second)) {
+                        if (!found) {
+                            s = stringToFind.substr(0, i) + c + stringToFind.substr(i + 1, stringToFind.length());
+                            found = true;
+                        } else {
+                            return false;
+                        }
+                    }
+                }
+            }
+        }
+        return found;
+    }
+};
+
 /**
  * @brief Date
  *
@@ -168,88 +221,6 @@ private:
     };
 
     /**
-     * @brief Key storage for CSupermarket::keys set
-     *
-     * Includes semi-hash functions for faster comparison
-     */
-    struct CValidKey {
-    private:
-        string key; //< Key itself 
-        unsigned int asciiValue; //< Precalculated ascii values
-
-        /**
-         * @brief Calculate sum of ascii values of key
-         *
-         * @return unsigned int Ascii value
-         */
-        unsigned int calculateAsciiValue() {
-            unsigned int result = 0;
-            for (auto & c : key) {
-                result += c;
-            }
-            return result;
-        }
-
-
-    public:
-
-        /**
-         * @brief Construct a new Valid Key object
-         *
-         * @param k String that serves as key
-         * @param hashModif Modify calculated hash by this value
-         */
-        CValidKey(string k, int hashModif = 0) : key(move(k)) {
-            unsigned int calculatedHash = calculateAsciiValue();
-            if (hashModif < 0 && static_cast<unsigned int>(hashModif < 0 ? -hashModif : hashModif) > calculatedHash) {
-                calculatedHash = 0;
-            } else {
-                calculatedHash += hashModif;
-            }
-            asciiValue = calculatedHash;
-        }
-
-        /**
-         * @brief Comparison for set ordering
-         *
-         * Values are firstly compared by key length, then ascii value and finally by whole keys
-         *
-         * @param lhs CValidKey
-         * @param rhs CValidKey
-         * @return true lhs is smaller
-         * @return false lhs is equal or greater
-         */
-        friend bool operator < (const CValidKey & lhs, const CValidKey & rhs) {
-            size_t lhsLength = lhs.key.length();
-            size_t rhsLength = rhs.key.length();
-
-            return tie(lhsLength, lhs.asciiValue, lhs.key) < tie(rhsLength, rhs.asciiValue, rhs.key);
-        }
-
-        const string & getKey() const {
-            return key;
-        }
-
-        unsigned int getAsciiValue() const {
-            return asciiValue;
-        }
-
-        size_t getKeyLength() const {
-            return key.length();
-        }
-
-        /**
-         * @brief Get char in key
-         *
-         * @param at Index of char
-         * @return const char& Char
-         */
-        const char & operator[] (size_t at) const {
-            return key[at];
-        }
-    };
-
-    /**
      * @brief Key in map CSupermarket::expiring map
      *
      * Keys are sorted by expiration date, then by serial
@@ -315,71 +286,12 @@ private:
     //!SECTION
     //SECTION: Variables
 
-    set<CValidKey> keys; //< Set containing keys for map CSupermarket::items
+    PrefixArray keys;
     unordered_map<string, priority_queue<CItemBatch, vector<CItemBatch>>> items; // Map with keys as item names and values as priority queues of batches, prioritised by oldest (by expiration date) batches
     map<CExpiredKey, CExpiredBatch> expiring; //< Map with keys as expire dates and values as batches with names of item and and their amout, (is sorted by date for fast expired batches lookup)
 
     //!SECTION
     //SECTION: Methods
-
-    /**
-     * @brief Check if CValidKeys have maximum of one mismatch
-     *
-     * Keys need to have same length.
-     *
-     * @param key CValidKey
-     * @param compareTo CValidKey
-     * @return true Zero or one mismatches
-     * @return false More mismatches than one
-     */
-    static bool hasKeyMaxMismatch(const CValidKey & key, const CValidKey & compareTo) {
-        if (key.getKeyLength() != compareTo.getKeyLength()) {
-            return false;
-        }
-
-        int mismatches = 0;
-        for (size_t i = 0; i < key.getKeyLength(); i++) {
-            if (key[i] != compareTo[i]) {
-                mismatches++;
-                if (key.getAsciiValue() - key[i] != compareTo.getAsciiValue() - compareTo[i]) { //< If ascii values are different after removing mismatch, rest of the string surely cannot be same
-                    return false;
-                }
-            }
-            if (mismatches > 1) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    /**
-     * @brief Find key in CSupermarket::keys
-     *
-     * Key can contain max one mismatch.
-     * Key must match only one key, if more keys match, key is not found.
-     *
-     * @param [inout] key Key to find/found key
-     * @param [inout] found Has unique key been found
-     */
-    void findInKeys(string & key, bool & found) {
-        auto lowerIter = keys.lower_bound(CValidKey(key, -0x7F)); //< Lowest key to search is searched key with substracted ascii value of 0x7f, which is max possible difference between two mismatching chars in case of a single mismatch
-        CValidKey upper(key, +0x7F); //< Highest key to search for is searched key with added ascii value of 0x7f (max possible difference between two chars in case of one mismatch)
-
-        found = false;
-        CValidKey keyToFind(key);
-        while ((lowerIter != keys.end()) && !(upper < (*lowerIter))) {
-            if (hasKeyMaxMismatch(keyToFind, (*lowerIter))) {
-                if (!found) {
-                    found = true;
-                    key = (*lowerIter).getKey();
-                } else { //< If more than one key is matching return false
-                    found = false;
-                    break;
-                }
-            }
-            lowerIter++;
-        }
-    }
 
 public:
     CSupermarket() { }
@@ -397,7 +309,7 @@ public:
 
         expiring.emplace(make_pair(newExpiredKey, CExpiredBatch(name, count))); //< Add batch into CSupermarket::expiring
         items[name].push(CItemBatch(move(expireDate), count, newExpiredKey.expiredSerialID)); //< Add batch into appropriate priority queue in CSupermarket::items
-        keys.emplace(move(name)); //< Add key (if is new) into CSupermarket::keys
+        keys.add(move(name)); //< Add key (if is new) into CSupermarket::keys
         return (*this);
     }
 
@@ -416,10 +328,8 @@ public:
         list<CShoplistItem> processedList; //< Helper struct for processing items
         for (auto & i : shoppingList) {
             if (items.find(i.first) == items.end()) { //< If item isn't found, try to find correct item name and process it into processedList
-                bool found = false;
                 string correctKey = i.first;
-                findInKeys(correctKey, found);
-
+                bool found = keys.findUnique(correctKey);
                 processedList.emplace_back(i, found, correctKey);
 
             } else { //< If item is found, process into processedList
@@ -441,7 +351,7 @@ public:
                         shoppingList.emplace_back(i.nameAndAmount);
                     }
                     items.erase(i.key);
-                    keys.erase(i.key);
+                    keys.remove(i.key);
                     break;
                 }
 
