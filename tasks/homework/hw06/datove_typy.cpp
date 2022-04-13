@@ -1,3 +1,14 @@
+/**
+ * @file datove_typy.cpp
+ * @author Michal Dobeš (dobesmic@fit.cvut.cz)
+ * @date 2022-04-13
+ *
+ * @brief A set of classes that implement the description of some data types
+ *
+ * @copyright Copyright (c) 2022
+ *
+ */
+
 #ifndef __PROGTEST__
 #include <cstring>
 #include <cassert>
@@ -24,10 +35,27 @@
 using namespace std;
 #endif /* __PROGTEST__ */
 
+/**
+ * @brief Generic data type
+ *
+ */
 class CDataType {
 protected:
+    /**
+     * @brief Is this type equal to rhs
+     *
+     * @param rhs CDataType
+     * @return true Types are equal
+     * @return false Types are not equal
+     */
     virtual bool isEqualTo(const CDataType & rhs) const = 0;
 
+    /**
+     * @brief Indent output stream by level
+     *
+     * @param stream Stream to indent
+     * @param level Level of indentation
+     */
     static void indentStream(ostream & stream, size_t level) {
         while (level--) {
             stream << "  ";
@@ -39,6 +67,11 @@ public:
 
     virtual ~CDataType() { }
 
+    /**
+     * @brief Size of this type
+     *
+     * @return size_t size
+     */
     virtual size_t getSize() const = 0;
 
     bool operator == (const CDataType & rhs) const {
@@ -49,8 +82,20 @@ public:
         return !(isEqualTo(rhs));
     }
 
+    /**
+     * @brief Allocate copy of this object
+     *
+     * @return CDataType* Pointer to copy
+     */
     virtual CDataType * clone() const = 0;
 
+    /**
+     * @brief Print this type to stream
+     *
+     * @param stream Stream to print to
+     * @param level Indentation level
+     * @param suffix Suffix to add after printing (if type allows that)
+     */
     virtual void print(ostream & stream, size_t level = 0, string suffix = "") const = 0;
 
     friend ostream & operator << (ostream & stream, const CDataType & rhs) {
@@ -58,12 +103,23 @@ public:
         return stream;
     }
 
+    /**
+     * @brief Element of this type
+     *
+     * @return const CDataType& Element
+     */
     virtual const CDataType & element() const {
         stringstream ss;
         print(ss);
         throw std::invalid_argument("Cannot use element() for type: " + ss.str());
     }
 
+    /**
+     * @brief Field of this type
+     *
+     * @param name Name of field
+     * @return const CDataType& Field
+     */
     virtual const CDataType & field(const string & name) const {
         stringstream ss;
         print(ss);
@@ -71,6 +127,10 @@ public:
     }
 };
 
+/**
+ * @brief Int data type
+ *
+ */
 class CDataTypeInt : public CDataType {
 protected:
     bool isEqualTo(const CDataType & rhs) const override {
@@ -93,6 +153,10 @@ public:
     }
 };
 
+/**
+ * @brief Double data type
+ *
+ */
 class CDataTypeDouble : public CDataType {
 protected:
     bool isEqualTo(const CDataType & rhs) const override {
@@ -115,13 +179,19 @@ public:
     }
 };
 
+/**
+ * @brief Enum data type
+ *
+ */
 class CDataTypeEnum : public CDataType {
 private:
-    vector<string> values;
+    vector<string> values; //< Values of enum, sorted by insertion order
 
 protected:
     bool isEqualTo(const CDataType & rhs) const override {
         const CDataTypeEnum * ptrRhs = dynamic_cast<const CDataTypeEnum *>(&rhs);
+
+        // Check if values in the enum are same
         if ((ptrRhs == nullptr)
             || (values.size() != ptrRhs->values.size())) {
             return false;
@@ -143,10 +213,11 @@ protected:
         CDataType::indentStream(stream, level);
         stream << "{\n";
 
+        // Print contents of enum
         for (size_t i = 0; i < values.size(); i++) {
             CDataType::indentStream(stream, level + 1);
             stream << values[i];
-            if (i + 1 < values.size()) {
+            if (i + 1 < values.size()) { //< Print separator between values
                 stream << ",";
             }
             stream << "\n";
@@ -166,8 +237,16 @@ public:
         return 4;
     }
 
+    /**
+     * @brief Add value to enum
+     *
+     * Throws invalid_argument if value is duplicate
+     *
+     * @param value Value to add
+     * @return CDataTypeEnum& this
+     */
     CDataTypeEnum & add(const string & value) {
-        if (find(values.begin(), values.end(), value) != values.end()) {
+        if (find(values.begin(), values.end(), value) != values.end()) { //< Try to find if value is already contained, throw if it is
             throw std::invalid_argument("Duplicate enum value: " + value);
         }
 
@@ -176,10 +255,18 @@ public:
     }
 };
 
+/**
+ * @brief Struct data type
+ *
+ */
 class CDataTypeStruct : public CDataType {
 private:
-    vector<pair<string, CDataType *>> values;
+    vector<pair<string, CDataType *>> values; //< Fields of struct, kept in order of insertion
 
+    /**
+     * @brief Deallocate fields
+     *
+     */
     void deallocValues() {
         for (auto & v : values) {
             delete v.second;
@@ -187,6 +274,12 @@ private:
         values.clear();
     }
 
+    /**
+     * @brief Find field
+     *
+     * @param name Name to find
+     * @return vector<pair<string, CDataType *>>::const_iterator Iterator to field found
+     */
     vector<pair<string, CDataType *>>::const_iterator findInValues(const string & name) const {
         auto iter = values.begin();
         for (; iter < values.end(); iter++) {
@@ -201,6 +294,8 @@ private:
 protected:
     bool isEqualTo(const CDataType & rhs) const override {
         const CDataTypeStruct * ptrRhs = dynamic_cast<const CDataTypeStruct *>(&rhs);
+
+        // Check if fields in enum are the same (compare only their values)
         if ((ptrRhs == nullptr)
             || (values.size() != ptrRhs->values.size())) {
             return false;
@@ -224,9 +319,9 @@ protected:
 
         for (const auto & v : values) {
             string newSuffix = " ";
-            newSuffix += v.first;
-            v.second->print(stream, level + 1, newSuffix);
-            stream << ";\n";
+            newSuffix += v.first; //< Set field name to print as suffix after field value
+            v.second->print(stream, level + 1, newSuffix); //< Print value of field
+            stream << ";\n"; //< Print separator after field
         }
 
         CDataType::indentStream(stream, level);
@@ -243,7 +338,7 @@ public:
     CDataTypeStruct() : CDataType() { }
 
     CDataTypeStruct(const CDataTypeStruct & toCopy) : CDataType() {
-        for (auto & v : toCopy.values) {
+        for (auto & v : toCopy.values) { //< Copy field values
             values.push_back(make_pair(v.first, v.second->clone()));
         }
     }
@@ -257,6 +352,7 @@ public:
             return *this;
         }
 
+        // Deallocate current fields and copy field values
         deallocValues();
 
         for (auto & v : toCopy.values) {
@@ -268,20 +364,29 @@ public:
 
     size_t getSize() const override {
         size_t sum = 0;
-        for (auto & v : values) {
+        for (auto & v : values) { // Get size of values of fields
             sum += v.second->getSize();
         }
         return sum;
     }
 
+    /**
+     * @brief Add field to struct
+     *
+     * If name is duplicate, throws invalid_argument
+     *
+     * @param name Name of field
+     * @param value Value of field
+     * @return CDataTypeStruct&
+     */
     CDataTypeStruct & addField(const string & name, const CDataType & value) {
         auto iter = findInValues(name);
 
-        if (iter != values.end()) {
+        if (iter != values.end()) { //< Check if name is unique
             throw std::invalid_argument("Duplicate field: " + name);
         }
 
-        CDataType * valueCopy = value.clone();
+        CDataType * valueCopy = value.clone(); //< Copy value and add
         values.push_back(make_pair(name, valueCopy));
 
         return (*this);
@@ -298,14 +403,20 @@ public:
     }
 };
 
+/**
+ * @brief Array data type
+ *
+ */
 class CDataTypeArray : public CDataType {
 private:
-    CDataType * type;
-    size_t count;
+    CDataType * type; //< Data type this array stores
+    size_t count; //< Amount of size of array
 
 protected:
     bool isEqualTo(const CDataType & rhs) const override {
         const CDataTypeArray * ptrRhs = dynamic_cast<const CDataTypeArray *>(&rhs);
+
+        // Compare data type of array and count of elements
         if ((ptrRhs == nullptr)
             || (typeid(*(ptrRhs->type)) != typeid(*type))
             || ptrRhs->count != count) {
@@ -316,10 +427,10 @@ protected:
     }
 
     void print(ostream & stream, size_t level = 0, string suffix = "") const override {
-        suffix += "[";
+        suffix += "["; //< Add count as suffix
         suffix += to_string(count);
         suffix += "]";
-        type->print(stream, level, suffix);
+        type->print(stream, level, suffix); //< Print array's type
     }
 
     CDataTypeArray * clone() const override {
@@ -328,7 +439,7 @@ protected:
 
 public:
     CDataTypeArray(size_t s, const CDataType & t) : CDataType(), count(s) {
-        type = t.clone();
+        type = t.clone(); //< Copy type
     }
 
     CDataTypeArray(const CDataTypeArray & toCopy) : CDataType(), count(toCopy.count) {
@@ -345,6 +456,7 @@ public:
             return *this;
         }
 
+        // Copy type, then deallocate, then assign copied type
         CDataType * clone = toCopy.type->clone();
 
         delete type;
@@ -362,13 +474,19 @@ public:
     }
 };
 
+/**
+ * @brief Pointer data type
+ *
+ */
 class CDataTypePtr : public CDataType {
 private:
-    CDataType * type;
+    CDataType * type; //< Data type this points to
 
 protected:
     bool isEqualTo(const CDataType & rhs) const override {
         const CDataTypePtr * ptrRhs = dynamic_cast<const CDataTypePtr *>(&rhs);
+
+        // Copmare if type of pointers are same
         if ((ptrRhs == nullptr)
             || (typeid(*(ptrRhs->type)) != typeid(*type))) {
             return false;
@@ -378,21 +496,21 @@ protected:
     }
 
     void print(ostream & stream, size_t level = 0, string suffix = "") const override {
-        bool pointingToArray = ((dynamic_cast<const CDataTypeArray *>(type) != nullptr) ? true : false);
+        bool pointingToArray = ((dynamic_cast<const CDataTypeArray *>(type) != nullptr) ? true : false); //< Check if pointer is pointing to array
 
         CDataType::indentStream(stream, level);
 
         string newSuffix = "";
-        if (pointingToArray) {
+        if (pointingToArray) { //< If pointing to array, add brackets to pointer symbol (before and after suffix)
             newSuffix = "(*";
             newSuffix += suffix;
             newSuffix += ")";
-        } else {
+        } else { //< Add pointer symbol to before suffix
             newSuffix = "*";
             newSuffix += suffix;
         };
 
-        type->print(stream, 0, newSuffix);
+        type->print(stream, 0, newSuffix); //< Print type with suffix
     }
 
     CDataTypePtr * clone() const override {
@@ -401,11 +519,11 @@ protected:
 
 public:
     CDataTypePtr(const CDataType & t) : CDataType() {
-        type = t.clone();
+        type = t.clone(); //< Copy type
     }
 
     CDataTypePtr(const CDataTypePtr & toCopy) : CDataType() {
-        CDataType * clone = toCopy.type->clone();
+        CDataType * clone = toCopy.type->clone(); //< Copy type
         type = clone;
     }
 
@@ -418,6 +536,7 @@ public:
             return *this;
         }
 
+        // Copy type, then deallocate, then assign copied type
         CDataType * clone = toCopy.type->clone();
 
         delete type;
