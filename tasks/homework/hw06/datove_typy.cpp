@@ -1,6 +1,6 @@
 /**
  * @file datove_typy.cpp
- * @author Michal Dobeš (dobesmic@fit.cvut.cz)
+ * @author Michal Dobeš
  * @date 2022-04-13
  *
  * @brief A set of classes that implement the description of some data types
