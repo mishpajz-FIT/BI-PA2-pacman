@@ -34,53 +34,87 @@ using namespace std;
 
 // SECTION: Implementation
 
-class PrefixArray {
+/**
+ * @brief Set of strings with fast lookup of mismatched strings.
+ *
+ */
+class CStringMatchSet {
+    /*
+        Implemented as a map where string prefixes are keys and values are internal maps with suffixes as keys and a set of omitted characters as values.
+
+        When inserting, it needs to go through the entire string and split the prefix, character and suffix and insert those values into the correct maps.
+        As each prefix is stored separately, large amount of memory is thus exchanged for string search speed.
+
+        Searching is similar process as inserting, going through each character of the string and splitting the string as follows: prefix + current character + suffix. It then performs a search on the prefix in the map and on the suffix in the inner map. Prefix added with value from the set of ommited chars added with suffix is matched string.
+    */
 private:
-    unordered_map<string, map
-        <string, set<char>>> keys;
+    unordered_map<string, unordered_map
+        <string, set<char>>> keys; //< Map of prefixes containing map of suffixes containing set of ommited chars
 
 public:
-    PrefixArray() { }
+    CStringMatchSet() { }
 
+    /**
+     * @brief Store string
+     *
+     * @param s string to store
+     */
     void add(const string & s) {
-        for (size_t i = 0; i < s.length(); i++) {
+        for (size_t i = 0; i < s.length(); i++) { //< Go through each char and split the prefix, character and suffix and insert those values into the correct maps.
             keys[s.substr(0, i)][(s.substr(i + 1, s.length()))].emplace(s[i]);
         }
     }
 
+    /**
+     * @brief Remove stored string
+     *
+     * @param s string to remove
+     */
     void remove(const string & s) {
-        for (size_t i = 0; i < s.length(); i++) {
+        for (size_t i = 0; i < s.length(); i++) { //< Go through each char and split the prefix, character and suffix and remove those values from correct maps.
             string prefixString = s.substr(0, i);
             string suffixString = s.substr(i + 1, s.length());
 
-            keys[prefixString][suffixString].erase(s[i]);
+            keys[prefixString][suffixString].erase(s[i]); //< Remove char form set of ommited chars
 
-            if (keys[prefixString][suffixString].size() == 0) {
+            if (keys[prefixString][suffixString].size() == 0) { //< If ommited char set is empty remove key with suffix from suffix map
                 keys[prefixString].erase(suffixString);
             }
-            if (keys[prefixString].size() == 0) {
+            if (keys[prefixString].size() == 0) { //< If suffix map is empty remove key with prefix from prefix map
                 keys.erase(prefixString);
             }
         }
     }
 
+    /**
+     * @brief Find stored string that matches searched string in all but one character
+     *
+     * Matched string needs to be unambiguous, if two or more strings match, matching string is considered not found
+     *
+     * @param [inout] s String to find/found string
+     * @return true Unambiguous match was found
+     * @return false None or ambiguous match
+     */
     bool findUnique(string & s) const {
         string stringToFind = s;
         bool found = false;
-        for (size_t i = 0; i < stringToFind.length(); i++) {
-            auto foundPrefix = keys.find(stringToFind.substr(0, i));
-            if (foundPrefix != keys.end()) {
-                auto foundSufix = foundPrefix->second.find(stringToFind.substr(i + 1, stringToFind.length()));
-                if (foundSufix != foundPrefix->second.end()) {
-                    for (auto & c : (foundSufix->second)) {
-                        if (!found) {
-                            s = stringToFind.substr(0, i) + c + stringToFind.substr(i + 1, stringToFind.length());
-                            found = true;
-                        } else {
-                            return false;
-                        }
-                    }
+        for (size_t i = 0; i < stringToFind.length(); i++) {  //< Go through each char
+            auto foundPrefix = keys.find(stringToFind.substr(0, i)); //< Split the prefix and look for it in prefix map
+            if (foundPrefix == keys.end()) {
+                continue;
+            }
+
+            auto foundSuffix = foundPrefix->second.find(stringToFind.substr(i + 1, stringToFind.length())); //< Split the prefix and look for it in suffix map
+            if (foundSuffix == foundPrefix->second.end()) {
+                continue;
+            }
+
+            for (auto & c : (foundSuffix->second)) { //< Go through ommited chars
+                s = foundPrefix->first + c + foundSuffix->first; //< Compose matched string
+                if (found) { //< More than one match (ambiguous)
+                    return false;
                 }
+                found = true;
             }
         }
         return found;
@@ -286,8 +320,8 @@ private:
     //!SECTION
     //SECTION: Variables
 
-    PrefixArray keys;
-    unordered_map<string, priority_queue<CItemBatch, vector<CItemBatch>>> items; // Map with keys as item names and values as priority queues of batches, prioritised by oldest (by expiration date) batches
+    CStringMatchSet keys; //< Set of keys of CSupermarket::items map with fast lookup of mismatched keys at the expense of more memory 
+    unordered_map<string, priority_queue<CItemBatch, vector<CItemBatch>>> items; //< Map with keys as item names and values as priority queues of batches, prioritised by oldest (by expiration date) batches
     map<CExpiredKey, CExpiredBatch> expiring; //< Map with keys as expire dates and values as batches with names of item and and their amout, (is sorted by date for fast expired batches lookup)
 
     //!SECTION
