@@ -24,40 +24,135 @@
 using namespace std;
 #endif /* __PROGTEST__ */
 
+template <typename TContainer, typename TComparator = std::less<typename TContainer::value_type>>
+class KnuthMorrisPratt {
+
+    TComparator comparator;
+
+    bool equal(const typename TContainer::value_type & lhs, const typename TContainer::value_type & rhs) const {
+        return (!comparator(lhs, rhs) && !comparator(rhs, lhs));
+    }
+
+    // Implementation based on source: https://en.wikipedia.org/wiki/Knuth–Morris–Pratt_algorithm
+    vector<int> table(const TContainer & pattern) const {
+        vector<int> patternTable;
+        patternTable.resize(pattern.size() + 2);
+
+        patternTable[0] = -1;
+
+        int i = 0;
+        int j = 1;
+        while (j < (long)(pattern.size())) {
+            if (equal(pattern[i], pattern[j])) {
+                patternTable[j] = patternTable[i];
+            } else {
+                patternTable[j] = i;
+                while (i >= 0 && !equal(pattern[i], pattern[j])) {
+                    i = patternTable[i];
+                }
+            }
+            j++;
+            i++;
+        }
+        patternTable[j] = i;
+
+        return patternTable;
+    }
+
+public:
+
+    KnuthMorrisPratt() { }
+
+    KnuthMorrisPratt(TComparator c) : comparator(c) { }
+
+    // Implementation based on source: https://en.wikipedia.org/wiki/Knuth–Morris–Pratt_algorithm
+    set<size_t> calculate(const TContainer & indexes, const TContainer & pattern) const {
+        vector<int> patternTable = table(pattern);
+
+        set<size_t> results;
+
+        int i = 0;
+        int j = 0;
+        while (i < (long)(indexes.size())) {
+            if (equal(pattern[j], indexes[i])) {
+                i++;
+                j++;
+                if (j == (long)(pattern.size())) {
+                    results.emplace(i - j);
+                    j = patternTable[pattern.size()];
+                }
+            } else {
+                j = patternTable[j];
+                if (j < 0) {
+                    i++;
+                    j++;
+                }
+            }
+        }
+        return results;
+    }
+};
+
 template <typename TSequence, typename TComparator = std::less<typename TSequence::value_type>>
 class CIndex {
 private:
-    TSequence sequence;
+    vector<typename TSequence::value_type> indexes;
     TComparator comparator;
-public:
-    CIndex(const TSequence & s) : sequence(s) { }
 
-    CIndex(const TSequence & s, const TComparator & c) : sequence(s), comparator(c) { }
+public:
+    CIndex(const TSequence & s) {
+        for (const auto & c : s) {
+            indexes.emplace_back(c);
+        }
+    }
+
+    CIndex(const TSequence & s, const TComparator & c) : comparator(c) {
+        for (const auto & c : s) {
+            indexes.emplace_back(c);
+        }
+    }
 
     set<size_t> search(const TSequence & searchFor) {
-        set<size_t> res;
-
-        size_t currentIndex = 0;
-        auto iter = sequence.begin();
-        while (iter != sequence.end()) {
-            auto innerIter = searchFor.begin();
-            auto innerOuterIter = iter;
-            while (true) {
-                if (innerIter == searchFor.end()) {
-                    res.emplace(currentIndex);
-                    break;
-                }
-                if (comparator(*innerOuterIter, *innerIter) || comparator(*innerIter, *innerOuterIter)) {
-                    break;
-                }
-                innerIter++;
-                innerOuterIter++;
+        if (searchFor.size() == 0) {
+            set<size_t> resultSet;
+            for (size_t i = 0; i < indexes.size(); i++) {
+                resultSet.emplace(i);
             }
-            currentIndex++;
-            iter++;
+            return resultSet;
         }
 
-        return res;
+        vector<typename TSequence::value_type> pattern;
+
+        for (const auto & c : searchFor) {
+            pattern.emplace_back(c);
+        }
+
+        KnuthMorrisPratt<vector<typename TSequence::value_type>, TComparator> kmp(comparator);
+        return kmp.calculate(indexes, pattern);
+    }
+};
+
+template<>
+class CIndex<string> {
+private:
+    string sequence;
+
+public:
+    CIndex(const string & s) : sequence(s) { }
+
+    set<size_t> search(const string & searchFor) {
+        set<size_t> result;
+
+        if (searchFor.size() == 0) {
+            set<size_t> resultSet;
+            for (size_t i = 0; i < sequence.size(); i++) {
+                resultSet.emplace(i);
+            }
+            return resultSet;
+        }
+
+        KnuthMorrisPratt<string> kmp;
+        return kmp.calculate(sequence, searchFor);
     }
 };
 
@@ -147,7 +242,6 @@ int main(void) {
     assert(r25 == (set<size_t> { 2 }));
     set<size_t> r26 = t7.search(list<string>{"test", "this"});
     assert(r26 == (set<size_t> { 2, 5 }));
-
     return 0;
 }
 #endif /* __PROGTEST__ */
