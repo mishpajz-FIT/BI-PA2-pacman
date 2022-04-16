@@ -24,12 +24,41 @@
 using namespace std;
 #endif /* __PROGTEST__ */
 
-template <typename T_, typename C_>
+template <typename TSequence, typename TComparator = std::less<typename TSequence::value_type>>
 class CIndex {
+private:
+    TSequence sequence;
+    TComparator comparator;
 public:
-  // constructor
-  // search ()
-  // todo
+    CIndex(const TSequence & s) : sequence(s) { }
+
+    CIndex(const TSequence & s, const TComparator & c) : sequence(s), comparator(c) { }
+
+    set<size_t> search(const TSequence & searchFor) {
+        set<size_t> res;
+
+        size_t currentIndex = 0;
+        auto iter = sequence.begin();
+        while (iter != sequence.end()) {
+            auto innerIter = searchFor.begin();
+            auto innerOuterIter = iter;
+            while (true) {
+                if (innerIter == searchFor.end()) {
+                    res.emplace(currentIndex);
+                    break;
+                }
+                if (comparator(*innerOuterIter, *innerIter) || comparator(*innerIter, *innerOuterIter)) {
+                    break;
+                }
+                innerIter++;
+                innerOuterIter++;
+            }
+            currentIndex++;
+            iter++;
+        }
+
+        return res;
+    }
 };
 
 #ifndef __PROGTEST__  
