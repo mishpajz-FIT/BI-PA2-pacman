@@ -28,7 +28,7 @@ https://courses.fit.cvut.cz/BI-PA2/
 |
 
 |hw07
-|5.50/5.00
+|6.60/5.00
 |===
 
 #### Exercises
