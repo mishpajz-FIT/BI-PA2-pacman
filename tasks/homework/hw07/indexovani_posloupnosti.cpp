@@ -1,3 +1,14 @@
+/**
+ * @file indexovani_posloupnosti.cpp
+ * @author Michal Dobeš
+ * @date 2022-04-18
+ *
+ * @brief Index implementation for sequence containers, which allows for search of subsequences
+ *
+ * @copyright Copyright (c) 2022
+ *
+ */
+
 #ifndef __PROGTEST__
 #include <cstring>
 #include <cstdlib>
@@ -24,30 +35,52 @@
 using namespace std;
 #endif /* __PROGTEST__ */
 
+/**
+ * @brief Implement Knuth-Morris-Pratt algorithm for searching all occurences of sequence inside TContainer
+ *
+ * @tparam TContainer Type of container, required to have random access using squared bracket notation
+ * @tparam std::less<typename TContainer::value_type> Comparison function
+ */
 template <typename TContainer, typename TComparator = std::less<typename TContainer::value_type>>
 class KnuthMorrisPratt {
 
     TComparator comparator;
 
+    /**
+     * @brief Equal based on supplied comparison function
+     *
+     * @param lhs TContainer::value_type value
+     * @param rhs TContainer::value_type value
+     * @return true Are equal
+     * @return false Are not equal
+     */
     bool equal(const typename TContainer::value_type & lhs, const typename TContainer::value_type & rhs) const {
         return (!comparator(lhs, rhs) && !comparator(rhs, lhs));
     }
 
-    // Implementation based on source: https://en.wikipedia.org/wiki/Knuth–Morris–Pratt_algorithm
+    /**
+     * @brief Create partial match table
+     *
+     * Implementation based on source: https://en.wikipedia.org/wiki/Knuth–Morris–Pratt_algorithm
+     *
+     * For each char i in pattern calculates longest prefix (prefix without the substring itself) in pattern[0...i] which is also a suffix in this pattern
+     *
+     * @param pattern Pattern to create table for
+     */
     vector<int> table(const TContainer & pattern) const {
         vector<int> patternTable;
         patternTable.resize(pattern.size() + 2);
 
-        patternTable[0] = -1;
+        patternTable[0] = -1; //< -1 Signalizes first character of prefix
 
         int i = 0;
         int j = 1;
         while (j < (long)(pattern.size())) {
             if (equal(pattern[i], pattern[j])) {
-                patternTable[j] = patternTable[i];
+                patternTable[j] = patternTable[i]; //< If prefix and suffix are matching, use already calcualted values;
             } else {
-                patternTable[j] = i;
-                while (i >= 0 && !equal(pattern[i], pattern[j])) {
+                patternTable[j] = i; //< i is the char until where prefix was same as suffix (threfore size of match)
+                while (i >= 0 && !equal(pattern[i], pattern[j])) { //< Until not found prefix that matches, return back
                     i = patternTable[i];
                 }
             }
@@ -65,25 +98,35 @@ public:
 
     KnuthMorrisPratt(TComparator c) : comparator(c) { }
 
-    // Implementation based on source: https://en.wikipedia.org/wiki/Knuth–Morris–Pratt_algorithm
-    set<size_t> calculate(const TContainer & indexes, const TContainer & pattern) const {
-        vector<int> patternTable = table(pattern);
+    /**
+     * @brief Search for indexes in source which contain pattern
+     *
+     * Implementation based on source: https://en.wikipedia.org/wiki/Knuth–Morris–Pratt_algorithm
+     *
+     * @param source Indexable container in which to search
+     * @param pattern Pattern to search for
+     * @return set<size_t> Indexes containing pattern
+     */
+    set<size_t> calculate(const TContainer & source, const TContainer & pattern) const {
+
+        vector<int> patternTable = table(pattern); //< Fail function, create partial match table
+        // Because of pattern table, on mismatch knows to "move" the pattern more on next matching trial
 
         set<size_t> results;
 
         int i = 0;
         int j = 0;
-        while (i < (long)(indexes.size())) {
-            if (equal(pattern[j], indexes[i])) {
+        while (i < (long)(source.size())) {
+            if (equal(pattern[j], source[i])) { //< Compare characters and continue if they match
                 i++;
                 j++;
-                if (j == (long)(pattern.size())) {
-                    results.emplace(i - j);
+                if (j == (long)(pattern.size())) { //< Pattern was found
+                    results.emplace(i - j); //< Insert index
                     j = patternTable[pattern.size()];
                 }
-            } else {
+            } else { //< On mismatch, continue matching based on pattern table (eg. if last 3 characters matched and they are same as first 3 characters of pattern, continue matching from fourth character of pattern, not from the beggining, this is the information stored in patternTable)
                 j = patternTable[j];
-                if (j < 0) {
+                if (j < 0) { //< If on first character of pattern, move to the next one (first one certainly won't match, because it will be the same as char that was checked just now)
                     i++;
                     j++;
                 }
@@ -93,27 +136,33 @@ public:
     }
 };
 
+/**
+ * @brief Index for sequence containers, which allows for search of subsequences
+ *
+ * @tparam TSequence Sequence container containing elements, needs to have iterator
+ * @tparam std::less<typename TSequence::value_type> Comparator for elements of sequence
+ */
 template <typename TSequence, typename TComparator = std::less<typename TSequence::value_type>>
 class CIndex {
 private:
-    vector<typename TSequence::value_type> indexes;
+    vector<typename TSequence::value_type> indexes; //< Sequence elements copied into vector, which is indexable
     TComparator comparator;
 
 public:
     CIndex(const TSequence & s) {
-        for (const auto & c : s) {
+        for (const auto & c : s) { //< Copy elements into vector
             indexes.emplace_back(c);
         }
     }
 
     CIndex(const TSequence & s, const TComparator & c) : comparator(c) {
-        for (const auto & c : s) {
+        for (const auto & c : s) { //< Copy elements into vector
             indexes.emplace_back(c);
         }
     }
 
     set<size_t> search(const TSequence & searchFor) {
-        if (searchFor.size() == 0) {
+        if (searchFor.size() == 0) { //< If size of searchFor subsequence is 0, return all indexes
             set<size_t> resultSet;
             for (size_t i = 0; i < indexes.size(); i++) {
                 resultSet.emplace(i);
@@ -121,29 +170,30 @@ public:
             return resultSet;
         }
 
-        vector<typename TSequence::value_type> pattern;
+        vector<typename TSequence::value_type> pattern; //< Search for subsequence converted into vector
 
-        for (const auto & c : searchFor) {
+        for (const auto & c : searchFor) { //< Copy searchFor elements into vector
             pattern.emplace_back(c);
         }
 
-        KnuthMorrisPratt<vector<typename TSequence::value_type>, TComparator> kmp(comparator);
+        KnuthMorrisPratt<vector<typename TSequence::value_type>, TComparator> kmp(comparator); //< Find subsequences using Knuth-Morris-Pratt algorithm
         return kmp.calculate(indexes, pattern);
     }
 };
 
 template<>
 class CIndex<string> {
+    // Specialization of CIndex for string and implicit comparator, because string is already indexable so it doesnt need to be preprocessed
 private:
     string sequence;
 
 public:
-    CIndex(const string & s) : sequence(s) { }
+    CIndex(const string & s) : sequence(s) { } //< Copy string
 
     set<size_t> search(const string & searchFor) {
         set<size_t> result;
 
-        if (searchFor.size() == 0) {
+        if (searchFor.size() == 0) { //< If substring to searchFor is empty, return all indexes
             set<size_t> resultSet;
             for (size_t i = 0; i < sequence.size(); i++) {
                 resultSet.emplace(i);
@@ -152,7 +202,7 @@ public:
         }
 
         KnuthMorrisPratt<string> kmp;
-        return kmp.calculate(sequence, searchFor);
+        return kmp.calculate(sequence, searchFor); //< Find subsequences using Knuth-Morris-Pratt algorithm
     }
 };
 
