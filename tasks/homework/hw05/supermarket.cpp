@@ -222,7 +222,7 @@ private:
      */
     struct CItemBatch {
         CDate date; //< Expiration date
-        int amount; //< Amount
+        mutable int amount; //< Amount, can be mutable because only stores value, comparison operator doesn't depend on it
 
         unsigned int expiringId; //< Helper id for lookup in CSupermarket::expiring map, should be unique in combination with Date
 
@@ -388,14 +388,16 @@ public:
                     keys.remove(i.key);
                     break;
                 }
-
-                if (i.nameAndAmount.second >= static_cast<int>(items[i.key].top().amount)) { //< If shopping list requests bigger amount than in oldest (by expiring date) batch of items, pop the batch from priority queue in CSupermarket::items (and remove from CSupermarket::expired)
-                    i.nameAndAmount.second -= items[i.key].top().amount; //< Update remaining amount to sell
-                    expiring.erase(CExpiredKey(items[i.key].top().date, items[i.key].top().expiringId));
+                
+                const CItemBatch & topOfItemQueue = items[i.key].top(); //< Currently processed batch in CSupermarket::items
+                CExpiredKey currentExpiredKey(topOfItemQueue.date, topOfItemQueue.expiringId); //< Key for currently processed batch in CSupermarket::expired
+                if (i.nameAndAmount.second >= topOfItemQueue.amount) { //< If shopping list requests bigger amount than in oldest (by expiring date) batch of items, pop the batch from priority queue in CSupermarket::items (and remove from CSupermarket::expired)
+                    i.nameAndAmount.second -= topOfItemQueue.amount; //< Update remaining amount to sell
+                    expiring.erase(currentExpiredKey);
                     items[i.key].pop();
                 } else { //< If shopping list requests smaller amount than in oldest (by expiring date) batch of items, update amount in batch
-                    const_cast<CItemBatch &>(items[i.key].top()).amount -= i.nameAndAmount.second; //< Update amount in priority queue in CSupermarket::items
-                    expiring.at(CExpiredKey(items[i.key].top().date, items[i.key].top().expiringId)).amount = items[i.key].top().amount; //< Update amount in CSupermarket::expired
+                    topOfItemQueue.amount -= i.nameAndAmount.second;
+                    expiring.at(currentExpiredKey).amount = topOfItemQueue.amount; //< Update amount in CSupermarket::expired
                     break;
                 }
             }
@@ -403,7 +405,7 @@ public:
     }
 
     /**
-     * @brief Get list with items and their amount in batches that expire before the specified date
+     * @brief Get list with items and their amount from batches that expire before the specified date
      *
      * Batches expiring on date itself are not included.
      * Items are sorted descending by amount.
