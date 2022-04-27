@@ -6,38 +6,67 @@
 template <typename T>
 class Matrix {
 private:
-    data * T;
+    T * data;
 
     size_t sizeX;
     size_t sizeY;
 
-public:
-
-    Matrix(size_t dimensionX, size_t dimensionY);
-    Matrix(const Matrix & toCopy);
-    ~Matrix();
-    Matrix & operator = (const Matrix & toCopy);
-
-    size_t getSizeX() const;
-    size_t getSizeY() const;
-
-    const T & at(size_t x, size_t y) const;
-    T & at(size_t x, size_t y);
-};
-
-template <typename T>
-Matrix<T>::Matrix(size_t dimensionX, size_t dimensionY) : sizeX(dimensionX), sizeY(dimensionY) {
-    if (dimensionX <= 0 || dimensionY <= 0) {
-        throw std::invalid_argument("matrix: invalid size");
+    size_t getIndexFor(size_t x, size_t y) {
+        return (x + (y * sizeX));
     }
 
-    size_t totalSize = dimensionX * dimensionY;
-    data = new T[totalSize];
-}
+public:
 
-template <typename T>
-Matrix::Matrix(const Matrix & toCopy) {
+    Matrix(size_t dimensionX, size_t dimensionY) : sizeX(dimensionX), sizeY(dimensionY) {
+        if (dimensionX <= 0 || dimensionY <= 0) {
+            throw std::invalid_argument("matrix: invalid size");
+        }
 
-}
+        size_t totalSize = dimensionX * dimensionY;
+        data = new T[totalSize];
+    }
+
+    Matrix(const Matrix & toCopy) : sizeX(toCopy.sizeX), sizeY(toCopy.sizeY) {
+        size_t totalSize = toCopy.sizeX * toCopy.sizeY;
+        data = new T[totalSize];
+
+        for (size_t i = 0; i < totalSize; i++) {
+            data[i] = toCopy.data[i];
+        }
+    }
+
+    Matrix & operator = (const Matrix & toCopy) {
+        if (this == &toCopy) {
+            return (*this);
+        }
+
+        Matrix copiedMatrix(toCopy);
+        std::swap(copiedMatrix.data, data);
+        std::swap(copiedMatrix.sizeX, sizeX);
+        std::swap(copiedMatrix.sizeY, sizeY);
+
+        return (*this);
+    }
+
+    ~Matrix() {
+        delete [] data;
+        data = nullptr;
+    }
+
+    size_t getSizeX() const {
+        return sizeX;
+    }
+    size_t getSizeY() const {
+        return sizeY;
+    }
+
+    const T & at(size_t x, size_t y) const {
+        return data[getIndexFor(x, y)];
+    }
+
+    T & at(size_t x, size_t y) {
+        return data[getIndexFor(x, y)];
+    }
+};
 
 #endif /* MATRIX_H */
