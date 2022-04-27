@@ -1,24 +1,23 @@
 #ifndef ENEMY_H
 #define ENEMY_H
 
-#include <Coords.h>
+#include "Transform.h"
 #include <ncurses.h>
 
 class Enemy {
-private:
-    Coords position;
+protected:
+    Transform transform;
     bool alive;
     bool frightened;
 
+    Transform initialTransform;
 public:
 
-    Enemy(const Coords & pos);
+    Enemy(const Position & pos);
 
-    void display(WINDOW * window) = 0;
+    virtual void move(const Board & board, const Transform & playerTransform, const Position & specialPlace = Position(), bool scatter = false) = 0;
 
-    void move(const Maze & maze, const Coords & player, const Coords & place = Coords(), bool scatter = false) = 0;
-
-    Coords getPosition() = 0;
-}
+    virtual const Position & getPosition() = 0;
+};
 
 #endif /* ENEMY_H */
