@@ -7,11 +7,16 @@
 
 class Board {
 public:
-    enum class Tile {
-        wall,
-        floor,
-        coin,
-        cherry
+    struct Tile {
+        enum class Type {
+            wall,
+            floor,
+            coin,
+            cherry
+        };
+
+        static Type dataCharToType(char c);
+        static char typeToDisplayChar(Type t);
     };
 
 private:
@@ -20,10 +25,12 @@ private:
     Position enemySpawn;
     Position playerSpawn;
 
+    bool isTileCoordinateValid(size_t x, size_t y);
+
 public:
     Board(const std::string & file);
 
-    Board::Tile tileAt(size_t x, size_t y) const;
+    Board::Tile::Type tileAt(size_t x, size_t y) const;
 
     size_t getSizeX() const;
     size_t getSizeY() const;
