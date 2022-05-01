@@ -1,8 +1,4 @@
 #include "Board.h"
-#include <stdexcept>
-#include <fstream>
-#include <string>
-#include <list>
 
 #include <iostream>
 
@@ -22,9 +18,9 @@ void Board::loadBoardFromFile(const std::string & filePath) {
     std::string buffer;
     size_t lineLength = 0;
 
-    while (std::getline(file, buffer)) {
+    while (std::getline(file, buffer)) { //Read lines from file
 
-        if (lineLength == 0) {
+        if (lineLength == 0) { //If line is first with content set line length, else check if loaded line length is correct
             lineLength = buffer.length();
         } else if (lineLength != buffer.length()) {
             throw BoardInvalidGrid("board: wrong format of grid in file");
@@ -37,10 +33,12 @@ void Board::loadBoardFromFile(const std::string & filePath) {
         throw BoardInvalidGrid("board: empty grid");
     }
 
-    buildTilesFromChars(lines);
+    buildTilesFromChars(lines); //Create Board::tiles from loaded lines
 
-    buildCheckForCorrectEdges();
+    buildCheckForCorrectEdges(); //Check if teleports are possible
 
+    //TODO: REMOVE
+    //Print out to console
     for (size_t y = 0; y < getSizeY(); y++) {
         for (size_t x = 0; x < getSizeX(); x++) {
             switch (tiles.at(x, y)) {
@@ -67,7 +65,7 @@ void Board::buildTilesFromChars(std::list<std::string> & lines) {
     size_t y = 0;
     size_t x = 0;
     for (auto & l : lines) {
-        for (auto & c : l) {
+        for (auto & c : l) { //For each character in each line, check if is special then replace it by wall, else convert it to correct type
             if (buildCheckForSpecialChars(c, x, y)) {
                 generatedTiles.at(x++, y) = Board::Tile::Type::wall;
             } else {
@@ -79,7 +77,7 @@ void Board::buildTilesFromChars(std::list<std::string> & lines) {
     }
 
     if ((enemySpawn.x == -1 && enemySpawn.y == -1)
-        || (playerSpawn.x == -1 && playerSpawn.y == -1)) {
+        || (playerSpawn.x == -1 && playerSpawn.y == -1)) { //Check if spawns have been set
         throw BoardInvalidGrid("board: missing spawn point");
     }
 
@@ -87,7 +85,7 @@ void Board::buildTilesFromChars(std::list<std::string> & lines) {
 }
 
 bool Board::buildCheckForSpecialChars(char c, size_t x, size_t y) {
-    switch (c) {
+    switch (c) { //If chars are 'P' or 'E', set spawn positions (or throw is spawn has already been set)
         case 'P':
             if (playerSpawn.x == -1 && playerSpawn.y == -1) {
                 playerSpawn = Position(x, y);
@@ -111,13 +109,13 @@ bool Board::buildCheckForSpecialChars(char c, size_t x, size_t y) {
 
 void Board::buildCheckForCorrectEdges() {
 
-    for (size_t x = 1; x < getSizeX() - 1; x++) {
+    for (size_t x = 1; x < getSizeX() - 1; x++) { //Check if tiles at top and bottom are same
         if (tiles.at(x, 0) != tiles.at(x, getSizeY() - 1)) {
             throw BoardInvalidGrid("board: incorrect teleport");
         }
     }
 
-    for (size_t y = 1; y < getSizeY() - 1; y++) {
+    for (size_t y = 1; y < getSizeY() - 1; y++) { //Check if tiles at left and right are same
         if (tiles.at(0, y) != tiles.at(getSizeX() - 1, y)) {
             throw BoardInvalidGrid("board: incorrect teleport");
         }
@@ -131,12 +129,20 @@ bool Board::isTileCoordinateValid(size_t x, size_t y) const {
     return true;
 }
 
+bool Board::isTileCoordinateValid(const Position & pos) const {
+    return isTileCoordinateValid(pos.x, pos.y);
+}
+
 Board::Tile::Type Board::tileAt(size_t x, size_t y) const {
     if (!isTileCoordinateValid(x, y)) {
-        throw std::invalid_argument("board: tileAt - coordinates are out of range");
+        throw BoardException("board: tileAt - coordinates are out of range");
     }
 
     return tiles.at(x, y);
+}
+
+Board::Tile::Type Board::tileAt(const Position & pos) const {
+    return tileAt(pos.x, pos.y);
 }
 
 size_t Board::getSizeX() const {
@@ -157,7 +163,7 @@ Position Board::getPlayerSpawn() const {
 
 bool Board::interactWithTileAt(size_t x, size_t y) {
     if (!isTileCoordinateValid(x, y)) {
-        throw std::invalid_argument("board: tileAt - coordinates are out of range");
+        throw BoardException("board: tileAt - coordinates are out of range");
     }
 
     switch (tiles.at(x, y)) {
@@ -171,7 +177,7 @@ bool Board::interactWithTileAt(size_t x, size_t y) {
 }
 
 Board::Tile::Type Board::Tile::dataCharToType(char c) {
-    switch (c) {
+    switch (c) { //Map chars to types
         case '#':
             return Board::Tile::Type::wall;
             break;

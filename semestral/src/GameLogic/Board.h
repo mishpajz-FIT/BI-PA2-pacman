@@ -6,9 +6,10 @@
 #include <string>
 #include <stdexcept>
 #include <list>
+#include <fstream>
 
 /**
- * @brief Game Board with Maze
+ * @brief Game Board
  *
  */
 class Board {
@@ -44,16 +45,6 @@ private:
 
     Position enemySpawn; //< Position in maze of enemy spawn
     Position playerSpawn; //< Position in maze of player spawn
-
-    /**
-     * @brief Check if tile with coordinate is in Board::tiles
-     *
-     * @param x coordinate X
-     * @param y coordinate Y
-     * @return true Coordiante is in Board::tiles
-     * @return false Coordinate is not in Board::tiles
-     */
-    bool isTileCoordinateValid(size_t x, size_t y) const;
 
     /**
      * @brief Load tiles from file
@@ -99,6 +90,25 @@ private:
 
 public:
     /**
+     * @brief Check if tile with coordinate is in Board::tiles
+     *
+     * @param x coordinate X
+     * @param y coordinate Y
+     * @return true Coordiante is in Board::tiles
+     * @return false Coordinate is not in Board::tiles
+     */
+    bool isTileCoordinateValid(size_t x, size_t y) const;
+
+    /**
+     * @brief Check if tile with position is in Board::tiles
+     *
+     * @param pos position of tile
+     * @return true Position is in Board::tiles
+     * @return false Position is not in Board::tiles
+     */
+    bool isTileCoordinateValid(const Position & pos) const;
+
+    /**
      * @brief Construct a new Board object from file
      *
      * File needs to have correct format.
@@ -120,6 +130,16 @@ public:
      * @return Board::Tile::Type Type of tile at coordinates
      */
     Board::Tile::Type tileAt(size_t x, size_t y) const;
+
+    /**
+     * @brief Get tile in board at position
+     *
+     * @exception BoardException wrong position
+     *
+     * @param pos position of tile
+     * @return Board::Tile::Type Type of tile at coordinates
+     */
+    Board::Tile::Type tileAt(const Position & pos) const;
 
     /**
      * @brief Get size of board in X dimension
