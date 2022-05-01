@@ -1,21 +1,19 @@
 #ifndef PLAYER_H
 #define PLAYER_H
 
-#include "Transform.h"
+#include "Entity.h"
+#include "Board.h"
 
-class Player {
-protected:
-    Transform transform;
-    bool alive;
+class Player : public Entity {
+private:
+    Rotation nextRotation;
 
 public:
     Player(const Transform & initial);
 
     void move(const Board & board);
-    void move(const Position & pos);
     void rotate(const Rotation & to);
 
-    const Position & getPosition() const;
-}
+};
 
 #endif /* PLAYER_H */

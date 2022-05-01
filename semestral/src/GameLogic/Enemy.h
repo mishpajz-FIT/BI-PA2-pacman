@@ -1,23 +1,18 @@
 #ifndef ENEMY_H
 #define ENEMY_H
 
-#include "Transform.h"
-#include <ncurses.h>
+#include "Entity.h"
+#include "Board.h"
 
-class Enemy {
+class Enemy : public Entity {
 protected:
-    Transform transform;
-    bool alive;
     bool frightened;
-
-    Transform initialTransform;
 public:
 
-    Enemy(const Position & pos);
+    Enemy(const Transform & initial) : Entity(initial) { };
+    virtual ~Enemy() { };
 
-    virtual void move(const Board & board, const Transform & playerTransform, const Position & specialPlace = Position(), bool scatter = false) = 0;
-
-    virtual const Position & getPosition() = 0;
+    virtual void move(const Board & board, const Transform & playerTransform, const Position & specialPos = Position(), bool scatter = false) = 0;
 };
 
 #endif /* ENEMY_H */
