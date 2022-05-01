@@ -39,6 +39,8 @@ void Board::loadBoardFromFile(const std::string & filePath) {
 
     buildTilesFromChars(lines);
 
+    buildCheckForCorrectEdges();
+
     for (size_t y = 0; y < getSizeY(); y++) {
         for (size_t x = 0; x < getSizeX(); x++) {
             switch (tiles.at(x, y)) {
@@ -56,7 +58,7 @@ void Board::loadBoardFromFile(const std::string & filePath) {
         std::cout << std::endl;
     }
     std::cout << "Player spawn: " << playerSpawn.x << "; " << playerSpawn.y << '\n';
-    std::cout << "Enemy spawn: " << enemySpawn.y << "; " << enemySpawn.y << std::endl;
+    std::cout << "Enemy spawn: " << enemySpawn.x << "; " << enemySpawn.y << std::endl;
 }
 
 void Board::buildTilesFromChars(std::list<std::string> & lines) {
@@ -66,7 +68,7 @@ void Board::buildTilesFromChars(std::list<std::string> & lines) {
     size_t x = 0;
     for (auto & l : lines) {
         for (auto & c : l) {
-            if (checkForSpecialChars(c, x, y)) {
+            if (buildCheckForSpecialChars(c, x, y)) {
                 generatedTiles.at(x++, y) = Board::Tile::Type::wall;
             } else {
                 generatedTiles.at(x++, y) = Board::Tile::dataCharToType(c);
@@ -84,7 +86,7 @@ void Board::buildTilesFromChars(std::list<std::string> & lines) {
     tiles = generatedTiles;
 }
 
-bool Board::checkForSpecialChars(char c, size_t x, size_t y) {
+bool Board::buildCheckForSpecialChars(char c, size_t x, size_t y) {
     switch (c) {
         case 'P':
             if (playerSpawn.x == -1 && playerSpawn.y == -1) {
@@ -105,6 +107,21 @@ bool Board::checkForSpecialChars(char c, size_t x, size_t y) {
             break;
     }
     return false;
+}
+
+void Board::buildCheckForCorrectEdges() {
+
+    for (size_t x = 1; x < getSizeX() - 1; x++) {
+        if (tiles.at(x, 0) != tiles.at(x, getSizeY() - 1)) {
+            throw BoardInvalidGrid("board: incorrect teleport");
+        }
+    }
+
+    for (size_t y = 1; y < getSizeY() - 1; y++) {
+        if (tiles.at(0, y) != tiles.at(getSizeX() - 1, y)) {
+            throw BoardInvalidGrid("board: incorrect teleport");
+        }
+    }
 }
 
 bool Board::isTileCoordinateValid(size_t x, size_t y) const {

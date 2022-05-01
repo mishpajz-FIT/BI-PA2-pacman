@@ -30,7 +30,8 @@ private:
 
     void loadBoardFromFile(const std::string & filename);
     void buildTilesFromChars(std::list<std::string> & lines);
-    bool checkForSpecialChars(char c, size_t x, size_t y);
+    bool buildCheckForSpecialChars(char c, size_t x, size_t y);
+    void buildCheckForCorrectEdges();
 
 public:
     Board(const std::string & filePath);
