@@ -65,9 +65,9 @@ void Board::buildTilesFromChars(std::list<std::string> & lines) {
     size_t y = 0;
     size_t x = 0;
     for (auto & l : lines) {
-        for (auto & c : l) { //For each character in each line, check if is special then replace it by wall, else convert it to correct type
+        for (auto & c : l) { //For each character in each line, check if is special then replace it by default, else convert it to correct type
             if (buildCheckForSpecialChars(c, x, y)) {
-                generatedTiles.at(x++, y) = Board::Tile::Type::wall;
+                generatedTiles.at(x++, y) = Board::Tile::defaultType();
             } else {
                 generatedTiles.at(x++, y) = Board::Tile::dataCharToType(c);
             }
@@ -122,27 +122,56 @@ void Board::buildCheckForCorrectEdges() {
     }
 }
 
-bool Board::isTileCoordinateValid(size_t x, size_t y) const {
-    if (x >= tiles.getSizeX() || y >= tiles.getSizeY()) {
+bool Board::isTileCoordinateValid(const Position & pos) const {
+    if ((unsigned)(pos.x) >= tiles.getSizeX() || (unsigned)(pos.y) >= tiles.getSizeY()) {
         return false;
     }
     return true;
 }
 
-bool Board::isTileCoordinateValid(const Position & pos) const {
-    return isTileCoordinateValid(pos.x, pos.y);
-}
-
-Board::Tile::Type Board::tileAt(size_t x, size_t y) const {
-    if (!isTileCoordinateValid(x, y)) {
-        throw BoardException("board: tileAt - coordinates are out of range");
+bool Board::isTileCrossroad(const Position & pos) const {
+    if (!isTileAllowingMovement(pos)) {
+        return false;
     }
 
-    return tiles.at(x, y);
+    size_t numberOfPaths = 0;
+    for (size_t d = 0; d < 4; d++) {
+        if (isTileAllowingMovement(Transform(pos, Rotation(d)).moveByOne().position)) {
+            if (++numberOfPaths >= 3) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+
+}
+
+bool Board::isTileEdge(const Position & pos) const {
+    if ((size_t)(pos.x) == (getSizeX() - 1) || pos.x == 0
+        || (size_t)(pos.y) == (getSizeY() - 1) || pos.y == 0) {
+        return true;
+    }
+    return false;
+}
+
+bool Board::isTileAllowingMovement(const Position & pos) const {
+    try {
+        if (Board::Tile::typeAllowsMovement(tileAt(pos))) {
+            return true;
+        }
+    }
+    catch (BoardException & e) { }
+    return false;
 }
 
 Board::Tile::Type Board::tileAt(const Position & pos) const {
-    return tileAt(pos.x, pos.y);
+    try {
+        return tiles.at(pos.x, pos.y);
+    }
+    catch (std::out_of_range & e) {
+        throw BoardException("board: tileAt - coordinates are out of range");
+    }
 }
 
 size_t Board::getSizeX() const {
@@ -161,18 +190,13 @@ Position Board::getPlayerSpawn() const {
     return playerSpawn;
 }
 
-bool Board::interactWithTileAt(size_t x, size_t y) {
-    if (!isTileCoordinateValid(x, y)) {
-        throw BoardException("board: tileAt - coordinates are out of range");
+bool Board::interactWithTileAt(const Position & pos) {
+
+    if (Board::Tile::typeAllowsInteraction(tileAt(pos))) {
+        tiles.at(pos.x, pos.y) = Board::Tile::defaultType();
+        return true;
     }
 
-    switch (tiles.at(x, y)) {
-        case Board::Tile::Type::coin:
-            tiles.at(x, y) = Board::Tile::Type::space;
-            return true;
-        default:
-            break;
-    }
     return false;
 }
 
@@ -191,6 +215,31 @@ Board::Tile::Type Board::Tile::dataCharToType(char c) {
     }
 
     return Board::Tile::Type::space;
+}
+
+Board::Tile::Type Board::Tile::defaultType() {
+    return Board::Tile::Type::wall;
+}
+
+bool Board::Tile::typeAllowsMovement(const Board::Tile::Type & t) {
+    switch (t) {
+        case Board::Tile::Type::coin:
+        case Board::Tile::Type::space:
+            return true;
+        default:
+            break;
+    }
+    return false;
+}
+
+bool Board::Tile::typeAllowsInteraction(const Type & t) {
+    switch (t) {
+        case Board::Tile::Type::coin:
+            return true;
+        default:
+            break;
+    }
+    return false;
 }
 
 BoardException::BoardException(const std::string & message) : runtime_error(message) { };

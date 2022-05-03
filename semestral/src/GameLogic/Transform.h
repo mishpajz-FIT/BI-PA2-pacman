@@ -1,21 +1,27 @@
 #ifndef TRANSFORM_H
 #define TRANSFORM_H
 
+#include <cmath>
+
+enum Rotation {
+    up = 0,
+    down = 1,
+    right = 2,
+    left = 3
+};
+
 struct Position {
 public:
+    int x;
+    int y;
+
     Position();
 
     Position(int newX, int newY);
 
-    int x;
-    int y;
-};
+    Position & moveByOne(Rotation inRotation);
 
-enum class Rotation {
-    up,
-    down,
-    right,
-    left
+    static double distanceBetween(const Position & lhs, const Position & rhs);
 };
 
 struct Transform {
@@ -24,6 +30,10 @@ public:
     Rotation rotation;
 
     Transform(const Position & pos = Position(), const Rotation & rot = Rotation::up);
+
+    Transform & moveByOne();
+
+    static Transform moveByOne(const Transform & trans);
 };
 
 

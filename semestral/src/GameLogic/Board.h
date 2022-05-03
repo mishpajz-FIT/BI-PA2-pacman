@@ -38,6 +38,33 @@ public:
          * @return Type Tile::Type the inputted char represents
          */
         static Type dataCharToType(char c);
+
+        /**
+         * @brief Default tile type
+         *
+         * Simplest type of tile
+         *
+         * @return Type default type
+         */
+        static Type defaultType();
+
+        /**
+         * @brief Check if type allows movement
+         *
+         * @param t type of tile
+         * @return true type allows movement
+         * @return false type doesnt allow movement
+         */
+        static bool typeAllowsMovement(const Type & t);
+
+        /**
+         * @brief Check if type allows interaction
+         *
+         * @param t type of tile
+         * @return true type allows interaction
+         * @return false type doesnt allow interaction
+         */
+        static bool typeAllowsInteraction(const Type & t);
     };
 
 private:
@@ -89,15 +116,6 @@ private:
     void buildCheckForCorrectEdges();
 
 public:
-    /**
-     * @brief Check if tile with coordinate is in Board::tiles
-     *
-     * @param x coordinate X
-     * @param y coordinate Y
-     * @return true Coordiante is in Board::tiles
-     * @return false Coordinate is not in Board::tiles
-     */
-    bool isTileCoordinateValid(size_t x, size_t y) const;
 
     /**
      * @brief Check if tile with position is in Board::tiles
@@ -107,6 +125,35 @@ public:
      * @return false Position is not in Board::tiles
      */
     bool isTileCoordinateValid(const Position & pos) const;
+
+    /**
+     * @brief Check if tile is crossroad
+     *
+     * To be a crossroad, tile needs to have at least 3 tiles in vicinity that allow for movement.
+     *
+     * @param pos position of tile to check
+     * @return true tile is crossroad
+     * @return false tile is not crossroad
+     */
+    bool isTileCrossroad(const Position & pos) const;
+
+    /**
+     * @brief Check if tile is at edge of board
+     *
+     * @param pos position of tile to check
+     * @return true tile is at edge of board
+     * @return false tile is not at edge of board
+     */
+    bool isTileEdge(const Position & pos) const;
+
+    /**
+     * @brief Check if type of tile is allowing movement
+     *
+     * @param pos position of tile to check
+     * @return true tile is allowing movement
+     * @return false tile is not allowing movement
+     */
+    bool isTileAllowingMovement(const Position & pos) const;
 
     /**
      * @brief Construct a new Board object from file
@@ -119,17 +166,6 @@ public:
      * @param filePath path to file
      */
     Board(const std::string & filePath);
-
-    /**
-     * @brief Get tile in board at coordinate
-     *
-     * @exception BoardException wrong coordinates
-     *
-     * @param x coordinate X
-     * @param y coordinate Y
-     * @return Board::Tile::Type Type of tile at coordinates
-     */
-    Board::Tile::Type tileAt(size_t x, size_t y) const;
 
     /**
      * @brief Get tile in board at position
@@ -176,12 +212,11 @@ public:
      *
      * @exception BoardException wrong coordinates
      *
-     * @param x coordinate X
-     * @param y coordinate Y
+     * @param pos position of tile
      * @return true Tile was interractable
      * @return false Tile was not interractable
      */
-    bool interactWithTileAt(size_t x, size_t y);
+    bool interactWithTileAt(const Position & pos);
 };
 
 /**
