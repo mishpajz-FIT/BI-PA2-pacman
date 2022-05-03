@@ -17,7 +17,9 @@ struct Rotation {
     Rotation();
     Rotation(size_t d);
 
-    Rotation opposite();
+    Rotation opposite() const;
+
+    bool operator < (const Rotation & rhs) const;
 };
 
 #endif /* ROTATION_H */

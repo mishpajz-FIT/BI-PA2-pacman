@@ -12,9 +12,8 @@ public:
 
     Transform(const Position & pos = Position(), const Rotation & rot = Rotation());
 
-    Transform & moveByOne();
-
-    static Transform moveByOne(const Transform & trans);
+    Transform & moveBy(int by);
+    Transform movedBy(int by);
 };
 
 

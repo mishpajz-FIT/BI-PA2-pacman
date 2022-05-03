@@ -4,28 +4,28 @@ Position::Position() : x(0), y(0) { }
 
 Position::Position(int newX, int newY) : x(newX), y(newY) { }
 
-Position & Position::moveByOne(Rotation inRotation) {
+Position & Position::moveBy(int by, Rotation inRotation) {
     switch (inRotation.direction) {
         case Rotation::Direction::up:
-            y--;
+            y -= by;
             break;
         case Rotation::Direction::down:
-            y++;
+            y += by;
             break;
         case Rotation::Direction::right:
-            x++;
+            x += by;
             break;
         case Rotation::Direction::left:
-            x--;
+            x -= by;
             break;
     }
 
     return (*this);
 }
 
-Position Position::movedByOne(Rotation inRotation) {
+Position Position::movedBy(int by, Rotation inRotation) {
     Position newPosition(*this);
-    newPosition.moveByOne(inRotation);
+    newPosition.moveBy(by, inRotation);
     return newPosition;
 }
 

@@ -2,13 +2,13 @@
 
 Transform::Transform(const Position & pos, const Rotation & rot) : position(pos), rotation(rot) { }
 
-Transform & Transform::moveByOne() {
-    position.moveByOne(rotation);
+Transform & Transform::moveBy(int by) {
+    position.moveBy(by, rotation);
     return (*this);
 }
 
-Transform Transform::moveByOne(const Transform & trans) {
-    Transform newTransform(trans);
-
-    return newTransform.moveByOne();
+Transform Transform::movedBy(int by) {
+    Transform newTransform(*this);
+    newTransform.moveBy(by);
+    return newTransform;
 }
