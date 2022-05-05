@@ -11,7 +11,7 @@
 #ifndef MATRIX_H
 #define MATRIX_H
 
-#include <exception>
+#include <stdexcept>
 
 /**
  * @brief Matrix container
@@ -43,7 +43,7 @@ private:
      * @param y Coordinate y
      * @return size_t Index of element in Matrix::data array
      */
-    size_t getIndexFor(size_t x, size_t y) {
+    size_t getIndexFor(size_t x, size_t y) const {
         if (x >= sizeX || y >= sizeY) {
             throw std::out_of_range("matrix: index out of range");
         }
