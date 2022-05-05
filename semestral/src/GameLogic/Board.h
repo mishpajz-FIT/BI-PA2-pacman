@@ -1,7 +1,7 @@
 #ifndef BOARD_H
 #define BOARD_H
 
-#include "../Structures/Matrix.h"
+#include "Matrix.h"
 #include "Transform.h"
 #include <string>
 #include <stdexcept>
@@ -13,6 +13,7 @@
  *
  */
 class Board {
+    friend class BoardFileLoader;
 public:
     /**
      * @brief Tile of Board
@@ -28,16 +29,6 @@ public:
             space,
             coin
         };
-
-        /**
-         * @brief Imported file char to type conversion
-         *
-         * @exception BoardInvalidGrid char is unknown
-         *
-         * @param c char from file
-         * @return Type Tile::Type the inputted char represents
-         */
-        static Type dataCharToType(char c);
 
         /**
          * @brief Default tile type
@@ -73,49 +64,19 @@ private:
     Position enemySpawn; //< Position in maze of enemy spawn
     Position playerSpawn; //< Position in maze of player spawn
 
-    /**
-     * @brief Load tiles from file
-     *
-     * @param filename Path to file
-     */
-    void loadBoardFromFile(const std::string & filename);
-
-    /**
-     * @brief Convert lines from input file into Board::tiles matrix
-     * @exception BoardInvalidGrid missing spawn point/unknown char/duplicit spawn/edges are invalid/wrong format
-     * @exception BoardWrongFile file couldn't be read
-     *
-     * @param lines list of lines
-     */
-    void buildTilesFromChars(std::list<std::string> & lines);
-
-    /**
-     * @brief Check if char from input file has special meaning and perform action associated with it
-     *
-     * If char has special meaning, it probably should not be propagated further the board creation (or should be changed).
-     *
-     * Could signalize player or enemy spawn etc.
-     *
-     * @exception BoardInvalidGrid duplicit spawn
-     *
-     * @param c Char to check
-     * @param x coordinate X
-     * @param y coordinate Y
-     * @return true Char has special meaning
-     * @return false Char has no special meaning
-     */
-    bool buildCheckForSpecialChars(char c, size_t x, size_t y);
-
-    /**
-     * @brief Check if edges of Board::tiles are correct
-     *
-     * Edges must be same on both sides.
-     *
-     * @exception BoardInvalidGrid edges are invalid
-     */
-    void buildCheckForCorrectEdges();
-
 public:
+
+    Board();
+
+    /**
+     * @brief Get tile in board at position
+     *
+     * @exception BoardException wrong position
+     *
+     * @param pos position of tile
+     * @return Board::Tile::Type Type of tile at coordinates
+     */
+    Board::Tile::Type tileAt(const Position & pos) const;
 
     /**
      * @brief Check if tile with position is in Board::tiles
@@ -156,26 +117,12 @@ public:
     bool isTileAllowingMovement(const Position & pos) const;
 
     /**
-     * @brief Construct a new Board object from file
+     * @brief Get complementary position on opposite edge of board to position
      *
-     * File needs to have correct format.
-     *
-     * @exception BoardInvalidGrid wrong file format
-     * @exception BoardWrongFile couldn't read file
-     *
-     * @param filePath path to file
+     * @param forPos position
+     * @return Position complementary position
      */
-    Board(const std::string & filePath);
-
-    /**
-     * @brief Get tile in board at position
-     *
-     * @exception BoardException wrong position
-     *
-     * @param pos position of tile
-     * @return Board::Tile::Type Type of tile at coordinates
-     */
-    Board::Tile::Type tileAt(const Position & pos) const;
+    Position complementaryEdgePosition(const Position & forPos) const;
 
     /**
      * @brief Get size of board in X dimension
@@ -225,22 +172,6 @@ public:
  */
 struct BoardException : public std::runtime_error {
     BoardException(const std::string & message);
-};
-
-/**
- * @brief Runtime Board exception signaling problem with input file
- *
- */
-struct BoardWrongFile : public BoardException {
-    BoardWrongFile(const std::string & message);
-};
-
-/**
- * @brief Runtime Board exception signaling problem with loading Board from input file
- *
- */
-struct BoardInvalidGrid : public BoardException {
-    BoardInvalidGrid(const std::string & message);
 };
 
 #endif /* BOARD_H */
