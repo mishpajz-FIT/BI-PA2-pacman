@@ -14,7 +14,7 @@ public:
     Position(int newX, int newY);
 
     Position & moveBy(int by, Rotation inRotation);
-    Position movedBy(int by, Rotation inRotation);
+    Position movedBy(int by, Rotation inRotation) const;
 
     static double distanceBetween(const Position & lhs, const Position & rhs);
 

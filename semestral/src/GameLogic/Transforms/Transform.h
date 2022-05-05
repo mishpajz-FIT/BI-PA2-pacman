@@ -13,7 +13,7 @@ public:
     Transform(const Position & pos = Position(), const Rotation & rot = Rotation());
 
     Transform & moveBy(int by);
-    Transform movedBy(int by);
+    Transform movedBy(int by) const;
 };
 
 
