@@ -26,7 +26,9 @@ public:
         enum class Type {
             wall,
             space,
-            coin
+            coin,
+            frighten,
+            bonus
         };
 
         /**

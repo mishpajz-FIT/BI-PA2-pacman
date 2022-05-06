@@ -55,6 +55,8 @@ Board::Tile::Type BoardFileLoader::dataCharToType(char c) {
             break;
         case '.':
             return Board::Tile::Type::coin;
+        case 'o':
+            return Board::Tile::Type::frighten;
         case ' ':
             break;
         default:

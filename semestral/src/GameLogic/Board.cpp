@@ -9,6 +9,8 @@ bool Board::Tile::typeAllowsMovement(const Board::Tile::Type & t) {
     switch (t) {
         case Board::Tile::Type::coin:
         case Board::Tile::Type::space:
+        case Board::Tile::Type::bonus:
+        case Board::Tile::Type::frighten:
             return true;
         default:
             break;
@@ -19,6 +21,8 @@ bool Board::Tile::typeAllowsMovement(const Board::Tile::Type & t) {
 bool Board::Tile::typeAllowsInteraction(const Type & t) {
     switch (t) {
         case Board::Tile::Type::coin:
+        case Board::Tile::Type::bonus:
+        case Board::Tile::Type::frighten:
             return true;
         default:
             break;
