@@ -13,7 +13,6 @@
  *
  */
 class Board {
-    friend class BoardFileLoader;
 public:
     /**
      * @brief Tile of Board
@@ -67,6 +66,8 @@ private:
 public:
 
     Board();
+
+    Board(const Matrix<Board::Tile::Type> & newTiles, const Position & newEnemySpawn, const Position & newPlayersSpawn);
 
     /**
      * @brief Get tile in board at position

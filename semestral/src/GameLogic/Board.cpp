@@ -1,8 +1,48 @@
 #include "Board.h"
 
-#include <iostream>
+//SECTION: Board::Tile
+Board::Tile::Type Board::Tile::defaultType() {
+    return Board::Tile::Type::wall;
+}
+
+bool Board::Tile::typeAllowsMovement(const Board::Tile::Type & t) {
+    switch (t) {
+        case Board::Tile::Type::coin:
+        case Board::Tile::Type::space:
+            return true;
+        default:
+            break;
+    }
+    return false;
+}
+
+bool Board::Tile::typeAllowsInteraction(const Type & t) {
+    switch (t) {
+        case Board::Tile::Type::coin:
+            return true;
+        default:
+            break;
+    }
+    return false;
+}
+//!SECTION
 
 Board::Board() : tiles(1, 1), enemySpawn(-1, -1), playerSpawn(-1, -1) { }
+
+Board::Board(const Matrix<Board::Tile::Type> & newTiles, const Position & newEnemySpawn, const Position & newPlayersSpawn) : tiles(newTiles), enemySpawn(newEnemySpawn), playerSpawn(newPlayersSpawn) {
+    if (!isTileCoordinateValid(playerSpawn) || !isTileCoordinateValid(enemySpawn)) {
+        throw std::invalid_argument("Board: Board - invalid enemy or player spawn");
+    }
+}
+
+Board::Tile::Type Board::tileAt(const Position & pos) const {
+    try {
+        return tiles.at(pos.x, pos.y);
+    }
+    catch (std::out_of_range & e) {
+        throw BoardException("board: tileAt - coordinates are out of range");
+    }
+}
 
 bool Board::isTileCoordinateValid(const Position & pos) const {
     if ((size_t)(pos.x) >= tiles.getSizeX() || (size_t)(pos.y) >= tiles.getSizeY()) {
@@ -65,15 +105,6 @@ Position Board::complementaryEdgePosition(const Position & forPos) const {
     return newPos;
 }
 
-Board::Tile::Type Board::tileAt(const Position & pos) const {
-    try {
-        return tiles.at(pos.x, pos.y);
-    }
-    catch (std::out_of_range & e) {
-        throw BoardException("board: tileAt - coordinates are out of range");
-    }
-}
-
 size_t Board::getSizeX() const {
     return tiles.getSizeX();
 }
@@ -97,31 +128,6 @@ bool Board::interactWithTileAt(const Position & pos) {
         return true;
     }
 
-    return false;
-}
-
-Board::Tile::Type Board::Tile::defaultType() {
-    return Board::Tile::Type::wall;
-}
-
-bool Board::Tile::typeAllowsMovement(const Board::Tile::Type & t) {
-    switch (t) {
-        case Board::Tile::Type::coin:
-        case Board::Tile::Type::space:
-            return true;
-        default:
-            break;
-    }
-    return false;
-}
-
-bool Board::Tile::typeAllowsInteraction(const Type & t) {
-    switch (t) {
-        case Board::Tile::Type::coin:
-            return true;
-        default:
-            break;
-    }
     return false;
 }
 

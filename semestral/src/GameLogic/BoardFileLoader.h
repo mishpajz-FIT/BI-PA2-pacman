@@ -3,12 +3,20 @@
 
 #include "FileLoader.h"
 #include "Board.h"
+#include "Transform.h"
+#include "Matrix.h"
 
 class BoardFileLoader : public FileLoader {
 private:
-    bool buildCheckForSpecialCharacter(char c, size_t x, size_t y, Board & toBoard);
+    typedef Matrix<Board::Tile::Type> TileMatrix;
 
-    void createBoardOutOfData(std::list<std::string> & lines, Board & toBoard);
+    Position playerSpawn;
+    Position enemySpawn;
+
+
+    bool checkForSpecialCharacter(char c, size_t x, size_t y);
+
+    TileMatrix createTilesOutOfData(std::list<std::string> & lines);
 
     /**
     * @brief Imported file char to type conversion
