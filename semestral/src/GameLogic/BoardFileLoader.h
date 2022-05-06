@@ -35,4 +35,4 @@ public:
 
 };
 
-#endif /* BOARD_H */
+#endif /* BOARDFILELOADER_H */

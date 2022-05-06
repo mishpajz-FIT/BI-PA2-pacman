@@ -15,8 +15,9 @@ public:
 
     void reposition(const Transform & trans);
 
-    Position getPosition() const;
+    Transform getTransform() const;
 
+    void toggleAlive();
 };
 
 #endif /* ENTITY_H */

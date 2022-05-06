@@ -8,6 +8,10 @@ void Entity::reposition(const Transform & trans) {
     transform = trans;
 }
 
-Position Entity::getPosition() const {
-    return transform.position;
+Transform Entity::getTransform() const {
+    return transform;
+}
+
+void Entity::toggleAlive() {
+    alive = !alive;
 }

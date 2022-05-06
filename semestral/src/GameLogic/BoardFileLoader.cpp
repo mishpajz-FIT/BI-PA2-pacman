@@ -80,14 +80,14 @@ Board BoardFileLoader::loadBoard() {
         if (lineLength == 0) { //If line is first with content set line length, else check if loaded line length is correct
             lineLength = buffer.length();
         } else if (lineLength != buffer.length()) {
-            throw FileLoaderException("boardfileloader: wrong format of grid in file");
+            throw FileLoaderException("BoardFileLoader: loadBoard - wrong format of grid in file");
         }
 
         lines.emplace_back(buffer);
     }
 
     if (lines.size() == 0) {
-        throw FileLoaderException("boardfileloader: empty grid");
+        throw FileLoaderException("BoardFileLoader: loadBoard - empty grid");
     }
 
     return Board(createTilesOutOfData(lines), enemySpawn, playerSpawn);
