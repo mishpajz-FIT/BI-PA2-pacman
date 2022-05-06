@@ -23,7 +23,7 @@ Position & Position::moveBy(int by, Rotation inRotation) {
     return (*this);
 }
 
-Position Position::movedBy(int by, Rotation inRotation) {
+Position Position::movedBy(int by, Rotation inRotation) const {
     Position newPosition(*this);
     newPosition.moveBy(by, inRotation);
     return newPosition;
@@ -35,10 +35,10 @@ double Position::distanceBetween(const Position & lhs, const Position & rhs) {
     return hypot(disX, disY);
 }
 
-bool Position::operator == (const Position & rhs) {
+bool Position::operator == (const Position & rhs) const {
     return (x == rhs.x) && (y == rhs.y);
 }
 
-bool Position::operator != (const Position & rhs) {
+bool Position::operator != (const Position & rhs) const {
     return !((*this) == rhs);
 }

@@ -18,8 +18,8 @@ public:
 
     static double distanceBetween(const Position & lhs, const Position & rhs);
 
-    bool operator == (const Position & rhs);
-    bool operator != (const Position & rhs);
+    bool operator == (const Position & rhs) const;
+    bool operator != (const Position & rhs) const;
 };
 
 #endif /* POSITION_H */

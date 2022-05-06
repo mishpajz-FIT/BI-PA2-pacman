@@ -7,7 +7,7 @@ Transform & Transform::moveBy(int by) {
     return (*this);
 }
 
-Transform Transform::movedBy(int by) {
+Transform Transform::movedBy(int by) const {
     Transform newTransform(*this);
     newTransform.moveBy(by);
     return newTransform;
