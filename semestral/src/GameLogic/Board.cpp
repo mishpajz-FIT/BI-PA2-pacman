@@ -92,21 +92,7 @@ bool Board::isTileAllowingMovement(const Position & pos) const {
 }
 
 Position Board::complementaryEdgePosition(const Position & forPos) const {
-    Position newPos(forPos);
-
-    if ((size_t)(forPos.x) == (getSizeX() - 1)) {
-        newPos.x = 0;
-    } else if ((size_t)(forPos.x) == 0) {
-        newPos.x = (getSizeX() - 1);
-    }
-
-    if ((size_t)(forPos.y) == (getSizeY() - 1)) {
-        newPos.y = 0;
-    } else if ((size_t)(forPos.y) == 0) {
-        newPos.y = (getSizeY() - 1);
-    }
-
-    return newPos;
+    return Position((getSizeX() - 1) - forPos.x, (getSizeY() - 1) - forPos.y);
 }
 
 size_t Board::getSizeX() const {
