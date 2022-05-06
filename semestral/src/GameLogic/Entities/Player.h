@@ -5,6 +5,9 @@
 #include "Board.h"
 
 class Player : public Entity {
+private:
+    bool ifPossibleChangeTransform(const Transform & to, const Board & board);
+
 public:
     Player(const Transform & initial, bool a = true);
 

@@ -14,7 +14,7 @@ protected:
     bool frightened;
     bool scatter;
 
-    Rotation currentRotation;
+    Rotation currentDirection;
 
     Position scatterTarget;
 
@@ -29,8 +29,8 @@ public:
 
     void move(const Board & board, const Transform & playerTransform, const Position & specialPos = Position());
 
-    void turnScatter();
-    void turnFrighten();
+    void toggleScatter();
+    void toggleFrighten();
 };
 
 #endif /* ENEMY_H */

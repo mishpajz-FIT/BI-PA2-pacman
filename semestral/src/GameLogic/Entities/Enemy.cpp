@@ -1,11 +1,7 @@
 #include "Enemy.h"
 
-Enemy::Enemy(const Transform & initial, const Position & scatterPos, bool a) : Entity(initial, a), scatterTarget(scatterPos) { }
-
-Enemy::~Enemy() { }
-
 void Enemy::calculateNextDirection(const Board & board, const Position & target) {
-    Position nextTilePos = transform.position.movedBy(1, currentRotation);
+    Position nextTilePos = transform.position.movedBy(1, currentDirection);
     if (board.isTileCrossroad(nextTilePos)) {
         std::vector<std::pair<double, Rotation>> distances;
 
@@ -48,13 +44,18 @@ Position Enemy::calculateTarget(const Board & board, const Transform & playerTra
     return Position();
 }
 
+Enemy::Enemy(const Transform & initial, const Position & scatterPos, bool a) : Entity(initial, a), scatterTarget(scatterPos) { }
+
+Enemy::~Enemy() { }
+
 void Enemy::move(const Board & board, const Transform & playerTransform, const Position & specialPos) {
     if (!alive) {
         return;
     }
-    transform.rotation = currentRotation;
+    
+    transform.rotation = currentDirection;
     transform.moveBy(1);
-    currentRotation = nextRotation;
+    currentDirection = nextRotation;
 
     Position target;
 
@@ -67,16 +68,16 @@ void Enemy::move(const Board & board, const Transform & playerTransform, const P
     calculateNextDirection(board, target);
 }
 
-void Enemy::turnScatter() {
+void Enemy::toggleScatter() {
     scatter = !scatter;
     if (!frightened) {
-        currentRotation = transform.rotation.opposite();
+        currentDirection = transform.rotation.opposite();
     }
 }
 
-void Enemy::turnFrighten() {
+void Enemy::toggleFrighten() {
     frightened = !frightened;
     if (!scatter) {
-        currentRotation = transform.rotation.opposite();
+        currentDirection = transform.rotation.opposite();
     }
 }
