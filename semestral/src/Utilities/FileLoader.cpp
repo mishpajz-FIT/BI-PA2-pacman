@@ -1,7 +1,11 @@
 #include "FileLoader.h"
 
-FileLoader::FileLoader(const std::string & filePath) : file(filePath) {
-    if (!file.good()) {
+#include <iostream>
+#include <filesystem>
+
+FileLoader::FileLoader(const std::string & filePath) : file(filePath, std::ios::in) {
+    if (!file.is_open() || !file.good()) {
+        std::cout << "bad" << std::endl;
         throw FileLoaderException("fileloader: error utilizing file");
     }
 }

@@ -25,7 +25,7 @@ Game GameFileLoader::loadGame() {
         if (file.fail()
             || keys[i] != keyBuffer
             || valueBuffer == 0) {
-            throw FileLoader("GameFileLoader: loadGame - wrong format of values in file");
+            throw FileLoaderException("GameFileLoader: loadGame - wrong format of values in file");
         }
         values[i] = valueBuffer;
     }

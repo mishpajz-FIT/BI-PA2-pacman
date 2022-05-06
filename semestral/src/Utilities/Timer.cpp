@@ -35,7 +35,7 @@ Timer::timepoint Timer::adjustedTime() {
     return (std::chrono::steady_clock::now() - timeOffset);
 }
 
-Timer::Timer() : paused(false), lastPausedTime(Timer::clock::now()), timeOffset(0) { }
+Timer::Timer() : paused(true), lastPausedTime(Timer::clock::now()), timeOffset(0) { }
 
 void Timer::togglePause() {
     if (!paused) {

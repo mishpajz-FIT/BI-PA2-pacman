@@ -1,7 +1,6 @@
 #TODO
 
-[] FileLoader
-[] Timer
-[] Game
+[] Doxyfile
 [] nCurses
+[] Game
 [] Menu

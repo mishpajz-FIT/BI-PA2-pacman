@@ -1,6 +1,6 @@
 #include "Entity.h"
 
-Entity::Entity(const Transform & initial, bool a) : transform(initial), alive(a), nextRotation(initial.rotation) { };
+Entity::Entity(const Transform & initial, bool a) : transform(initial), nextRotation(initial.rotation), alive(a) { };
 
 Entity::~Entity() { };
 

@@ -4,7 +4,7 @@
 #include "Enemy.h"
 
 //SECTION: GhostBlinky
-class GhostBlinky : Enemy {
+class GhostBlinky : public Enemy {
 public:
     GhostBlinky(const Transform & initial, const Position & scatterPos, bool a = false);
     ~GhostBlinky();
@@ -15,7 +15,7 @@ public:
 
 
 //SECTION: GhostPinky
-class GhostPinky : Enemy {
+class GhostPinky : public Enemy {
 public:
     GhostPinky(const Transform & initial, const Position & scatterPos, bool a = false);
     ~GhostPinky();
@@ -26,7 +26,7 @@ public:
 
 
 //SECTION: GhostInky
-class GhostInky : Enemy {
+class GhostInky : public Enemy {
 public:
     GhostInky(const Transform & initial, const Position & scatterPos, bool a = false);
     ~GhostInky();
@@ -37,7 +37,7 @@ public:
 
 
 //SECTION: GhostClyde
-class GhostClyde : Enemy {
+class GhostClyde : public Enemy {
 public:
     GhostClyde(const Transform & initial, const Position & scatterPos, bool a = false);
     ~GhostClyde();
