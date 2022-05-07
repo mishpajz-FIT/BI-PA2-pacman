@@ -11,7 +11,7 @@ SOURCES := $(wildcard ${SOURCE_DIR}/*.cpp  ${SOURCE_DIR}/*/*.cpp ${SOURCE_DIR}/*
 OBJECTS := $(patsubst ${SOURCE_DIR}/%.cpp, ${BUILD_DIR}/%.o, ${SOURCES})
 INCLUDE := $(strip $(addprefix -I , $(dir ${SOURCES})))
 
-.PHONY: compile print run clear count
+.PHONY: compile print run clean doc count
 
 compile: ${OBJECTS}
 	@${CXX} ${FLAGS} ${INCLUDE} $^ -o ${NAME}
@@ -25,10 +25,13 @@ ${BUILD_DIR}/%.o: src/%.cpp
 run: compile
 	./${NAME}
 
-clear:
+clean:
 	@rm -rf ${BUILD_DIR}
 	@rm -rf ${NAME}
-	@echo "Clearing"
+	@rm -rf doc/generated
+	@echo "Cleaning"
+
+doc: doxygen Doxyfile
 
 count:
 	@wc -l ${SOURCE_DIR}/*/*.h ${SOURCE_DIR}/*/*/*.h ${SOURCE_DIR}/*.cpp ${SOURCE_DIR}/*/*.cpp ${SOURCE_DIR}/*/*/*.h
