@@ -5,27 +5,23 @@
 #include "Game.h"
 #include <memory>
 #include <ncurses.h>
+#include "LayoutView.h"
+#include "GameView.h"
+#include "OptionsView.h"
 
 class GameViewController : public ViewController {
     std::unique_ptr<Game> game;
 
     enum GameStatePhase {
-        none,
         optionsLoading,
         mapLoading,
         playing
     };
     GameStatePhase phase;
-    GameStatePhase prevPhase;
 
-    WINDOW * gameWindow;
-    WINDOW * optionWindow;
-
-    void createWindows() override;
-
-    void drawGame();
-
-    void drawOptions();
+    LayoutView layoutView;
+    GameView gameView;
+    OptionsView optionsView;
 
 public:
     GameViewController();
@@ -34,6 +30,7 @@ public:
 
     void draw() override;
 
+    void setNeedsRefreshToSubviews();
 };
 
 #endif /* GAMEVIEWCONTROLLER_H */

@@ -95,3 +95,11 @@ void Game::loadMap(const std::string & filepath) {
 void Game::update() {
     timer.update();
 }
+
+unsigned int Game::getDimensionX() {
+    return board->getSizeX();
+}
+
+unsigned int Game::getDimensionY() {
+    return board->getSizeY();
+}

@@ -5,25 +5,6 @@
 #include <string>
 
 class ViewController {
-protected:
-    int termYSize;
-    int termXSize;
-    bool termSizeChanged;
-
-    bool displaying;
-
-    bool problem;
-    bool prevProblem;
-    std::string problemMessage;
-
-    virtual void createWindows() = 0;
-
-    void getTermSizes();
-
-    void boxAronudWindow(WINDOW * win);
-
-    void wrongResolution();
-
 public:
     ViewController();
 

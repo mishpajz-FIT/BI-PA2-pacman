@@ -1,15 +1,15 @@
 #include "View.h"
 
-View::View() : needsRefresh(true) { }
+View::View(std::function<void()> refreshCallback) : needsRefresh(true), ableToDisplay(true), sizeY(-1), sizeX(-1), sizeChanged(true), needsRefreshCallback(refreshCallback) { }
 View::~View() { }
 
 void View::getWindowSize(WINDOW * forWindow) {
     int maxY, maxX;
     getmaxyx(forWindow, maxY, maxX);
-    if (maxY != ySize || maxX != xSize) {
+    if (maxY != sizeY || maxX != sizeX) {
         sizeChanged = true;
-        ySize = maxY;
-        xSize = maxX;
+        sizeY = maxY;
+        sizeX = maxX;
     } else {
         sizeChanged = false;
     }
@@ -17,4 +17,8 @@ void View::getWindowSize(WINDOW * forWindow) {
 
 void View::setNeedsRefresh() {
     needsRefresh = true;
+}
+
+bool View::isAbleToDisplay() {
+    return ableToDisplay;
 }

@@ -13,11 +13,11 @@ int main(void) {
 
     std::clock_t c = std::clock();
 
-    GameViewController gameState;
+    GameViewController gameViewController;
 
     while (std::clock() < c + CLOCKS_PER_SEC * 180) {
-        gameState.update();
+        gameViewController.update();
 
-        gameState.draw();
+        gameViewController.draw();
     }
 }

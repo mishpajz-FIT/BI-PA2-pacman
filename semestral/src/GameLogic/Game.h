@@ -10,7 +10,7 @@
 #include <ncurses.h>
 
 class Game {
-    friend class GameViewController;
+    friend class GameView;
 private:
     bool needsRedraw;
 
@@ -66,7 +66,8 @@ public:
 
     void update();
 
-    void draw(WINDOW * inWindow);
+    unsigned int getDimensionX();
+    unsigned int getDimensionY();
 };
 
 #endif /* GAME_H */
