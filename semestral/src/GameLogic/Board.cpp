@@ -29,6 +29,24 @@ bool Board::Tile::typeAllowsInteraction(const Type & t) {
     }
     return false;
 }
+
+char Board::Tile::typeDisplayChar(const Type & t) {
+    switch (t) {
+        case Board::Tile::Type::coin:
+            return '.';
+        case Board::Tile::Type::bonus:
+            return '@';
+        case Board::Tile::Type::frighten:
+            return 'o';
+        case Board::Tile::Type::space:
+            return ' ';
+        case Board::Tile::Type::wall:
+            return '#';
+        default:
+            break;
+    }
+    return ' ';
+}
 //!SECTION
 
 Board::Board() : tiles(1, 1), enemySpawn(-1, -1), playerSpawn(-1, -1) { }
@@ -121,4 +139,4 @@ bool Board::interactWithTileAt(const Position & pos) {
     return false;
 }
 
-BoardException::BoardException(const std::string & message) : runtime_error(message) { };
+BoardException::BoardException(const std::string & message) : runtime_error(message) { }

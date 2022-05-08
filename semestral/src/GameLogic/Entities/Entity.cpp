@@ -1,8 +1,8 @@
 #include "Entity.h"
 
-Entity::Entity(const Transform & initial, bool a) : transform(initial), nextRotation(initial.rotation), alive(a) { };
+Entity::Entity(const Transform & initial, bool a) : transform(initial), nextRotation(initial.rotation), alive(a) { }
 
-Entity::~Entity() { };
+Entity::~Entity() { }
 
 void Entity::reposition(const Transform & trans) {
     transform = trans;

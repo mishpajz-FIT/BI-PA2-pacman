@@ -7,6 +7,7 @@
 #include <tuple>
 #include <algorithm>
 #include <cstdlib>
+#include <ctime>
 
 
 class Enemy : public Entity {
@@ -31,6 +32,8 @@ public:
 
     void toggleScatter();
     void toggleFrighten();
+
+    char displayChar() override;
 };
 
 #endif /* ENEMY_H */

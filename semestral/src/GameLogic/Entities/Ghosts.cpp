@@ -2,7 +2,7 @@
 
 //SECTION: GhostBlinky
 GhostBlinky::GhostBlinky(const Transform & initial, const Position & scatterPos, bool a) : Enemy(initial, scatterPos, a) { }
-GhostBlinky::~GhostBlinky() { };
+GhostBlinky::~GhostBlinky() { }
 
 Position GhostBlinky::calculateTarget(const Board & board, const Transform & playerTransform, const Position &) {
     return playerTransform.position;
@@ -12,7 +12,7 @@ Position GhostBlinky::calculateTarget(const Board & board, const Transform & pla
 
 //SECTION: GhostPinky
 GhostPinky::GhostPinky(const Transform & initial, const Position & scatterPos, bool a) : Enemy(initial, scatterPos, a) { }
-GhostPinky::~GhostPinky() { };
+GhostPinky::~GhostPinky() { }
 
 Position GhostPinky::calculateTarget(const Board & board, const Transform & playerTransform, const Position &) {
     Position newTarget(playerTransform.position);
@@ -27,7 +27,7 @@ Position GhostPinky::calculateTarget(const Board & board, const Transform & play
 
 //SECTION: GhostInky
 GhostInky::GhostInky(const Transform & initial, const Position & scatterPos, bool a) : Enemy(initial, scatterPos, a) { }
-GhostInky::~GhostInky() { };
+GhostInky::~GhostInky() { }
 
 Position GhostInky::calculateTarget(const Board & board, const Transform & playerTransform, const Position & specialPos) {
     Position newTarget(playerTransform.position);
@@ -46,7 +46,7 @@ Position GhostInky::calculateTarget(const Board & board, const Transform & playe
 
 //SECTION: GhostClyde
 GhostClyde::GhostClyde(const Transform & initial, const Position & scatterPos, bool a) : Enemy(initial, scatterPos, a) { }
-GhostClyde::~GhostClyde() { };
+GhostClyde::~GhostClyde() { }
 
 Position GhostClyde::calculateTarget(const Board & board, const Transform & playerTransform, const Position &) {
     if (Position::distanceBetween(playerTransform.position, transform.position) > 8.0) {

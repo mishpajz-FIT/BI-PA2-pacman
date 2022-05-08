@@ -1,18 +1,23 @@
-#include "Game.h"
-#include "GameFileLoader.h"
+#include "GameViewController.h"
 
 #include <filesystem>
 #include <iostream>
+#include <ctime>
+#include <ncurses.h>
 
 int main(void) {
+    initscr();
+    curs_set(0);
+    start_color();
+    use_default_colors();
 
-    GameFileLoader gLoader("./examples/Settings/default.spac");
+    std::clock_t c = std::clock();
 
-    Game game = gLoader.loadGame();
-    game.loadMap("./examples/Maps/default.mpac");
+    GameViewController gameState;
 
-    game.begin();
-    while (true) {
-        game.update();
+    while (std::clock() < c + CLOCKS_PER_SEC * 180) {
+        gameState.update();
+
+        gameState.draw();
     }
 }

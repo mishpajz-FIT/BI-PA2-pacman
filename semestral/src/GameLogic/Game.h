@@ -7,9 +7,13 @@
 #include <array>
 #include <memory>
 #include <string>
+#include <ncurses.h>
 
 class Game {
+    friend class GameViewController;
 private:
+    bool needsRedraw;
+
     Timer timer;
 
     std::unique_ptr<Board> board;
@@ -17,10 +21,10 @@ private:
     std::unique_ptr<Player> player;
     std::array<std::unique_ptr<Enemy>, 4> ghosts;
 
+
     unsigned long score;
 
     bool bonusOut;
-    bool paused;
 
     const unsigned int playerSpeed;
     const unsigned int enemySpeed;
@@ -61,6 +65,8 @@ public:
     }
 
     void update();
+
+    void draw(WINDOW * inWindow);
 };
 
 #endif /* GAME_H */

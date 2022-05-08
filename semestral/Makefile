@@ -1,7 +1,7 @@
 NAME := dobesmic
 
 CXX := g++
-FLAGS := -std=c++17 -O2 -Wall -pedantic
+FLAGS := -std=c++17 -O2 -Wall -pedantic -lncurses
 
 SOURCE_DIR := src
 BUILD_DIR := build

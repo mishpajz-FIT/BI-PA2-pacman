@@ -18,6 +18,8 @@ public:
     Transform getTransform() const;
 
     void toggleAlive();
+
+    virtual char displayChar() = 0;
 };
 
 #endif /* ENTITY_H */

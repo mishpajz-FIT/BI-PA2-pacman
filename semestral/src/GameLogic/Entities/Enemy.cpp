@@ -81,3 +81,7 @@ void Enemy::toggleFrighten() {
         currentDirection = transform.rotation.opposite();
     }
 }
+
+char Enemy::displayChar() {
+    return '&';
+}

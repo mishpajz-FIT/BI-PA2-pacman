@@ -57,6 +57,8 @@ public:
          * @return false type doesnt allow interaction
          */
         static bool typeAllowsInteraction(const Type & t);
+
+        static char typeDisplayChar(const Type & t);
     };
 
 private:

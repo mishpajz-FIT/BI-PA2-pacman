@@ -7,14 +7,14 @@ void Game::detectCollisions() {
 }
 
 void Game::movePlayer() {
+    needsRedraw = true;
     player->move(*board);
-    std::cout << "(player) " << player->getTransform().position.x << "; " << player->getTransform().position.y << std::endl;
 }
 
 void Game::moveEnemy() {
+    needsRedraw = true;
     for (auto & e : ghosts) {
         e->move(*board, player->getTransform(), ghosts[0]->getTransform().position);
-        std::cout << "(enemy) " << e->getTransform().position.x << "; " << e->getTransform().position.y << std::endl;
     }
 }
 
@@ -23,9 +23,9 @@ void Game::createBonus() {
 }
 
 void Game::toggleScatter() {
+    needsRedraw = true;
     for (auto & e : ghosts) {
         e->toggleScatter();
-        std::cout << "(enemy) scatter toggle" << std::endl;
     }
 }
 
@@ -39,11 +39,11 @@ Game::Game(
     unsigned int bonusPer,
     unsigned int ghostComeOutPer
 ) :
+    needsRedraw(true),
     board(nullptr),
     player(nullptr),
     score(0),
     bonusOut(false),
-    paused(true),
     playerSpeed(playerSpd),
     enemySpeed(enemySpd),
     scatterDuration(scatterDur),
@@ -55,16 +55,16 @@ Game::Game(
 
 void Game::loadMap(const std::string & filepath) {
     BoardFileLoader fileLoader(filepath);
-    board = std::make_unique<Board>(fileLoader.loadBoard());
+    board.reset(new Board(fileLoader.loadBoard()));
 
     Transform playerSpawn(board->getPlayerSpawn(), Rotation(Rotation::Direction::left));
-    player = std::make_unique<Player>(Player(playerSpawn));
+    player.reset(new Player(playerSpawn));
 
     Transform enemySpawn(board->getEnemySpawn(), Rotation(Rotation::Direction::left));
-    ghosts[0] = std::make_unique<Enemy>(GhostBlinky(enemySpawn, Position(0, board->getSizeX())));
-    ghosts[1] = std::make_unique<Enemy>(GhostPinky(enemySpawn, Position(0, 0)));
-    ghosts[2] = std::make_unique<Enemy>(GhostInky(enemySpawn, Position(board->getSizeY(), board->getSizeY())));
-    ghosts[3] = std::make_unique<Enemy>(GhostClyde(enemySpawn, Position(board->getSizeY(), 0)));
+    ghosts[0].reset(new GhostBlinky(enemySpawn, Position(0, board->getSizeX())));
+    ghosts[1].reset(new GhostPinky(enemySpawn, Position(0, 0)));
+    ghosts[2].reset(new GhostInky(enemySpawn, Position(board->getSizeY(), board->getSizeY())));
+    ghosts[3].reset(new GhostClyde(enemySpawn, Position(board->getSizeY(), 0)));
 
     /* Movement trigger */
     timer.addTrigger(playerSpeed, [ this ]() {
