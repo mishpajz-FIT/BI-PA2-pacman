@@ -76,7 +76,6 @@ void Game::loadMap(const std::string & filepath) {
         }, true);
 
     /* Chase and scatter trigger */
-    /*
     timer.addTrigger(chaseDuration + scatterDuration, [ this ]() {
         this->toggleScatter();
         }, true);
@@ -84,7 +83,7 @@ void Game::loadMap(const std::string & filepath) {
         this->timer.addTrigger(chaseDuration + scatterDuration, [ this ]() {
             this->toggleScatter();
             }, true);
-        }, false);*/
+        }, false);
 
     /* Ghost come out */
     for (size_t i = 0; i < 1; i++) {

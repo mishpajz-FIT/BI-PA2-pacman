@@ -1,23 +1,19 @@
 #include "GameViewController.h"
 
-#include <filesystem>
-#include <iostream>
-#include <ctime>
 #include <ncurses.h>
+#include <NCColors.h>
 
 int main(void) {
     initscr();
     curs_set(0);
-    start_color();
-    use_default_colors();
-
-    std::clock_t c = std::clock();
+    noecho();
+    cbreak();
+    NCColors::initialize();
 
     GameViewController gameViewController;
 
-    while (std::clock() < c + CLOCKS_PER_SEC * 180) {
+    while (true) {
         gameViewController.update();
-
         gameViewController.draw();
     }
 }

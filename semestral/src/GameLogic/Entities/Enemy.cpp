@@ -75,16 +75,13 @@ void Enemy::move(const Board & board, const Transform & playerTransform, const P
 
 void Enemy::toggleScatter() {
     scatter = !scatter;
-    if (!frightened) {
-        currentDirection = transform.rotation.opposite();
-    }
+    nextRotation = currentDirection.opposite();
 }
 
 void Enemy::toggleFrighten() {
     frightened = !frightened;
-    if (!scatter) {
-        currentDirection = transform.rotation.opposite();
-    }
+    nextRotation = currentDirection.opposite();
+
 }
 
 std::pair<char, NCColors::ColorPairs> Enemy::displayEntity() {
