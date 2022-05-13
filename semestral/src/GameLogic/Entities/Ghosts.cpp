@@ -7,6 +7,10 @@ GhostBlinky::~GhostBlinky() { }
 Position GhostBlinky::calculateTarget(const Board & board, const Transform & playerTransform, const Position &) {
     return playerTransform.position;
 }
+
+std::pair<char, NCColors::ColorPairs> GhostBlinky::displayEntity() {
+    return std::make_pair('&', NCColors::ColorPairs::ghostBlinky);
+}
 //!SECTION
 
 
@@ -21,6 +25,10 @@ Position GhostPinky::calculateTarget(const Board & board, const Transform & play
         newTarget.moveBy(4, Rotation(Rotation::Direction::left));
     }
     return newTarget;
+}
+
+std::pair<char, NCColors::ColorPairs> GhostPinky::displayEntity() {
+    return std::make_pair('&', NCColors::ColorPairs::ghostPinky);
 }
 //!SECTION
 
@@ -41,6 +49,10 @@ Position GhostInky::calculateTarget(const Board & board, const Transform & playe
 
     return newTarget;
 }
+
+std::pair<char, NCColors::ColorPairs> GhostInky::displayEntity() {
+    return std::make_pair('&', NCColors::ColorPairs::ghostInky);
+}
 //!SECTION
 
 
@@ -53,5 +65,9 @@ Position GhostClyde::calculateTarget(const Board & board, const Transform & play
         return playerTransform.position;
     }
     return scatterTarget;
+}
+
+std::pair<char, NCColors::ColorPairs> GhostClyde::displayEntity() {
+    return std::make_pair('&', NCColors::ColorPairs::ghostClyde);
 }
 //!SECTION

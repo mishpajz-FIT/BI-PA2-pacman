@@ -15,6 +15,7 @@ private:
     bool needsRedraw;
 
     Timer timer;
+    bool paused;
 
     std::unique_ptr<Board> board;
 
@@ -60,14 +61,13 @@ public:
 
     void loadMap(const std::string & filepath);
 
-    void begin() {
-        timer.togglePause();
-    }
-
     void update();
 
     unsigned int getDimensionX();
     unsigned int getDimensionY();
+
+    void togglePause();
+    bool isPaused();
 };
 
 #endif /* GAME_H */

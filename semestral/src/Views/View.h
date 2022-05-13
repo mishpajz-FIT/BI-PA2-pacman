@@ -10,8 +10,8 @@ protected:
 
     bool ableToDisplay;
 
-    int sizeY;
-    int sizeX;
+    unsigned int sizeY;
+    unsigned int sizeX;
     bool sizeChanged;
 
     std::function<void()> needsRefreshCallback;

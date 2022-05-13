@@ -14,7 +14,7 @@ public:
     void move(const Board & board);
     void rotate(const Rotation & to);
 
-    char displayChar() override;
+    std::pair<char, NCColors::ColorPairs> displayEntity() override;
 };
 
 #endif /* PLAYER_H */

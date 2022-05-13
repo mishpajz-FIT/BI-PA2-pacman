@@ -7,10 +7,15 @@ void Enemy::calculateNextDirection(const Board & board, const Position & target)
 
         for (size_t d = 0; d < 4; d++) {
             Position calculatePosition = nextTilePos.movedBy(1, Rotation(d));
-            Position calculatePositionAfterTeleport = board.complementaryEdgePosition(calculatePosition);
-            if (calculatePositionAfterTeleport != transform.position && board.isTileAllowingMovement(calculatePositionAfterTeleport)) {
-                distances.push_back(std::make_pair(Position::distanceBetween(target, calculatePositionAfterTeleport), Rotation(d)));
+            if (!board.isTileAllowingMovement(calculatePosition) || calculatePosition == transform.position) {
+                continue;
             }
+
+            if (board.isTileEdge(calculatePosition)) {
+                calculatePosition = board.complementaryEdgePosition(calculatePosition);
+            }
+
+            distances.push_back(std::make_pair(Position::distanceBetween(target, calculatePosition), Rotation(d)));
         }
 
         std::sort(distances.begin(), distances.end(), [ ](auto & lhs, auto & rhs) {
@@ -29,7 +34,7 @@ void Enemy::calculateNextDirection(const Board & board, const Position & target)
         }
     }
 
-    nextRotation = transform.rotation.opposite();
+    nextRotation = currentDirection.opposite();
 }
 
 Position Enemy::calculateTarget(const Board & board, const Transform & playerTransform, const Position & specialPos) {
@@ -44,7 +49,7 @@ Position Enemy::calculateTarget(const Board & board, const Transform & playerTra
     return Position();
 }
 
-Enemy::Enemy(const Transform & initial, const Position & scatterPos, bool a) : Entity(initial, a), scatterTarget(scatterPos) { }
+Enemy::Enemy(const Transform & initial, const Position & scatterPos, bool a) : Entity(initial, a), frightened(false), scatter(false), currentDirection(initial.rotation), scatterTarget(scatterPos) { }
 
 Enemy::~Enemy() { }
 
@@ -82,6 +87,6 @@ void Enemy::toggleFrighten() {
     }
 }
 
-char Enemy::displayChar() {
-    return '&';
+std::pair<char, NCColors::ColorPairs> Enemy::displayEntity() {
+    return std::make_pair('&', NCColors::ColorPairs::basic);
 }

@@ -2,6 +2,8 @@
 #define ENTITY_H
 
 #include "Transform.h"
+#include "NCColors.h"
+#include <tuple>
 
 class Entity {
 protected:
@@ -19,7 +21,9 @@ public:
 
     void toggleAlive();
 
-    virtual char displayChar() = 0;
+    bool isAlive();
+
+    virtual std::pair<char, NCColors::ColorPairs> displayEntity() = 0;
 };
 
 #endif /* ENTITY_H */

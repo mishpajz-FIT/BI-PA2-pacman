@@ -10,6 +10,8 @@ public:
     ~GhostBlinky();
 
     Position calculateTarget(const Board & board, const Transform & playerTransform, const Position &) override;
+
+    std::pair<char, NCColors::ColorPairs> displayEntity() override;
 };
 //!SECTION
 
@@ -21,6 +23,8 @@ public:
     ~GhostPinky();
 
     Position calculateTarget(const Board & board, const Transform & playerTransform, const Position &) override;
+
+    std::pair<char, NCColors::ColorPairs> displayEntity() override;
 };
 //!SECTION
 
@@ -32,6 +36,8 @@ public:
     ~GhostInky();
 
     Position calculateTarget(const Board & board, const Transform & playerTransform, const Position & specialPos) override;
+
+    std::pair<char, NCColors::ColorPairs> displayEntity() override;
 };
 //!SECTION
 
@@ -43,6 +49,8 @@ public:
     ~GhostClyde();
 
     Position calculateTarget(const Board & board, const Transform & playerTransform, const Position &) override;
+
+    std::pair<char, NCColors::ColorPairs> displayEntity() override;
 };
 //!SECTION
 

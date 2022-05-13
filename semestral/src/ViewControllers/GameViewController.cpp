@@ -11,12 +11,16 @@ GameViewController::GameViewController() : ViewController(), game(nullptr), phas
 }
 
 void GameViewController::update() {
+    char bufferStr[256];
     if (!layoutView.isAbleToDisplay()) {
+        if (phase == playing && !game->isPaused()) {
+            game->togglePause();
+        }
+        getch();
         return;
     }
 
     if (phase == optionsLoading) {
-        char bufferStr[256];
         wgetnstr(layoutView.getSecondaryWindow(), bufferStr, 256);
         std::string expectedPath(bufferStr);
         try {
@@ -34,7 +38,6 @@ void GameViewController::update() {
     }
 
     if (phase == mapLoading) {
-        char bufferStr[256];
         wgetnstr(layoutView.getSecondaryWindow(), bufferStr, 256);
         std::string expectedPath(bufferStr);
         try {
@@ -45,6 +48,7 @@ void GameViewController::update() {
             optionsView.setInput(false);
             gameView.setGameToDraw(game.get());
             layoutView.setMinPrimaryWindowDimensions(game->getDimensionX(), game->getDimensionY());
+            game->togglePause();
         }
         catch (FileLoaderException & e) {
             optionsView.setWarning(true, "Couldn't load map file");
@@ -54,6 +58,11 @@ void GameViewController::update() {
     }
 
     if (phase == playing) {
+        if (game->isPaused()) {
+            optionsView.setWarning(true, "Paused");
+        } else {
+            optionsView.setWarning(false);
+        }
         game->update();
     }
 }

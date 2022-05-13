@@ -15,3 +15,7 @@ Transform Entity::getTransform() const {
 void Entity::toggleAlive() {
     alive = !alive;
 }
+
+bool Entity::isAlive() {
+    return alive;
+}

@@ -10,8 +10,8 @@ protected:
     unsigned int minPrimaryY;
 
     WINDOW * secondaryWindow;
-    const int secondaryX;
-    const int minSecondaryY;
+    const unsigned int secondaryX;
+    const unsigned int minSecondaryY;
 
     void recreateWindows();
 

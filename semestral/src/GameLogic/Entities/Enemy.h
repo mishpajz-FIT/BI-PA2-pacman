@@ -33,7 +33,7 @@ public:
     void toggleScatter();
     void toggleFrighten();
 
-    char displayChar() override;
+    std::pair<char, NCColors::ColorPairs> displayEntity() override;
 };
 
 #endif /* ENEMY_H */

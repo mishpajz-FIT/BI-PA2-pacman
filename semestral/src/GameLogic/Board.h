@@ -7,6 +7,8 @@
 #include <stdexcept>
 #include <list>
 #include <fstream>
+#include "NCColors.h"
+#include <tuple>
 
 /**
  * @brief Game Board
@@ -58,7 +60,7 @@ public:
          */
         static bool typeAllowsInteraction(const Type & t);
 
-        static char typeDisplayChar(const Type & t);
+        static std::pair<char, NCColors::ColorPairs> typeDisplay(const Type & t);
     };
 
 private:

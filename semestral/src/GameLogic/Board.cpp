@@ -30,22 +30,32 @@ bool Board::Tile::typeAllowsInteraction(const Type & t) {
     return false;
 }
 
-char Board::Tile::typeDisplayChar(const Type & t) {
+std::pair<char, NCColors::ColorPairs> Board::Tile::typeDisplay(const Type & t) {
+    char c = ' ';
+    NCColors::ColorPairs color = NCColors::ColorPairs::basic;
+
     switch (t) {
-        case Board::Tile::Type::coin:
-            return '.';
-        case Board::Tile::Type::bonus:
-            return '@';
-        case Board::Tile::Type::frighten:
-            return 'o';
-        case Board::Tile::Type::space:
-            return ' ';
         case Board::Tile::Type::wall:
-            return '#';
-        default:
+            color = NCColors::ColorPairs::wall;
+            break;
+        case Board::Tile::Type::space:
+            color = NCColors::ColorPairs::space;
+            break;
+        case Board::Tile::Type::coin:
+            color = NCColors::ColorPairs::coin;
+            c = '.';
+            break;
+        case Board::Tile::Type::frighten:
+            color = NCColors::ColorPairs::coin;
+            c = 'o';
+            break;
+        case Board::Tile::Type::bonus:
+            color = NCColors::ColorPairs::bonus;
+            c = '*';
             break;
     }
-    return ' ';
+
+    return std::make_pair(c, color);
 }
 //!SECTION
 

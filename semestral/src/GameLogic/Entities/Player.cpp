@@ -14,9 +14,9 @@ void Player::move(const Board & board) {
     Transform newTransform = transform;
     newTransform.rotation = nextRotation;
     newTransform.moveBy(1);
-    if (!ifPossibleChangeTransform(newTransform.position, board)) {
+    if (!ifPossibleChangeTransform(newTransform, board)) {
         newTransform = transform.movedBy(1);
-        if (!ifPossibleChangeTransform(newTransform.position, board)) {
+        if (!ifPossibleChangeTransform(newTransform, board)) {
             rotate(transform.rotation);
         }
     }
@@ -26,19 +26,22 @@ void Player::rotate(const Rotation & to) {
     nextRotation = to;
 }
 
-char Player::displayChar() {
+std::pair<char, NCColors::ColorPairs> Player::displayEntity() {
+    char c = '0';
     switch (transform.rotation.direction) {
         case Rotation::Direction::up:
-            return 'v';
+            c = 'v';
+            break;
         case Rotation::Direction::left:
-            return '>';
+            c = '>';
+            break;
         case Rotation::Direction::down:
-            return '^';
+            c = '^';
+            break;
         case Rotation::Direction::right:
-            return '<';
-        default:
+            c = '<';
             break;
     }
 
-    return ' ';
+    return std::make_pair(c, NCColors::ColorPairs::pacman);
 }

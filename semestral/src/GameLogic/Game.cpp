@@ -39,7 +39,8 @@ Game::Game(
     unsigned int bonusPer,
     unsigned int ghostComeOutPer
 ) :
-    needsRedraw(true),
+    needsRedraw(false),
+    paused(true),
     board(nullptr),
     player(nullptr),
     score(0),
@@ -75,6 +76,7 @@ void Game::loadMap(const std::string & filepath) {
         }, true);
 
     /* Chase and scatter trigger */
+    /*
     timer.addTrigger(chaseDuration + scatterDuration, [ this ]() {
         this->toggleScatter();
         }, true);
@@ -82,10 +84,10 @@ void Game::loadMap(const std::string & filepath) {
         this->timer.addTrigger(chaseDuration + scatterDuration, [ this ]() {
             this->toggleScatter();
             }, true);
-        }, false);
+        }, false);*/
 
     /* Ghost come out */
-    for (size_t i = 0; i < 4; i++) {
+    for (size_t i = 0; i < 1; i++) {
         timer.addTrigger(ghostComeOutPeriod * i, [ this, i ]() {
             this->ghosts[i]->toggleAlive();
             });
@@ -102,4 +104,13 @@ unsigned int Game::getDimensionX() {
 
 unsigned int Game::getDimensionY() {
     return board->getSizeY();
+}
+
+void Game::togglePause() {
+    paused = !paused;
+    timer.togglePause();
+}
+
+bool Game::isPaused() {
+    return paused;
 }

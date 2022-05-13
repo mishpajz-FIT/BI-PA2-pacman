@@ -25,16 +25,22 @@ LayoutView::~LayoutView() {
 
 void LayoutView::draw(WINDOW *) {
     getWindowSize();
-    if (sizeX < (minPrimaryX + secondaryX)
-        || sizeY < (minPrimaryY > minSecondaryY ? minPrimaryY : minSecondaryY)) {
-        ableToDisplay = false;
-        clear();
-        mvprintw(1, 1, "Please resize the window");
-        refresh();
+    if (sizeChanged) {
+        if ((sizeX < (minPrimaryX + secondaryX))
+            || (sizeY < (minPrimaryY > minSecondaryY ? minPrimaryY : minSecondaryY))) {
+            ableToDisplay = false;
+            clear();
+
+            curs_set(0);
+            noecho();
+
+            mvprintw(1, 1, "Please resize the window");
+            refresh();
         return;
-    } else if (sizeChanged) {
-        ableToDisplay = true;
-        setNeedsRefresh();
+        } else {
+            ableToDisplay = true;
+            setNeedsRefresh();
+        }
     }
 
     if (!needsRefresh) {
