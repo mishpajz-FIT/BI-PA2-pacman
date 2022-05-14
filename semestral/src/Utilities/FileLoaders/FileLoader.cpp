@@ -5,7 +5,7 @@
 
 FileLoader::FileLoader(const std::string & filePath) : file(filePath, std::ios::in) {
     if (!file.is_open() || !file.good()) {
-        throw FileLoaderException("fileloader: error utilizing file");
+        throw FileLoaderException("FileLoader: error utilizing file");
     }
 }
 

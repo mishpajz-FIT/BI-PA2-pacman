@@ -60,7 +60,7 @@ Board::Tile::Type BoardFileLoader::dataCharToType(char c) {
         case ' ':
             break;
         default:
-            throw FileLoaderException("board: unknown char in file");
+            throw FileLoaderException("BoardFileLoader: dataCharToType - unknown char in file");
             break;
     }
 
