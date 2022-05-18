@@ -39,9 +39,8 @@ void Enemy::calculateNextDirection(const Board & board, const Position & target)
 
 Position Enemy::calculateTarget(const Board & board, const Transform & playerTransform, const Position & specialPos) {
     if (frightened) {
-        std::srand(std::time(nullptr));
-        size_t randX = rand() % board.getSizeX();
-        size_t randY = rand() % board.getSizeY();
+        size_t randX = arc4random_uniform(board.getSizeX());
+        size_t randY = arc4random_uniform(board.getSizeY());
         return Position(randX, randY);
     } else if (scatter) {
         return scatterTarget;

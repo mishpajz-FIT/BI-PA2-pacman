@@ -48,6 +48,8 @@ private:
 public:
     Timer();
 
+    void start();
+
     void togglePause();
 
     void update();

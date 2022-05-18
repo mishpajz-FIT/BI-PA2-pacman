@@ -1,6 +1,9 @@
 #include "OptionsView.h"
 
-OptionsView::OptionsView() : View(), warningDisplayed(false), warningText(""), titleText(""), inputting(false) { }
+OptionsView::OptionsView() : View() {
+    minSizeY = 25;
+    minSizeX = 50;
+}
 
 OptionsView::~OptionsView() { }
 
@@ -12,7 +15,6 @@ void OptionsView::draw(WINDOW * intoWindow) {
     }
 
     wclear(intoWindow);
-
     box(intoWindow, 0, 0);
 
     mvwprintw(intoWindow, 1, 1, titleText.c_str());
@@ -21,7 +23,7 @@ void OptionsView::draw(WINDOW * intoWindow) {
         mvwprintw(intoWindow, sizeY - 3, 1, warningText.c_str());
     }
 
-    if (inputting) {
+    if (inputEnabled) {
         curs_set(1);
         echo();
         wmove(intoWindow, sizeY - 2, 1);
@@ -30,6 +32,7 @@ void OptionsView::draw(WINDOW * intoWindow) {
         noecho();
     }
 
+    wrefresh(intoWindow);
     needsRefresh = false;
 }
 
@@ -49,8 +52,12 @@ void OptionsView::setTitle(std::string text) {
 }
 
 void OptionsView::setInput(bool to) {
-    if (inputting != to) {
-        inputting = to;
+    if (inputEnabled != to) {
+        inputEnabled = to;
         setNeedsRefresh();
     }
+}
+
+OptionsView * OptionsView::clone() const {
+    return new OptionsView(*this);
 }

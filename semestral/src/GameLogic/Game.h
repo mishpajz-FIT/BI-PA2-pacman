@@ -66,6 +66,7 @@ public:
     unsigned int getDimensionX();
     unsigned int getDimensionY();
 
+    void start();
     void togglePause();
     bool isPaused();
 };

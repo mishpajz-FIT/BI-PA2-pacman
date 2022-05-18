@@ -2,29 +2,37 @@
 #define LAYOUTVIEW_H
 
 #include "View.h"
+#include <memory>
 
 class LayoutView : public View {
 protected:
     WINDOW * primaryWindow;
-    unsigned int minPrimaryX;
-    unsigned int minPrimaryY;
+    std::unique_ptr<View> primaryView;
 
     WINDOW * secondaryWindow;
-    const unsigned int secondaryX;
-    const unsigned int minSecondaryY;
+    std::unique_ptr<View> secondaryView;
 
     void recreateWindows();
 
 public:
-    LayoutView(std::function<void()> refreshCallback);
+    LayoutView();
+    LayoutView(const LayoutView & toCopy);
     virtual ~LayoutView();
 
     void draw(WINDOW * intoWindow = stdscr) override;
 
+    void setNeedsRefresh() override;
+
     WINDOW * getPrimaryWindow() const;
     WINDOW * getSecondaryWindow() const;
 
-    void setMinPrimaryWindowDimensions(unsigned int x, unsigned int y);
+    View * getPrimaryView() const;
+    View * getSecondaryView() const;
+
+    void setPrimaryView(const View & view);
+    void setSecondaryView(const View & view);
+
+    LayoutView * clone() const override;
 };
 
 #endif /* LAYOUTVIEW_H */

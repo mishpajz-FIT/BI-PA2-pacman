@@ -6,8 +6,6 @@
 #include <memory>
 #include <ncurses.h>
 #include "LayoutView.h"
-#include "GameView.h"
-#include "OptionsView.h"
 
 class GameViewController : public ViewController {
     std::unique_ptr<Game> game;
@@ -20,8 +18,6 @@ class GameViewController : public ViewController {
     GameStatePhase phase;
 
     LayoutView layoutView;
-    GameView gameView;
-    OptionsView optionsView;
 
 public:
     GameViewController();

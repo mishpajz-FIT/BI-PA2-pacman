@@ -105,6 +105,11 @@ unsigned int Game::getDimensionY() {
     return board->getSizeY();
 }
 
+void Game::start() {
+    paused = false;
+    timer.start();
+}
+
 void Game::togglePause() {
     paused = !paused;
     timer.togglePause();

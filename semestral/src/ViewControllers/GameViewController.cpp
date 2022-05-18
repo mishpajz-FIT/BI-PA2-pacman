@@ -1,11 +1,19 @@
 #include "GameViewController.h"
 #include "GameFileLoader.h"
 #include "BoardFileLoader.h"
+#include "GameDetailView.h"
+#include "GameView.h"
+#include "OptionsView.h"
+#include "LoadingView.h"
 #include <string>
 
-GameViewController::GameViewController() : ViewController(), game(nullptr), phase(optionsLoading), layoutView([ this ]() { this->setNeedsRefreshToSubviews(); }), gameView(), optionsView() {
-    optionsView.setTitle("Enter path to settings file.");
-    optionsView.setInput(true);
+GameViewController::GameViewController() : ViewController(), game(nullptr), phase(optionsLoading), layoutView() {
+
+    layoutView.setSecondaryView(OptionsView());
+    layoutView.getSecondaryView()->setTitle("Enter path to settings file.");
+    layoutView.getSecondaryView()->setInput(true);
+
+    layoutView.setPrimaryView(LoadingView());
 
     draw();
 }
@@ -26,14 +34,15 @@ void GameViewController::update() {
         try {
             GameFileLoader gameLoader(expectedPath);
             game.reset(new Game(gameLoader.loadGame()));
-            phase = mapLoading;
-            optionsView.setTitle("Enter path to map file");
-            optionsView.setWarning(false);
         }
         catch (FileLoaderException & e) {
-            optionsView.setWarning(true, "Couldn't load settings file");
+            layoutView.getSecondaryView()->setWarning(true, "Couldn't load settings file");
+            layoutView.getSecondaryView()->setNeedsRefresh();
+            return;
         }
-        optionsView.setNeedsRefresh();
+        phase = mapLoading;
+        layoutView.getSecondaryView()->setTitle("Enter path to map file");
+        layoutView.getSecondaryView()->setWarning(false);
         return;
     }
 
@@ -42,26 +51,24 @@ void GameViewController::update() {
         std::string expectedPath(bufferStr);
         try {
             game->loadMap(expectedPath);
-            phase = playing;
-            optionsView.setTitle("PacMan");
-            optionsView.setWarning(false);
-            optionsView.setInput(false);
-            gameView.setGameToDraw(game.get());
-            layoutView.setMinPrimaryWindowDimensions(game->getDimensionX(), game->getDimensionY());
-            game->togglePause();
         }
         catch (FileLoaderException & e) {
-            optionsView.setWarning(true, "Couldn't load map file");
+            layoutView.getSecondaryView()->setWarning(true, "Couldn't load map file");
+            layoutView.getSecondaryView()->setNeedsRefresh();
+            return;
         }
-        optionsView.setNeedsRefresh();
+        phase = playing;
+        layoutView.setSecondaryView(GameDetailView());
+        layoutView.setPrimaryView(GameView(game.get()));
+        game->start();
         return;
     }
 
     if (phase == playing) {
         if (game->isPaused()) {
-            optionsView.setWarning(true, "Paused");
+            layoutView.getSecondaryView()->setWarning(true, "Paused");
         } else {
-            optionsView.setWarning(false);
+            layoutView.getSecondaryView()->setWarning(false);
         }
         game->update();
     }
@@ -70,13 +77,4 @@ void GameViewController::update() {
 
 void GameViewController::draw() {
     layoutView.draw();
-    if (layoutView.isAbleToDisplay()) {
-        gameView.draw(layoutView.getPrimaryWindow());
-        optionsView.draw(layoutView.getSecondaryWindow());
-    }
-}
-
-void GameViewController::setNeedsRefreshToSubviews() {
-    gameView.setNeedsRefresh();
-    optionsView.setNeedsRefresh();
 }

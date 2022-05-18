@@ -37,6 +37,11 @@ Timer::timepoint Timer::adjustedTime() {
 
 Timer::Timer() : paused(true), lastPausedTime(Timer::clock::now()), timeOffset(0) { }
 
+void Timer::start() {
+    timeOffset = Timer::milliseconds(0);
+    paused = false;
+}
+
 void Timer::togglePause() {
     if (!paused) {
         lastPausedTime = Timer::clock::now();

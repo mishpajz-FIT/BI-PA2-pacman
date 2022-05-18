@@ -7,7 +7,6 @@ int main(void) {
     initscr();
     curs_set(0);
     noecho();
-    cbreak();
     NCColors::initialize();
 
     GameViewController gameViewController;
