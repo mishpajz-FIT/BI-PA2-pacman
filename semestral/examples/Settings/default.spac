@@ -1,9 +1,9 @@
 
-player_speed>       800
-ghost_speed>        650
+player_speed>       600
+ghost_speed>        750
 
 scatter_duration>   10000
-chase_duration>     7000
+chase_duration>     15000
 frighten_duration>  15000
 kill_duration>      8000
 
