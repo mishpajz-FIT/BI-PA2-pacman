@@ -2,12 +2,18 @@
 
 void Enemy::calculateNextDirection(const Board & board, const Position & target) {
     Position nextTilePos = transform.position.movedBy(1, currentDirection);
+
+    if (board.isTileEdge(nextTilePos)) {
+        nextTilePos = board.complementaryEdgePosition(nextTilePos);
+    }
+
     if (board.isTileCrossroad(nextTilePos)) {
         std::vector<std::pair<double, Rotation>> distances;
 
         for (size_t d = 0; d < 4; d++) {
-            Position calculatePosition = nextTilePos.movedBy(1, Rotation(d));
-            if (!board.isTileAllowingMovement(calculatePosition) || calculatePosition == transform.position) {
+            Rotation processingRotation(d);
+            Position calculatePosition = nextTilePos.movedBy(1, processingRotation);
+            if (!board.isTileAllowingMovement(calculatePosition) || (processingRotation == currentDirection.opposite())) {
                 continue;
             }
 
@@ -15,7 +21,7 @@ void Enemy::calculateNextDirection(const Board & board, const Position & target)
                 calculatePosition = board.complementaryEdgePosition(calculatePosition);
             }
 
-            distances.push_back(std::make_pair(Position::distanceBetween(target, calculatePosition), Rotation(d)));
+            distances.push_back(std::make_pair(Position::distanceBetween(target, calculatePosition), processingRotation));
         }
 
         std::sort(distances.begin(), distances.end(), [ ](auto & lhs, auto & rhs) {
@@ -29,7 +35,8 @@ void Enemy::calculateNextDirection(const Board & board, const Position & target)
     for (size_t d = 0; d < 4; d++) {
         Rotation processingRotation(d);
         Position calculatePosition = nextTilePos.movedBy(1, processingRotation);
-        if (board.isTileAllowingMovement(calculatePosition) && calculatePosition != transform.position) {
+
+        if (board.isTileAllowingMovement(calculatePosition) && (processingRotation != currentDirection.opposite())) {
             nextRotation = processingRotation;
             return;
         }
@@ -62,8 +69,12 @@ void Enemy::move(const Board & board, const Transform & playerTransform, const P
     transform.moveBy(1);
     currentDirection = nextRotation;
 
-    Position target;
+    if (board.isTileEdge(transform.position)) {
+        transform.position = board.complementaryEdgePosition(transform.position);
+    }
 
+
+    Position target;
     if (frightened || scatter) {
         target = Enemy::calculateTarget(board, playerTransform, specialPos);
     } else {

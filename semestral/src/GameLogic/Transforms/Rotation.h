@@ -20,6 +20,11 @@ struct Rotation {
     Rotation opposite() const;
 
     bool operator < (const Rotation & rhs) const;
+
+    bool operator == (const Rotation & rhs) const;
+
+    bool operator != (const Rotation & rhs) const;
+
 };
 
 #endif /* ROTATION_H */

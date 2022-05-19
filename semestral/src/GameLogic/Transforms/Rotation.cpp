@@ -25,3 +25,11 @@ Rotation Rotation::opposite() const {
 bool Rotation::operator < (const Rotation & rhs) const {
     return direction < rhs.direction;
 }
+
+bool Rotation::operator == (const Rotation & rhs) const {
+    return direction == rhs.direction;
+}
+
+bool Rotation::operator != (const Rotation & rhs) const {
+    return !((*this) == rhs);
+}

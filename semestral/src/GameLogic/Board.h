@@ -131,7 +131,7 @@ public:
      * @param forPos position
      * @return Position complementary position
      */
-    Position complementaryEdgePosition(const Position & forPos) const;
+    Position complementaryEdgePosition(Position forPos) const;
 
     /**
      * @brief Get size of board in X dimension

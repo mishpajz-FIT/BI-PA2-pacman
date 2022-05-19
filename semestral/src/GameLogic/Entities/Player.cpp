@@ -20,6 +20,10 @@ void Player::move(const Board & board) {
             rotate(transform.rotation);
         }
     }
+
+    if (board.isTileEdge(transform.position)) {
+        transform.position = board.complementaryEdgePosition(transform.position);
+    }
 }
 
 void Player::rotate(const Rotation & to) {
