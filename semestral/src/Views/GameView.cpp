@@ -54,11 +54,10 @@ void GameView::draw(WINDOW * intoWindow) {
     wclear(intoWindow);
     box(intoWindow, 0, 0);
 
-    if (ableToDisplay) {
+    if (isAbleToDisplay()) {
         drawBoard(intoWindow);
         drawPlayer(intoWindow);
         drawEnemies(intoWindow);
-        gameToDraw->needsRedraw = false;
     }
 
     wrefresh(intoWindow);

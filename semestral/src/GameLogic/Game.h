@@ -14,6 +14,8 @@
 
 class Game {
     friend class GameView;
+    friend class GameDetailView;
+
 private:
     bool needsRedraw;
 
@@ -24,7 +26,6 @@ private:
 
     std::unique_ptr<Player> player;
     std::array<std::unique_ptr<Enemy>, GAME_GHOSTCOUNT> ghosts;
-
 
     unsigned long score;
 
@@ -64,6 +65,8 @@ public:
 
     void loadMap(const std::string & filepath);
 
+    void restart();
+
     void update(std::optional<Rotation> keyPressDirection);
 
     unsigned int getDimensionX();
@@ -72,6 +75,8 @@ public:
     void start();
     void togglePause();
     bool isPaused();
+
+    unsigned long getScore();
 };
 
 #endif /* GAME_H */

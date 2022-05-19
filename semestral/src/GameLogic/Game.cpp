@@ -3,6 +3,16 @@
 #include <iostream>
 
 void Game::detectCollisions() {
+    Position playerPos = player->getTransform().position;
+    Board::Tile::Type playerTile = board->tileAt(playerPos);
+    if (Board::Tile::typeAllowsInteraction(playerTile)) {
+        if (playerTile == Board::Tile::Type::coin) {
+            score += 10;
+        }
+        board->interactWithTileAt(playerPos);
+        needsRedraw = true;
+    }
+
     //TODO
 }
 
@@ -57,7 +67,9 @@ Game::Game(
 void Game::loadMap(const std::string & filepath) {
     BoardFileLoader fileLoader(filepath);
     board.reset(new Board(fileLoader.loadBoard()));
+}
 
+void Game::restart() {
     Transform playerSpawn(board->getPlayerSpawn(), Rotation(Rotation::Direction::left));
     player.reset(new Player(playerSpawn));
 
@@ -66,6 +78,8 @@ void Game::loadMap(const std::string & filepath) {
     ghosts[1].reset(new GhostPinky(enemySpawn, Position(0, 0)));
     ghosts[2].reset(new GhostInky(enemySpawn, Position(board->getSizeY(), board->getSizeY())));
     ghosts[3].reset(new GhostClyde(enemySpawn, Position(board->getSizeY(), 0)));
+
+    timer = Timer();
 
     /* Movement trigger */
     timer.addTrigger(playerSpeed, [ this ]() {
@@ -94,13 +108,15 @@ void Game::loadMap(const std::string & filepath) {
 }
 
 void Game::update(std::optional<Rotation> keyPressDirection) {
+    needsRedraw = false;
+
     if (keyPressDirection) {
         player->rotate(*keyPressDirection);
     }
 
     timer.update();
 
-    board->interactWithTileAt(player->getTransform().position);
+    detectCollisions();
 }
 
 unsigned int Game::getDimensionX() {
@@ -123,4 +139,8 @@ void Game::togglePause() {
 
 bool Game::isPaused() {
     return paused;
+}
+
+unsigned long Game::getScore() {
+    return score;
 }

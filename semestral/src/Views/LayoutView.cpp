@@ -80,6 +80,7 @@ void LayoutView::draw(WINDOW *) {
     if (primaryView) {
         primaryView->draw(primaryWindow);
     }
+    
     if (secondaryView) {
         secondaryView->draw(secondaryWindow);
     }

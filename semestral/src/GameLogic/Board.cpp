@@ -59,11 +59,19 @@ std::pair<char, NCColors::ColorPairs> Board::Tile::typeDisplay(const Type & t) {
 }
 //!SECTION
 
-Board::Board() : tiles(1, 1), enemySpawn(-1, -1), playerSpawn(-1, -1) { }
+Board::Board() : tiles(1, 1), enemySpawn(-1, -1), playerSpawn(-1, -1), numberOfCoins(0) { }
 
-Board::Board(const Matrix<Board::Tile::Type> & newTiles, const Position & newEnemySpawn, const Position & newPlayersSpawn) : tiles(newTiles), enemySpawn(newEnemySpawn), playerSpawn(newPlayersSpawn) {
+Board::Board(const Matrix<Board::Tile::Type> & newTiles, const Position & newEnemySpawn, const Position & newPlayersSpawn) : tiles(newTiles), enemySpawn(newEnemySpawn), playerSpawn(newPlayersSpawn), numberOfCoins(0) {
     if (!isTileCoordinateValid(playerSpawn) || !isTileCoordinateValid(enemySpawn)) {
         throw std::invalid_argument("Board: Board - invalid enemy or player spawn");
+    }
+
+    for (size_t y = 0; y < newTiles.getSizeY(); y++) {
+        for (size_t x = 0; x < newTiles.getSizeX(); x++) {
+            if (newTiles.at(x, y) == Board::Tile::Type::coin) {
+                numberOfCoins++;
+            }
+        }
     }
 }
 
@@ -142,6 +150,9 @@ Position Board::getPlayerSpawn() const {
 bool Board::interactWithTileAt(const Position & pos) {
 
     if (Board::Tile::typeAllowsInteraction(tileAt(pos))) {
+        if (tileAt(pos) == Board::Tile::Type::coin) {
+            numberOfCoins--;
+        }
         tiles.at(pos.x, pos.y) = Board::Tile::defaultType();
         return true;
     }

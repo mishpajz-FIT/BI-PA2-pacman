@@ -69,6 +69,8 @@ private:
     Position enemySpawn; //< Position in maze of enemy spawn
     Position playerSpawn; //< Position in maze of player spawn
 
+    unsigned int numberOfCoins;
+
 public:
 
     Board();

@@ -84,8 +84,9 @@ void GameViewController::update() {
             return;
         }
         phase = playing;
-        layoutView.setSecondaryView(GameDetailView());
+        layoutView.setSecondaryView(GameDetailView(game.get()));
         layoutView.setPrimaryView(GameView(game.get()));
+        game->restart();
         game->start();
         return;
     }

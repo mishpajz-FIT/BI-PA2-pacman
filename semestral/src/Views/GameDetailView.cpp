@@ -1,16 +1,20 @@
 #include "GameDetailView.h"
 
-GameDetailView::GameDetailView() : View() {
+GameDetailView::GameDetailView(Game * game) : View(), gameToDraw(game) {
     minSizeY = 25;
     minSizeX = 50;
     titleText = "PacMan";
+
+    if (gameToDraw == nullptr) {
+        ableToDisplay = false;
+    }
 }
 GameDetailView::~GameDetailView() { }
 
 void GameDetailView::draw(WINDOW * intoWindow) {
     getWindowSize(intoWindow);
 
-    if (!needsRefresh) {
+    if (!(needsRefresh || (isAbleToDisplay() && gameToDraw->needsRedraw))) {
         return;
     }
 
@@ -22,6 +26,13 @@ void GameDetailView::draw(WINDOW * intoWindow) {
     box(intoWindow, 0, 0);
 
     mvwprintw(intoWindow, 1, 1, titleText.c_str());
+
+    if (isAbleToDisplay()) {
+        std::string scoreString = "score: ";
+        scoreString += std::to_string(gameToDraw->getScore());
+
+        mvwprintw(intoWindow, 3, 1, scoreString.c_str());
+    }
 
     if (warningDisplayed) {
         mvwprintw(intoWindow, sizeY - 2, 1, warningText.c_str());

@@ -2,10 +2,15 @@
 #define GAMEDETAILVIEW_H
 
 #include "View.h"
+#include "Game.h"
+
 
 class GameDetailView : public View {
+protected:
+    Game * gameToDraw;
+
 public:
-    GameDetailView();
+    GameDetailView(Game * game);
     virtual ~GameDetailView();
 
     void draw(WINDOW * intoWindow = stdscr) override;
