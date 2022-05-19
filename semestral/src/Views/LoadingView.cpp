@@ -109,7 +109,7 @@ void LoadingView::draw(WINDOW * intoWindow) {
 
     wattron(intoWindow, COLOR_PAIR(NCColors::pacman));
     for (size_t i = 0; i < LOADINGVIEWFRAMEHEIGHT; i++) {
-        mvwprintw(intoWindow, centeredYInWindow(i + 1), centeredYInWindow(1), frames[currentFrame][i]);
+        mvwprintw(intoWindow, centeredYInWindow(i + 1), centeredXInWindow(1), frames[currentFrame][i]);
     }
     wattroff(intoWindow, COLOR_PAIR(NCColors::pacman));
 
