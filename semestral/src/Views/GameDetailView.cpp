@@ -14,7 +14,7 @@ GameDetailView::~GameDetailView() { }
 void GameDetailView::draw(WINDOW * intoWindow) {
     getWindowSize(intoWindow);
 
-    if (!(needsRefresh || (isAbleToDisplay() && gameToDraw->needsRedraw))) {
+    if (!(needsRefresh || (isAbleToDisplay() && gameToDraw->doesNeedRefresh()))) {
         return;
     }
 

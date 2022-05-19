@@ -27,9 +27,10 @@ void Enemy::calculateNextDirection(const Board & board, const Position & target)
     }
 
     for (size_t d = 0; d < 4; d++) {
-        Position calculatePosition = nextTilePos.movedBy(1, Rotation(d));
-        if (calculatePosition != transform.position && board.isTileAllowingMovement(calculatePosition)) {
-            nextRotation = Rotation(d);
+        Rotation processingRotation(d);
+        Position calculatePosition = nextTilePos.movedBy(1, processingRotation);
+        if (board.isTileAllowingMovement(calculatePosition) && calculatePosition != transform.position) {
+            nextRotation = processingRotation;
             return;
         }
     }

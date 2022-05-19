@@ -87,7 +87,7 @@ void GameViewController::update() {
         layoutView.setSecondaryView(GameDetailView(game.get()));
         layoutView.setPrimaryView(GameView(game.get()));
         game->restart();
-        game->start();
+        game->begin();
         return;
     }
 

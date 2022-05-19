@@ -47,7 +47,7 @@ GameView::~GameView() { }
 void GameView::draw(WINDOW * intoWindow) {
     getWindowSize(intoWindow);
 
-    if (!(needsRefresh || (ableToDisplay && (gameToDraw->needsRedraw)))) {
+    if (!(needsRefresh || (ableToDisplay && (gameToDraw->doesNeedRefresh())))) {
         return;
     }
 

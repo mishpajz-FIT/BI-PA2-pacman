@@ -90,6 +90,7 @@ void Game::restart() {
         }, true);
 
     /* Chase and scatter trigger */
+    /*
     timer.addTrigger(chaseDuration + scatterDuration, [ this ]() {
         this->toggleScatter();
         }, true);
@@ -97,7 +98,7 @@ void Game::restart() {
         this->timer.addTrigger(chaseDuration + scatterDuration, [ this ]() {
             this->toggleScatter();
             }, true);
-        }, false);
+        }, false);*/
 
     /* Ghost come out */
     for (size_t i = 0; i < 1; i++) {
@@ -127,7 +128,7 @@ unsigned int Game::getDimensionY() {
     return board->getSizeY();
 }
 
-void Game::start() {
+void Game::begin() {
     paused = false;
     timer.start();
 }
@@ -143,4 +144,8 @@ bool Game::isPaused() {
 
 unsigned long Game::getScore() {
     return score;
+}
+
+bool Game::doesNeedRefresh() {
+    return needsRedraw;
 }

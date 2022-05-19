@@ -72,11 +72,13 @@ public:
     unsigned int getDimensionX();
     unsigned int getDimensionY();
 
-    void start();
+    void begin();
     void togglePause();
     bool isPaused();
 
     unsigned long getScore();
+
+    bool doesNeedRefresh();
 };
 
 #endif /* GAME_H */
