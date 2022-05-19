@@ -25,11 +25,11 @@ void View::getWindowSize(WINDOW * forWindow) {
     }
 }
 
-unsigned int View::correctedXInWindow(unsigned int x) const {
+unsigned int View::centeredXInWindow(unsigned int x) const {
     return ((sizeX - minSizeX) / 2) + x;
 }
 
-unsigned int View::correctedYInWindow(unsigned int y) const {
+unsigned int View::centeredYInWindow(unsigned int y) const {
     return ((sizeY - minSizeY) / 2) + y;
 }
 

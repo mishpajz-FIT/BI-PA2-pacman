@@ -27,9 +27,9 @@ protected:
 
     void getWindowSize(WINDOW * forWindow = stdscr);
 
-    unsigned int correctedXInWindow(unsigned int x) const;
+    unsigned int centeredXInWindow(unsigned int x) const;
 
-    unsigned int correctedYInWindow(unsigned int y) const;
+    unsigned int centeredYInWindow(unsigned int y) const;
 
 public:
     View();

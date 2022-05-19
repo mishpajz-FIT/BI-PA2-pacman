@@ -9,10 +9,7 @@ void Game::detectCollisions() {
         if (playerTile == Board::Tile::Type::coin) {
             score += 10;
         } else if (playerTile == Board::Tile::Type::frighten) {
-            toggleFrighten();
-            timer.addTrigger(frightenDuration, [ this ]() {
-                this->toggleFrighten();
-                });
+            toggleFrighten(true);
         }
 
         board->interactWithTileAt(playerPos);
@@ -27,10 +24,21 @@ void Game::movePlayer() {
     player->move(*board);
 }
 
-void Game::moveEnemy() {
+void Game::moveEnemy(bool fright) {
+    if (frightenActivated >= 1 && !fright) {
+        return;
+    }
+
     needsRedraw = true;
+
     for (auto & e : ghosts) {
         e->move(*board, player->getTransform(), ghosts[0]->getTransform().position);
+    }
+
+    if (frightenActivated >= 1) {
+        timer.addTrigger(settings.enemySpeed * frightenSpeedMultiplier, [ this ]() {
+            this->moveEnemy(true);
+            });
     }
 }
 
@@ -45,37 +53,44 @@ void Game::toggleScatter() {
     }
 }
 
-void Game::toggleFrighten() {
+void Game::toggleFrighten(bool on) {
     needsRedraw = true;
+
+    if (on) {
+        frightenActivated++;
+
+        timer.addTrigger(settings.frightenDuration, [ this ]() {
+            this->toggleFrighten(false);
+            });
+    } else {
+        frightenActivated--;
+    }
+
+    if (!(frightenActivated == 0 || (frightenActivated == 1 && on))) {
+        return;
+    }
+
     for (auto & e : ghosts) {
         e->toggleFrighten();
     }
+
+    if (on) {
+        timer.addTrigger(settings.enemySpeed * frightenSpeedMultiplier, [ this ]() {
+            this->moveEnemy(true);
+            });
+    }
 }
 
-Game::Game(
-    unsigned int playerSpd,
-    unsigned int enemySpd,
-    unsigned int scatterDur,
-    unsigned int chaseDur,
-    unsigned int frightenDur,
-    unsigned int killDur,
-    unsigned int bonusPer,
-    unsigned int ghostComeOutPer
-) :
+Game::Game(const GameSettings & gameSettings, double frightenMultiplier) :
+    settings(gameSettings),
     needsRedraw(false),
     paused(true),
     board(nullptr),
     player(nullptr),
     score(0),
     bonusOut(false),
-    playerSpeed(playerSpd),
-    enemySpeed(enemySpd),
-    scatterDuration(scatterDur),
-    chaseDuration(chaseDur),
-    frightenDuration(frightenDur),
-    killDuration(killDur),
-    bonusPeriod(bonusPer),
-    ghostComeOutPeriod(ghostComeOutPer) { }
+    frightenActivated(0),
+    frightenSpeedMultiplier(frightenMultiplier) { }
 
 void Game::loadMap(const std::string & filepath) {
     BoardFileLoader fileLoader(filepath);
@@ -95,10 +110,10 @@ void Game::restart() {
     timer = Timer();
 
     /* Movement trigger */
-    timer.addTrigger(playerSpeed, [ this ]() {
+    timer.addTrigger(settings.playerSpeed, [ this ]() {
         this->movePlayer();
         }, true);
-    timer.addTrigger(enemySpeed, [ this ]() {
+    timer.addTrigger(settings.enemySpeed, [ this ]() {
         this->moveEnemy();
         }, true);
 
@@ -115,7 +130,7 @@ void Game::restart() {
 
     /* Ghost come out */
     for (size_t i = 0; i < 1; i++) {
-        timer.addTrigger(ghostComeOutPeriod * i, [ this, i ]() {
+        timer.addTrigger(settings.ghostComeOutPeriod * i, [ this, i ]() {
             this->ghosts[i]->toggleAlive();
             });
     }

@@ -9,6 +9,7 @@
 #include <string>
 #include <ncurses.h>
 #include <optional>
+#include "GameSettings.h"
 
 #define GAME_GHOSTCOUNT 4
 
@@ -17,6 +18,8 @@ class Game {
     friend class GameDetailView;
 
 private:
+    GameSettings settings;
+
     bool needsRedraw;
 
     Timer timer;
@@ -31,39 +34,21 @@ private:
 
     bool bonusOut;
 
-    const unsigned int playerSpeed;
-    const unsigned int enemySpeed;
-
-    const unsigned int scatterDuration;
-    const unsigned int chaseDuration;
-    const unsigned int frightenDuration;
-
-    const unsigned int killDuration;
-    const unsigned int bonusPeriod;
-    const unsigned int ghostComeOutPeriod;
-
     void detectCollisions();
 
     void movePlayer();
-    void moveEnemy();
+    void moveEnemy(bool fright = false);
 
     void toggleScatter();
 
-    void toggleFrighten();
+    unsigned int frightenActivated;
+    const double frightenSpeedMultiplier;
+    void toggleFrighten(bool on);
 
     void createBonus();
 
 public:
-    Game(
-        unsigned int playerSpd,
-        unsigned int enemySpd,
-        unsigned int scatterDur,
-        unsigned int chaseDur,
-        unsigned int frightenDur,
-        unsigned int killDur,
-        unsigned int bonusPer,
-        unsigned int ghostComeOutPer
-    );
+    Game(const GameSettings & gameSettings, double frightenMultiplier);
 
     void loadMap(const std::string & filepath);
 

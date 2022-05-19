@@ -1,5 +1,5 @@
 #include "GameViewController.h"
-#include "GameFileLoader.h"
+#include "GameSettingsFileLoader.h"
 #include "BoardFileLoader.h"
 #include "GameDetailView.h"
 #include "GameView.h"
@@ -33,7 +33,7 @@ std::optional<Rotation> GameViewController::getPlayerRotationFromKey(int c) {
 }
 
 
-GameViewController::GameViewController() : ViewController(), game(nullptr), phase(optionsLoading), layoutView() {
+GameViewController::GameViewController() : ViewController(), game(nullptr), phase(settingsLoading), layoutView() {
 
     layoutView.setSecondaryView(OptionsView());
     layoutView.getSecondaryView()->setTitle("Enter path to settings file.");
@@ -54,12 +54,12 @@ void GameViewController::update() {
         return;
     }
 
-    if (phase == optionsLoading) {
+    if (phase == settingsLoading) {
         wgetnstr(layoutView.getSecondaryWindow(), bufferStr, 256);
         std::string expectedPath(bufferStr);
         try {
-            GameFileLoader gameLoader(expectedPath);
-            game.reset(new Game(gameLoader.loadGame()));
+            GameSettingsFileLoader gameSettingsLoader(expectedPath);
+            game.reset(new Game(gameSettingsLoader.loadSettings(), 1.5));
         }
         catch (FileLoaderException & e) {
             layoutView.getSecondaryView()->setWarning(true, "Couldn't load settings file");

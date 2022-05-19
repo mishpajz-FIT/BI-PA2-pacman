@@ -3,7 +3,7 @@
 
 void GameView::drawGameElement(WINDOW * intoWindow, const Position & at, unsigned int colorPair, char c) {
     wattron(intoWindow, COLOR_PAIR(colorPair));
-    mvwaddch(intoWindow, correctedYInWindow(at.y), correctedXInWindow(at.x), c);
+    mvwaddch(intoWindow, centeredYInWindow(at.y), centeredXInWindow(at.x), c);
     wattroff(intoWindow, COLOR_PAIR(colorPair));
 }
 

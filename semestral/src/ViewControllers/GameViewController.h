@@ -13,7 +13,7 @@ protected:
     std::unique_ptr<Game> game;
 
     enum GameStatePhase {
-        optionsLoading,
+        settingsLoading,
         mapLoading,
         playing
     };
