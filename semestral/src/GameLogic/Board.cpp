@@ -2,7 +2,7 @@
 
 //SECTION: Board::Tile
 Board::Tile::Type Board::Tile::defaultType() {
-    return Board::Tile::Type::wall;
+    return Board::Tile::Type::space;
 }
 
 bool Board::Tile::typeAllowsMovement(const Board::Tile::Type & t) {

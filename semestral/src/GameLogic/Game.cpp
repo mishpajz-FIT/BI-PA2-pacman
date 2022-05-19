@@ -93,8 +93,14 @@ void Game::loadMap(const std::string & filepath) {
     }
 }
 
-void Game::update() {
+void Game::update(std::optional<Rotation> keyPressDirection) {
+    if (keyPressDirection) {
+        player->rotate(*keyPressDirection);
+    }
+
     timer.update();
+
+    board->interactWithTileAt(player->getTransform().position);
 }
 
 unsigned int Game::getDimensionX() {

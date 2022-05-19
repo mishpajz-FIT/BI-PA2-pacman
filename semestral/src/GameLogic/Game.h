@@ -8,6 +8,9 @@
 #include <memory>
 #include <string>
 #include <ncurses.h>
+#include <optional>
+
+#define GAME_GHOSTCOUNT 4
 
 class Game {
     friend class GameView;
@@ -20,7 +23,7 @@ private:
     std::unique_ptr<Board> board;
 
     std::unique_ptr<Player> player;
-    std::array<std::unique_ptr<Enemy>, 4> ghosts;
+    std::array<std::unique_ptr<Enemy>, GAME_GHOSTCOUNT> ghosts;
 
 
     unsigned long score;
@@ -61,7 +64,7 @@ public:
 
     void loadMap(const std::string & filepath);
 
-    void update();
+    void update(std::optional<Rotation> keyPressDirection);
 
     unsigned int getDimensionX();
     unsigned int getDimensionY();

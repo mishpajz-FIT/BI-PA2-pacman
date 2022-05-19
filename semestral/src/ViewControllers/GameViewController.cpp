@@ -7,6 +7,32 @@
 #include "LoadingView.h"
 #include <string>
 
+std::optional<Rotation> GameViewController::getPlayerRotationFromKey(int c) {
+    switch (c) {
+        case KEY_UP:
+        case 'w':
+        case 'W':
+            return Rotation(Rotation::Direction::up);
+        case KEY_DOWN:
+        case 's':
+        case 'S':
+            return Rotation(Rotation::Direction::down);
+        case KEY_LEFT:
+        case 'a':
+        case 'A':
+            return Rotation(Rotation::Direction::left);
+        case KEY_RIGHT:
+        case 'd':
+        case 'D':
+            return Rotation(Rotation::Direction::right);
+        default:
+            break;
+    }
+
+    return { };
+}
+
+
 GameViewController::GameViewController() : ViewController(), game(nullptr), phase(optionsLoading), layoutView() {
 
     layoutView.setSecondaryView(OptionsView());
@@ -70,10 +96,19 @@ void GameViewController::update() {
         } else {
             layoutView.getSecondaryView()->setWarning(false);
         }
-        game->update();
+
+        cbreak();
+        noecho();
+        nodelay(stdscr, TRUE);
+        keypad(stdscr, true);
+        int c = getch();
+        std::optional<Rotation> playerDir;
+        if (c != ERR) {
+            playerDir = getPlayerRotationFromKey(c);
+        }
+        game->update(playerDir);
     }
 }
-
 
 void GameViewController::draw() {
     layoutView.draw();

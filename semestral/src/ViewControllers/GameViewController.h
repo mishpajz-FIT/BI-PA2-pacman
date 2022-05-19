@@ -6,8 +6,10 @@
 #include <memory>
 #include <ncurses.h>
 #include "LayoutView.h"
+#include <optional>
 
 class GameViewController : public ViewController {
+protected:
     std::unique_ptr<Game> game;
 
     enum GameStatePhase {
@@ -18,6 +20,8 @@ class GameViewController : public ViewController {
     GameStatePhase phase;
 
     LayoutView layoutView;
+
+    std::optional<Rotation> getPlayerRotationFromKey(int c);
 
 public:
     GameViewController();
