@@ -8,7 +8,13 @@ void Game::detectCollisions() {
     if (Board::Tile::typeAllowsInteraction(playerTile)) {
         if (playerTile == Board::Tile::Type::coin) {
             score += 10;
+        } else if (playerTile == Board::Tile::Type::frighten) {
+            toggleFrighten();
+            timer.addTrigger(frightenDuration, [ this ]() {
+                this->toggleFrighten();
+                });
         }
+
         board->interactWithTileAt(playerPos);
         needsRedraw = true;
     }
@@ -36,6 +42,13 @@ void Game::toggleScatter() {
     needsRedraw = true;
     for (auto & e : ghosts) {
         e->toggleScatter();
+    }
+}
+
+void Game::toggleFrighten() {
+    needsRedraw = true;
+    for (auto & e : ghosts) {
+        e->toggleFrighten();
     }
 }
 

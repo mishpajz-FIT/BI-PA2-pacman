@@ -9,6 +9,9 @@ Position GhostBlinky::calculateTarget(const Board & board, const Transform & pla
 }
 
 std::pair<char, NCColors::ColorPairs> GhostBlinky::displayEntity() {
+    if (frightened) {
+        return Enemy::displayEntity();
+    }
     return std::make_pair('&', NCColors::ColorPairs::ghostBlinky);
 }
 //!SECTION
@@ -28,6 +31,9 @@ Position GhostPinky::calculateTarget(const Board & board, const Transform & play
 }
 
 std::pair<char, NCColors::ColorPairs> GhostPinky::displayEntity() {
+    if (frightened) {
+        return Enemy::displayEntity();
+    }
     return std::make_pair('&', NCColors::ColorPairs::ghostPinky);
 }
 //!SECTION
@@ -51,6 +57,9 @@ Position GhostInky::calculateTarget(const Board & board, const Transform & playe
 }
 
 std::pair<char, NCColors::ColorPairs> GhostInky::displayEntity() {
+    if (frightened) {
+        return Enemy::displayEntity();
+    }
     return std::make_pair('&', NCColors::ColorPairs::ghostInky);
 }
 //!SECTION
@@ -68,6 +77,9 @@ Position GhostClyde::calculateTarget(const Board & board, const Transform & play
 }
 
 std::pair<char, NCColors::ColorPairs> GhostClyde::displayEntity() {
+    if (frightened) {
+        return Enemy::displayEntity();
+    }
     return std::make_pair('&', NCColors::ColorPairs::ghostClyde);
 }
 //!SECTION

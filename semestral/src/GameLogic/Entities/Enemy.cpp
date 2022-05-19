@@ -96,5 +96,8 @@ void Enemy::toggleFrighten() {
 }
 
 std::pair<char, NCColors::ColorPairs> Enemy::displayEntity() {
+    if (frightened) {
+        return std::make_pair('&', NCColors::ColorPairs::ghostFrighten);
+    }
     return std::make_pair('&', NCColors::ColorPairs::basic);
 }

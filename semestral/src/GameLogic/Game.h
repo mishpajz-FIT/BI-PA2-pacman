@@ -49,6 +49,8 @@ private:
 
     void toggleScatter();
 
+    void toggleFrighten();
+
     void createBonus();
 
 public:
