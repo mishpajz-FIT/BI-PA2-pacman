@@ -16,7 +16,33 @@ void Game::detectCollisions() {
         needsRedraw = true;
     }
 
-    //TODO
+    for (auto & e : ghosts) {
+        if (!e->isAlive()) {
+            continue;
+        }
+
+        if (playerPos == e->getTransform().position) {
+            if (e->isFrightened()) {
+                e->toggleAlive();
+                if (e->isFrightened()) {
+                    e->toggleFrighten();
+                }
+                e->reposition(board->getEnemySpawn());
+                Enemy * ePtr = e.get();
+                timer.addTrigger(
+                    settings.killDuration,
+                    [ ePtr ]() {
+                        ePtr->toggleAlive();
+                    });
+            } else {
+                if (!timer.isPaused()) {
+                    togglePause();
+                }
+                restart();
+                lives--;
+            }
+        }
+    }
 }
 
 void Game::movePlayer() {
@@ -25,17 +51,15 @@ void Game::movePlayer() {
 }
 
 void Game::moveEnemy(bool fright) {
-    if (frightenActivated >= 1 && !fright) {
-        return;
-    }
-
     needsRedraw = true;
 
     for (auto & e : ghosts) {
-        e->move(*board, player->getTransform(), ghosts[0]->getTransform().position);
+        if ((e->isFrightened() && fright) || (!e->isFrightened() && !fright)) {
+            e->move(*board, player->getTransform(), ghosts[0]->getTransform().position);
+        }
     }
 
-    if (frightenActivated >= 1) {
+    if (frightenActivated >= 1 && fright) {
         timer.addTrigger(settings.enemySpeed * frightenSpeedMultiplier, [ this ]() {
             this->moveEnemy(true);
             });
@@ -66,27 +90,31 @@ void Game::toggleFrighten(bool on) {
         frightenActivated--;
     }
 
-    if (!(frightenActivated == 0 || (frightenActivated == 1 && on))) {
-        return;
-    }
-
     for (auto & e : ghosts) {
-        e->toggleFrighten();
+        if (!e->isAlive()) {
+            continue;
+        }
+
+        if ((!e->isFrightened() && on)
+            || (e->isFrightened() && frightenActivated == 0)) {
+            e->toggleFrighten();
+        }
     }
 
-    if (on) {
+    if (on && frightenActivated == 1) {
         timer.addTrigger(settings.enemySpeed * frightenSpeedMultiplier, [ this ]() {
             this->moveEnemy(true);
             });
     }
 }
 
-Game::Game(const GameSettings & gameSettings, double frightenMultiplier) :
+Game::Game(const GameSettings & gameSettings, double frightenMultiplier, unsigned int livesAmount) :
     settings(gameSettings),
     needsRedraw(false),
     board(nullptr),
     player(nullptr),
     score(0),
+    lives(livesAmount),
     bonusOut(false),
     frightenActivated(0),
     frightenSpeedMultiplier(frightenMultiplier) { }

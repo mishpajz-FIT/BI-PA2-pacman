@@ -30,6 +30,7 @@ private:
     std::array<std::unique_ptr<Enemy>, GAME_GHOSTCOUNT> ghosts;
 
     unsigned long score;
+    unsigned int lives;
 
     bool bonusOut;
 
@@ -47,7 +48,7 @@ private:
     void createBonus();
 
 public:
-    Game(const GameSettings & gameSettings, double frightenMultiplier);
+    Game(const GameSettings & gameSettings, double frightenMultiplier, unsigned int livesAmount);
 
     void loadMap(const std::string & filepath);
 

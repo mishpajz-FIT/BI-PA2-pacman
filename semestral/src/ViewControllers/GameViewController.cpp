@@ -76,7 +76,7 @@ void GameViewController::update() {
         }
         try {
             GameSettingsFileLoader gameSettingsLoader(*expectedPath);
-            game.reset(new Game(gameSettingsLoader.loadSettings(), 1.5));
+            game.reset(new Game(gameSettingsLoader.loadSettings(), 1.5, 3));
         }
         catch (FileLoaderException & e) {
             layoutView.getSecondaryView()->setWarning(true, "Couldn't load settings file");

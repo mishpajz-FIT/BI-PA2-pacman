@@ -33,6 +33,8 @@ public:
     void toggleScatter();
     void toggleFrighten();
 
+    bool isFrightened();
+
     std::pair<char, NCColors::ColorPairs> displayEntity() override;
 };
 
