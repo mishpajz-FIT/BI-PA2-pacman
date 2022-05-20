@@ -51,8 +51,10 @@ void GameView::draw(WINDOW * intoWindow) {
         return;
     }
 
-    wclear(intoWindow);
-    box(intoWindow, 0, 0);
+    if (sizeChanged) {
+        wclear(intoWindow);
+        box(intoWindow, 0, 0);
+    }
 
     if (isAbleToDisplay()) {
         drawBoard(intoWindow);

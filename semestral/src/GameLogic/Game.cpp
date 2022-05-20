@@ -140,6 +140,10 @@ void Game::update(std::optional<Rotation> keyPressDirection) {
 
     if (keyPressDirection) {
         player->rotate(*keyPressDirection);
+
+        if (isPaused()) {
+            togglePause();
+        }
     }
 
     if (!isPaused()) {

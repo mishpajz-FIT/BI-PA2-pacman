@@ -106,7 +106,6 @@ void GameViewController::update() {
         layoutView.setSecondaryView(GameDetailView(game.get()));
         layoutView.setPrimaryView(GameView(game.get()));
         game->restart();
-        game->togglePause();
 
         cbreak();
         noecho();
@@ -123,6 +122,11 @@ void GameViewController::update() {
         }
 
         int c = getch();
+
+        if (!(game->isPaused()) && (c == 'p' || c == 'P')) {
+            game->togglePause();
+        }
+
         std::optional<Rotation> playerDir;
         if (c != ERR) {
             playerDir = getPlayerRotationFromKey(c);
