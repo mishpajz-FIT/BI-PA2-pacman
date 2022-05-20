@@ -64,6 +64,7 @@ public:
     bool isPaused();
 
     unsigned long getScore();
+    unsigned int getLives();
 
     bool doesNeedRefresh();
 };

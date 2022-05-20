@@ -28,10 +28,14 @@ void GameDetailView::draw(WINDOW * intoWindow) {
     mvwprintw(intoWindow, 1, 1, titleText.c_str());
 
     if (isAbleToDisplay()) {
-        std::string scoreString = "score: ";
-        scoreString += std::to_string(gameToDraw->getScore());
+        std::string displayString = "score: ";
+        displayString += std::to_string(gameToDraw->getScore());
+        mvwprintw(intoWindow, 3, 1, displayString.c_str());
 
-        mvwprintw(intoWindow, 3, 1, scoreString.c_str());
+        displayString = "lives: ";
+        displayString += std::to_string(gameToDraw->getLives());
+        displayString += "<3";
+        mvwprintw(intoWindow, 4, 1, displayString.c_str());
     }
 
     if (warningDisplayed) {

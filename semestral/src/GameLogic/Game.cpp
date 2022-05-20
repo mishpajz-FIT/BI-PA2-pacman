@@ -34,6 +34,7 @@ void Game::detectCollisions() {
                     [ ePtr ]() {
                         ePtr->toggleAlive();
                     });
+                needsRedraw = true;
             } else {
                 if (!timer.isPaused()) {
                     togglePause();
@@ -161,6 +162,8 @@ void Game::restart() {
             this->ghosts[i]->toggleAlive();
             });
     }
+
+    needsRedraw = true;
 }
 
 void Game::update(std::optional<Rotation> keyPressDirection) {
@@ -199,6 +202,10 @@ bool Game::isPaused() {
 
 unsigned long Game::getScore() {
     return score;
+}
+
+unsigned int Game::getLives() {
+    return lives;
 }
 
 bool Game::doesNeedRefresh() {
