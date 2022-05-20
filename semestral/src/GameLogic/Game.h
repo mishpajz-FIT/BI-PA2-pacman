@@ -32,8 +32,7 @@ private:
     unsigned long score;
     unsigned int lives;
 
-    bool bonusOut;
-
+    unsigned int killStreak;
     void detectCollisions();
 
     void movePlayer();

@@ -34,6 +34,10 @@ void Game::detectCollisions() {
                     [ ePtr ]() {
                         ePtr->toggleAlive();
                     });
+
+                score += (200 * (killStreak + 1));
+                killStreak++;
+
                 needsRedraw = true;
             } else {
                 if (!timer.isPaused()) {
@@ -89,6 +93,7 @@ void Game::toggleFrighten(bool on) {
             });
     } else {
         frightenActivated--;
+        killStreak = 0;
     }
 
     for (auto & e : ghosts) {
@@ -116,7 +121,7 @@ Game::Game(const GameSettings & gameSettings, double frightenMultiplier, unsigne
     player(nullptr),
     score(0),
     lives(livesAmount),
-    bonusOut(false),
+    killStreak(0),
     frightenActivated(0),
     frightenSpeedMultiplier(frightenMultiplier) { }
 
@@ -126,6 +131,9 @@ void Game::loadMap(const std::string & filepath) {
 }
 
 void Game::restart() {
+    killStreak = 0;
+    frightenActivated = 0;
+
     Transform playerSpawn(board->getPlayerSpawn(), Rotation(Rotation::Direction::left));
     player.reset(new Player(playerSpawn));
 
