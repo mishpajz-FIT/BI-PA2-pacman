@@ -16,14 +16,20 @@ private:
     class TimerObject {
     private:
         timepoint initializeTime;
-        milliseconds periodTime;
+        milliseconds periodDuration;
 
         std::function<void()> action;
         bool isRepeatingAction;
 
     public:
 
-        TimerObject(timepoint initTime, milliseconds perTime, std::function<void()> act, bool repeat);
+        TimerObject(timepoint initTime, milliseconds perDur, std::function<void()> act, bool repeat);
+
+        milliseconds getPeriodDuration() const;
+
+        timepoint getBeginTime() const;
+
+        std::function<void()> getAction() const;
 
         timepoint actionTime() const;
 
@@ -43,12 +49,11 @@ private:
 
     std::priority_queue<TimerObject> timerQueue;
 
-    timepoint adjustedTime();
 
 public:
     Timer();
 
-    void start();
+    bool isPaused();
 
     void togglePause();
 

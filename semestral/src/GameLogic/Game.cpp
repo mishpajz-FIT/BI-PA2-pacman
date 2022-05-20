@@ -84,7 +84,6 @@ void Game::toggleFrighten(bool on) {
 Game::Game(const GameSettings & gameSettings, double frightenMultiplier) :
     settings(gameSettings),
     needsRedraw(false),
-    paused(true),
     board(nullptr),
     player(nullptr),
     score(0),
@@ -143,9 +142,11 @@ void Game::update(std::optional<Rotation> keyPressDirection) {
         player->rotate(*keyPressDirection);
     }
 
-    timer.update();
+    if (!isPaused()) {
+        timer.update();
 
-    detectCollisions();
+        detectCollisions();
+    }
 }
 
 unsigned int Game::getDimensionX() {
@@ -156,18 +157,12 @@ unsigned int Game::getDimensionY() {
     return board->getSizeY();
 }
 
-void Game::begin() {
-    paused = false;
-    timer.start();
-}
-
 void Game::togglePause() {
-    paused = !paused;
     timer.togglePause();
 }
 
 bool Game::isPaused() {
-    return paused;
+    return timer.isPaused();
 }
 
 unsigned long Game::getScore() {

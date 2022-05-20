@@ -1,14 +1,26 @@
 #include "Timer.h"
 
 // SECTION: TimerObject
-Timer::TimerObject::TimerObject(timepoint initTime, milliseconds perTime, std::function<void()> act, bool repeat) : initializeTime(initTime), periodTime(perTime), action(act), isRepeatingAction(repeat) {
-    if (perTime.count() == 0 && repeat) {
+Timer::TimerObject::TimerObject(timepoint initTime, milliseconds perDur, std::function<void()> act, bool repeat) : initializeTime(initTime), periodDuration(perDur), action(act), isRepeatingAction(repeat) {
+    if (perDur.count() == 0 && repeat) {
         throw std::invalid_argument("Timer::TimerObject: TimerObject - repeating action with 0 period");
     }
 }
 
+Timer::milliseconds Timer::TimerObject::getPeriodDuration() const {
+    return periodDuration;
+}
+
+Timer::timepoint Timer::TimerObject::getBeginTime() const {
+    return initializeTime;
+}
+
+std::function<void()> Timer::TimerObject::getAction() const {
+    return action;
+}
+
 Timer::timepoint Timer::TimerObject::actionTime() const {
-    return (initializeTime + periodTime);
+    return (initializeTime + periodDuration);
 }
 
 void Timer::TimerObject::callAction() {
@@ -31,22 +43,31 @@ bool Timer::TimerObject::operator < (const TimerObject & rhs) const {
 
 
 // SECTION: Timer
-Timer::timepoint Timer::adjustedTime() {
-    return (std::chrono::steady_clock::now() - timeOffset);
-}
-
 Timer::Timer() : paused(true), lastPausedTime(Timer::clock::now()), timeOffset(0) { }
 
-void Timer::start() {
-    timeOffset = Timer::milliseconds(0);
-    paused = false;
+bool Timer::isPaused() {
+    return paused;
 }
 
 void Timer::togglePause() {
     if (!paused) {
         lastPausedTime = Timer::clock::now();
     } else {
-        timeOffset += std::chrono::duration_cast<Timer::milliseconds>(Timer::clock::now() - lastPausedTime);
+        std::priority_queue<TimerObject> newQueue;
+
+        while (!timerQueue.empty()) {
+            const TimerObject & originalObject = timerQueue.top();
+            Timer::milliseconds timePassedInObject = std::chrono::duration_cast<Timer::milliseconds>(lastPausedTime - originalObject.getBeginTime());
+            Timer::TimerObject newObject(
+                Timer::clock::now() - timePassedInObject,
+                originalObject.getPeriodDuration(),
+                originalObject.getAction(),
+                originalObject.repeating());
+            newQueue.push(newObject);
+            timerQueue.pop();
+        }
+
+        timerQueue = newQueue;
     }
 
     paused = !paused;
@@ -57,21 +78,21 @@ void Timer::update() {
         return;
     }
 
-    while ((timerQueue.size() != 0) && (timerQueue.top().actionTime() <= adjustedTime())) {
+    while ((timerQueue.size() != 0) && (timerQueue.top().actionTime() <= Timer::clock::now())) {
         Timer::TimerObject copy(timerQueue.top());
         timerQueue.pop();
 
         copy.callAction();
 
         if (copy.repeating()) {
-            copy.updateBeginning(adjustedTime());
+            copy.updateBeginning(Timer::clock::now());
             timerQueue.push(copy);
         }
     }
 }
 
 void Timer::addTrigger(unsigned int period, std::function<void()> action, bool repeating) {
-    TimerObject newObject(adjustedTime(), Timer::milliseconds(period), action, repeating);
+    TimerObject newObject(Timer::clock::now(), Timer::milliseconds(period), action, repeating);
 
     timerQueue.push(newObject);
 }

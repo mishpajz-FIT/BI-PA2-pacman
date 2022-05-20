@@ -23,7 +23,6 @@ private:
     bool needsRedraw;
 
     Timer timer;
-    bool paused;
 
     std::unique_ptr<Board> board;
 

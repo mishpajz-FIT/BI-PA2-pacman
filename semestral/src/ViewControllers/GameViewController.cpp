@@ -106,7 +106,7 @@ void GameViewController::update() {
         layoutView.setSecondaryView(GameDetailView(game.get()));
         layoutView.setPrimaryView(GameView(game.get()));
         game->restart();
-        game->begin();
+        game->togglePause();
 
         cbreak();
         noecho();
