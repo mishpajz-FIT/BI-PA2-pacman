@@ -10,8 +10,7 @@ View::View() :
     minSizeY(0),
     warningDisplayed(false),
     warningText(""),
-    titleText(""),
-    inputEnabled(false) { }
+    titleText("") { }
 View::~View() { }
 
 void View::getWindowSize(WINDOW * forWindow) {
@@ -42,15 +41,18 @@ bool View::isAbleToDisplay() {
 }
 
 void View::setWarning(bool to, std::string text) {
-    throw ViewException("View: setWarning - No warning processing implemented");
+    if (warningDisplayed != to || warningText != text) {
+        warningDisplayed = to;
+        warningText = text;
+        setNeedsRefresh();
+    }
 }
 
 void View::setTitle(std::string text) {
-    throw ViewException("View: setTitle - No title processing supplemented");
-}
-
-void View::setInput(bool to) {
-    throw ViewException("View: setTitle - No input processing supplemented");
+    if (titleText != text) {
+        titleText = text;
+        setNeedsRefresh();
+    }
 }
 
 unsigned int View::getMinSizeX() {

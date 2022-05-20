@@ -5,7 +5,6 @@
 #include "GameView.h"
 #include "OptionsView.h"
 #include "LoadingView.h"
-#include <string>
 
 std::optional<Rotation> GameViewController::getPlayerRotationFromKey(int c) {
     switch (c) {
@@ -32,12 +31,29 @@ std::optional<Rotation> GameViewController::getPlayerRotationFromKey(int c) {
     return { };
 }
 
+std::optional<std::string> GameViewController::getInputFromSecondaryView() {
+    if (wgetch(layoutView.getSecondaryWindow()) != '\n') {
+        return { };
+    }
+
+    echo();
+    curs_set(1);
+    nocbreak();
+    char bufferStr[256];
+    wrefresh(layoutView.getSecondaryWindow());
+
+    wgetnstr(layoutView.getSecondaryWindow(), bufferStr, 256);
+    noecho();
+    curs_set(0);
+    cbreak();
+    return std::string(bufferStr);
+}
+
 
 GameViewController::GameViewController() : ViewController(), game(nullptr), phase(settingsLoading), layoutView() {
 
     layoutView.setSecondaryView(OptionsView());
     layoutView.getSecondaryView()->setTitle("Enter path to settings file.");
-    layoutView.getSecondaryView()->setInput(true);
 
     layoutView.setPrimaryView(LoadingView());
 
@@ -45,7 +61,6 @@ GameViewController::GameViewController() : ViewController(), game(nullptr), phas
 }
 
 void GameViewController::update() {
-    char bufferStr[256];
     if (!layoutView.isAbleToDisplay()) {
         if (phase == playing && !game->isPaused()) {
             game->togglePause();
@@ -55,10 +70,12 @@ void GameViewController::update() {
     }
 
     if (phase == settingsLoading) {
-        wgetnstr(layoutView.getSecondaryWindow(), bufferStr, 256);
-        std::string expectedPath(bufferStr);
+        std::optional<std::string> expectedPath = getInputFromSecondaryView();
+        if (!expectedPath) {
+            return;
+        }
         try {
-            GameSettingsFileLoader gameSettingsLoader(expectedPath);
+            GameSettingsFileLoader gameSettingsLoader(*expectedPath);
             game.reset(new Game(gameSettingsLoader.loadSettings(), 1.5));
         }
         catch (FileLoaderException & e) {
@@ -73,10 +90,12 @@ void GameViewController::update() {
     }
 
     if (phase == mapLoading) {
-        wgetnstr(layoutView.getSecondaryWindow(), bufferStr, 256);
-        std::string expectedPath(bufferStr);
+        std::optional<std::string> expectedPath = getInputFromSecondaryView();
+        if (!expectedPath) {
+            return;
+        }
         try {
-            game->loadMap(expectedPath);
+            game->loadMap(*expectedPath);
         }
         catch (FileLoaderException & e) {
             layoutView.getSecondaryView()->setWarning(true, "Couldn't load map file");
@@ -88,6 +107,11 @@ void GameViewController::update() {
         layoutView.setPrimaryView(GameView(game.get()));
         game->restart();
         game->begin();
+
+        cbreak();
+        noecho();
+        nodelay(stdscr, TRUE);
+        keypad(stdscr, true);
         return;
     }
 
@@ -98,10 +122,6 @@ void GameViewController::update() {
             layoutView.getSecondaryView()->setWarning(false);
         }
 
-        cbreak();
-        noecho();
-        nodelay(stdscr, TRUE);
-        keypad(stdscr, true);
         int c = getch();
         std::optional<Rotation> playerDir;
         if (c != ERR) {

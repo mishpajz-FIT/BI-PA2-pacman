@@ -10,12 +10,6 @@ public:
 
     void draw(WINDOW * intoWindow = stdscr) override;
 
-    void setWarning(bool to, std::string text = "") override;
-
-    void setTitle(std::string text) override;
-
-    void setInput(bool to) override;
-
     OptionsView * clone() const override;
 };
 

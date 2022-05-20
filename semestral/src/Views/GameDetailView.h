@@ -15,8 +15,6 @@ public:
 
     void draw(WINDOW * intoWindow = stdscr) override;
 
-    void setWarning(bool to, std::string text = "") override;
-
     GameDetailView * clone() const override;
 };
 

@@ -22,9 +22,6 @@ protected:
 
     std::string titleText;
 
-    bool inputEnabled;
-
-
     void getWindowSize(WINDOW * forWindow = stdscr);
 
     unsigned int centeredXInWindow(unsigned int x) const;
@@ -43,11 +40,9 @@ public:
 
     virtual View * clone() const = 0;
 
-    virtual void setWarning(bool to, std::string text = "");
+    void setWarning(bool to, std::string text = "");
 
-    virtual void setTitle(std::string text);
-
-    virtual void setInput(bool to);
+    void setTitle(std::string text);
 
     unsigned int getMinSizeX();
     unsigned int getMinSizeY();

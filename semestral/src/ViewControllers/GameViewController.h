@@ -7,6 +7,7 @@
 #include <ncurses.h>
 #include "LayoutView.h"
 #include <optional>
+#include <string>
 
 class GameViewController : public ViewController {
 protected:
@@ -22,6 +23,8 @@ protected:
     LayoutView layoutView;
 
     std::optional<Rotation> getPlayerRotationFromKey(int c);
+
+    std::optional<std::string> getInputFromSecondaryView();
 
 public:
     GameViewController();

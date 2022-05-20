@@ -42,14 +42,6 @@ void GameDetailView::draw(WINDOW * intoWindow) {
     needsRefresh = false;
 }
 
-void GameDetailView::setWarning(bool to, std::string text) {
-    if (warningDisplayed != to || warningText != text) {
-        warningDisplayed = to;
-        warningText = text;
-        setNeedsRefresh();
-    }
-}
-
 GameDetailView * GameDetailView::clone() const {
     return new GameDetailView(*this);
 }
