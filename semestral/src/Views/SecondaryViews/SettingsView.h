@@ -7,8 +7,10 @@ class SettingsView : public SecondaryView {
 protected:
     void drawHint(WINDOW * intoWindow) override;
 
+    bool inputable;
+
 public:
-    SettingsView();
+    SettingsView(bool input = true);
     virtual ~SettingsView();
 
     void draw(WINDOW * intoWindow = stdscr) override;

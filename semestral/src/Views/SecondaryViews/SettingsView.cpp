@@ -3,12 +3,14 @@
 
 void SettingsView::drawHint(WINDOW * intoWindow) {
     wattron(intoWindow, COLOR_PAIR(NCColors::ColorPairs::hint));
-    mvwprintw(intoWindow, sizeY - 7, 1, "enter - input");
+    if (inputable) {
+        mvwprintw(intoWindow, sizeY - 7, 1, "enter - input");
+    }
     mvwprintw(intoWindow, sizeY - 6, 1, "q - quit");
     wattroff(intoWindow, COLOR_PAIR(NCColors::ColorPairs::hint));
 }
 
-SettingsView::SettingsView() : SecondaryView() { }
+SettingsView::SettingsView(bool input) : SecondaryView(), inputable(input) { }
 
 SettingsView::~SettingsView() { }
 
@@ -34,12 +36,14 @@ void SettingsView::draw(WINDOW * intoWindow) {
         wattroff(intoWindow, A_DIM);
     }
 
-    wattron(intoWindow, COLOR_PAIR(NCColors::interactive));
-    for (size_t i = 1; i < sizeX - 1; i++) {
-        mvwaddch(intoWindow, sizeY - 2, i, ' ');
+    if (inputable) {
+        wattron(intoWindow, COLOR_PAIR(NCColors::interactive));
+        for (size_t i = 1; i < sizeX - 1; i++) {
+            mvwaddch(intoWindow, sizeY - 2, i, ' ');
+        }
+        wattroff(intoWindow, COLOR_PAIR(NCColors::interactive));
+        wmove(intoWindow, sizeY - 2, 1);
     }
-    wattroff(intoWindow, COLOR_PAIR(NCColors::interactive));
-    wmove(intoWindow, sizeY - 2, 1);
 
     wrefresh(intoWindow);
     needsRefresh = false;

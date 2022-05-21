@@ -1,11 +1,13 @@
 #include "GameViewController.h"
-#include "GameSettingsFileLoader.h"
-#include "BoardFileLoader.h"
+#include "GameSettingsRecordsFileLoader.h"
+#include "GameSettingsRecordsFileSaver.h"
 #include "GameDetailView.h"
 #include "GameView.h"
 #include "SettingsView.h"
 #include "LoadingView.h"
+#include "GameOverView.h"
 #include "OptionMenuView.h"
+#include <filesystem>
 
 std::optional<Rotation> GameViewController::getPlayerRotationFromKey(int c) {
     switch (c) {
@@ -74,6 +76,8 @@ void GameViewController::difficultyChoosingUpdate() {
             return;
     }
 
+    loadedDifficulty = menu->getCurrentOption();
+
     keypad(layoutView.getSecondaryWindow(), FALSE);
     phase = settingsLoading;
     layoutView.setSecondaryView(SettingsView());
@@ -87,10 +91,10 @@ void GameViewController::settingsLoadingUpdate() {
         return;
     }
     try {
-        GameSettingsFileLoader gameSettingsLoader(*expectedPath);
+        GameSettingsRecordsFileLoader gameSettingsLoader(*expectedPath);
         unsigned int hp = 0;
         double speedModif = 0.0;
-        switch (menu->getCurrentOption()) {
+        switch (loadedDifficulty) {
             case 0:
                 hp = 5;
                 speedModif = 2;
@@ -107,13 +111,20 @@ void GameViewController::settingsLoadingUpdate() {
                 break;
         }
 
-        game.reset(new Game(gameSettingsLoader.loadSettings(), speedModif, hp));
+        std::pair<GameSettings, GameRecords> loadedSettingsAndRecords = gameSettingsLoader.loadSettingsAndRecords();
+        game.reset(new Game(loadedSettingsAndRecords.first, speedModif, hp, loadedDifficulty));
+
+        loadedSettings = loadedSettingsAndRecords.first;
+        loadedRecords = loadedSettingsAndRecords.second;
     }
     catch (FileLoaderException & e) {
         layoutView.getSecondaryView()->setWarning(true, "Couldn't load settings file!");
         layoutView.getSecondaryView()->setNeedsRefresh();
         return;
     }
+
+    settingsPath = *expectedPath;
+
     phase = mapLoading;
     layoutView.getSecondaryView()->setTitle("ENTER PATH TO MAP FILE");
     layoutView.getSecondaryView()->setWarning(false);
@@ -132,6 +143,9 @@ void GameViewController::mapLoadingUpdate() {
         layoutView.getSecondaryView()->setNeedsRefresh();
         return;
     }
+
+    mapName = std::filesystem::path(*expectedPath).filename();
+
     phase = playing;
     layoutView.setSecondaryView(GameDetailView(game.get()));
     layoutView.setPrimaryView(GameView(game.get()));
@@ -161,6 +175,25 @@ void GameViewController::playingUpdate() {
         playerDir = getPlayerRotationFromKey(c);
     }
     game->update(playerDir);
+
+    if (game->getLives() == 0) {
+        nodelay(stdscr, FALSE);
+        keypad(stdscr, false);
+        layoutView.setSecondaryView(SettingsView(false));
+        layoutView.getSecondaryView()->setTitle("GAME OVER");
+        bool highscore = loadedRecords.addScore(mapName, loadedDifficulty, game->getScore());
+        layoutView.setPrimaryView(GameOverView(game->getScore(), loadedRecords.records[std::make_pair(mapName, loadedDifficulty)], highscore));
+
+        try {
+            GameSettingsRecordsFileSaver saver(settingsPath);
+            saver.writeSettingsAndRecords(std::make_pair(loadedSettings, loadedRecords));
+        }
+        catch (FileLoaderException & e) {
+            layoutView.getSecondaryView()->setWarning(true, "Couldn't save settings and records");
+        }
+
+        phase = endGame;
+    }
 }
 
 void GameViewController::endGameUpdate() {
