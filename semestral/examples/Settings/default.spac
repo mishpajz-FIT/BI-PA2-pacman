@@ -1,11 +1,10 @@
+player_periodspeed>	600
+ghost_periodspeed>	750
+scatter_duration>	10000
+chase_duration>	15000
+frighten_duration>	15000
+kill_duration>	8000
+bonus_period>	20000
+ghost_begin_period>	5000
 
-player_speed>       600
-ghost_speed>        750
-
-scatter_duration>   10000
-chase_duration>     15000
-frighten_duration>  15000
-kill_duration>      8000
-
-bonus_period>       20000
-ghost_begin_period> 5000
+default.mpac	0	2160
