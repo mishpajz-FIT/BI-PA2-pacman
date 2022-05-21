@@ -28,6 +28,15 @@ void Enemy::calculateNextDirection(const Board & board, const Position & target)
             return std::tie(lhs.first, lhs.second) < std::tie(rhs.first, rhs.second);
             });
 
+        // If intelligence is low, enemy will choose non-ideal path in 1/4 times
+        if (intelligence == 0) {
+            unsigned int rng = arc4random_uniform(4);
+            if (rng == 0) {
+                nextRotation = distances.back().second;
+                return;
+            }
+        }
+
         nextRotation = distances.front().second;
         return;
     }
@@ -47,16 +56,40 @@ void Enemy::calculateNextDirection(const Board & board, const Position & target)
 
 Position Enemy::calculateTarget(const Board & board, const Transform & playerTransform, const Position & specialPos) {
     if (frightened) {
-        size_t randX = arc4random_uniform(board.getSizeX());
-        size_t randY = arc4random_uniform(board.getSizeY());
-        return Position(randX, randY);
+
+        // Different frightened targets based on intelligence
+        if (intelligence == 0) {
+            Position behindPlayer = playerTransform.position;
+            behindPlayer.moveBy(4, playerTransform.rotation.opposite());
+            return behindPlayer;
+        } else if (intelligence == 1) {
+            size_t randX = arc4random_uniform(board.getSizeX());
+            size_t randY = arc4random_uniform(board.getSizeY());
+            return Position(randX, randY);
+        }
+
+        Position frightenTarget;
+        if (playerTransform.position.x < board.getSizeX()) {
+            frightenTarget.x = board.getSizeX();
+        } else {
+            frightenTarget.x = 0;
+        }
+
+        if (playerTransform.position.y < board.getSizeY()) {
+            frightenTarget.y = board.getSizeY();
+        } else {
+            frightenTarget.y = 0;
+        }
+
+        return frightenTarget;
+
     } else if (scatter) {
         return scatterTarget;
     }
     return Position();
 }
 
-Enemy::Enemy(const Transform & initial, const Position & scatterPos, bool a) : Entity(initial, a), frightened(false), scatter(false), currentDirection(initial.rotation), scatterTarget(scatterPos) { }
+Enemy::Enemy(const Transform & initial, const Position & scatterPos, bool a, unsigned int intelligenceLevel) : Entity(initial, a), intelligence(intelligenceLevel), frightened(false), scatter(false), currentDirection(initial.rotation), scatterTarget(scatterPos) { }
 
 Enemy::~Enemy() { }
 

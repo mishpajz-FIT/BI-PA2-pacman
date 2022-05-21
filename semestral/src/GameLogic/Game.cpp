@@ -114,11 +114,12 @@ void Game::toggleFrighten(bool on) {
     }
 }
 
-Game::Game(const GameSettings & gameSettings, double frightenMultiplier, unsigned int livesAmount) :
+Game::Game(const GameSettings & gameSettings, double frightenMultiplier, unsigned int livesAmount, unsigned int enemyLevel) :
     settings(gameSettings),
     needsRedraw(false),
     board(nullptr),
     player(nullptr),
+    enemyIntelligence(enemyLevel),
     score(0),
     lives(livesAmount),
     killStreak(0),
@@ -138,10 +139,10 @@ void Game::restart() {
     player.reset(new Player(playerSpawn));
 
     Transform enemySpawn(board->getEnemySpawn(), Rotation(Rotation::Direction::left));
-    ghosts[0].reset(new GhostBlinky(enemySpawn, Position(0, board->getSizeX())));
-    ghosts[1].reset(new GhostPinky(enemySpawn, Position(0, 0)));
-    ghosts[2].reset(new GhostInky(enemySpawn, Position(board->getSizeY(), board->getSizeY())));
-    ghosts[3].reset(new GhostClyde(enemySpawn, Position(board->getSizeY(), 0)));
+    ghosts[0].reset(new GhostBlinky(enemySpawn, Position(0, board->getSizeX()), enemyIntelligence));
+    ghosts[1].reset(new GhostPinky(enemySpawn, Position(0, 0), enemyIntelligence));
+    ghosts[2].reset(new GhostInky(enemySpawn, Position(board->getSizeY(), board->getSizeY()), enemyIntelligence));
+    ghosts[3].reset(new GhostClyde(enemySpawn, Position(board->getSizeY(), 0), enemyIntelligence));
 
     timer = Timer();
 

@@ -12,6 +12,8 @@
 
 class Enemy : public Entity {
 protected:
+    unsigned int intelligence;
+
     bool frightened;
     bool scatter;
 
@@ -25,7 +27,7 @@ protected:
 
 public:
 
-    Enemy(const Transform & initial, const Position & scatterPos, bool a = false);
+    Enemy(const Transform & initial, const Position & scatterPos, bool a = false, unsigned int intelligenceLevel = 1);
     virtual ~Enemy();
 
     void move(const Board & board, const Transform & playerTransform, const Position & specialPos = Position());

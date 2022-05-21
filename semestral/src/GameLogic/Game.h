@@ -29,6 +29,8 @@ private:
     std::unique_ptr<Player> player;
     std::array<std::unique_ptr<Enemy>, GAME_GHOSTCOUNT> ghosts;
 
+    const unsigned int enemyIntelligence;
+
     unsigned long score;
     unsigned int lives;
 
@@ -47,7 +49,7 @@ private:
     void createBonus();
 
 public:
-    Game(const GameSettings & gameSettings, double frightenMultiplier, unsigned int livesAmount);
+    Game(const GameSettings & gameSettings, double frightenMultiplier, unsigned int livesAmount, unsigned int enemyLevel = 1);
 
     void loadMap(const std::string & filepath);
 
