@@ -6,7 +6,7 @@
 class NCColors {
 public:
     enum ColorPairs : unsigned int {
-        wall = 10,
+        wall = 20,
         space,
         coin,
         bonus,
@@ -16,18 +16,21 @@ public:
         ghostInky,
         ghostClyde,
         ghostFrighten,
-        basic
+        basic,
+        interactive,
+        hint
     };
 
     static void initialize();
 
 private:
     enum Color : unsigned int {
-        pink = 10,
+        pink = 20,
         turqoise,
         orange,
         darkBlue,
-        lightBlue
+        lightBlue,
+        grayBlue
     };
 };
 

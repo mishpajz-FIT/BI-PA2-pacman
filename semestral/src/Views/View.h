@@ -28,6 +28,8 @@ protected:
 
     unsigned int centeredYInWindow(unsigned int y) const;
 
+    unsigned int centeredXForText(const std::string & text) const;
+
 public:
     View();
     virtual ~View();

@@ -65,7 +65,7 @@ void LayoutView::draw(WINDOW *) {
 
             mvprintw(1, 1, "Please resize the window");
             refresh();
-        return;
+            return;
         } else {
             ableToDisplay = true;
             setNeedsRefresh();

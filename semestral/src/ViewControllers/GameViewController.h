@@ -6,6 +6,7 @@
 #include <memory>
 #include <ncurses.h>
 #include "LayoutView.h"
+#include "OptionMenu.h"
 #include <optional>
 #include <string>
 
@@ -14,17 +15,27 @@ protected:
     std::unique_ptr<Game> game;
 
     enum GameStatePhase {
+        difficultyChoosing,
         settingsLoading,
         mapLoading,
-        playing
+        playing,
+        endGame
     };
     GameStatePhase phase;
+
+    std::unique_ptr<OptionMenu> menu;
 
     LayoutView layoutView;
 
     std::optional<Rotation> getPlayerRotationFromKey(int c);
 
     std::optional<std::string> getInputFromSecondaryView();
+
+    void difficultyChoosingUpdate();
+    void settingsLoadingUpdate();
+    void mapLoadingUpdate();
+    void playingUpdate();
+    void endGameUpdate();
 
 public:
     GameViewController();

@@ -1,18 +1,5 @@
 #include "View.h"
 
-View::View() :
-    needsRefresh(true),
-    ableToDisplay(true),
-    sizeY(0),
-    sizeX(0),
-    sizeChanged(true),
-    minSizeX(0),
-    minSizeY(0),
-    warningDisplayed(false),
-    warningText(""),
-    titleText("") { }
-View::~View() { }
-
 void View::getWindowSize(WINDOW * forWindow) {
     unsigned int maxY, maxX;
     getmaxyx(forWindow, maxY, maxX);
@@ -31,6 +18,28 @@ unsigned int View::centeredXInWindow(unsigned int x) const {
 unsigned int View::centeredYInWindow(unsigned int y) const {
     return ((sizeY - minSizeY) / 2) + y;
 }
+
+unsigned int View::centeredXForText(const std::string & text) const {
+    int xPos = ((sizeX - text.length()) / 2);
+    if (xPos < 1) {
+        xPos = 1;
+    }
+
+    return xPos;
+}
+
+View::View() :
+    needsRefresh(true),
+    ableToDisplay(true),
+    sizeY(0),
+    sizeX(0),
+    sizeChanged(true),
+    minSizeX(0),
+    minSizeY(0),
+    warningDisplayed(false),
+    warningText(""),
+    titleText("") { }
+View::~View() { }
 
 void View::setNeedsRefresh() {
     needsRefresh = true;
