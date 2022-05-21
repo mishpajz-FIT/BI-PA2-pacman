@@ -66,6 +66,7 @@ public:
 
     unsigned long getScore();
     unsigned int getLives();
+    unsigned int getCoinsRemaining();
 
     bool doesNeedRefresh();
 };

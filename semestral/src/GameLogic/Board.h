@@ -173,6 +173,10 @@ public:
      * @return false Tile was not interractable
      */
     bool interactWithTileAt(const Position & pos);
+
+    unsigned int getNumberOfCoins();
+
+    bool placeBonusTile();
 };
 
 /**

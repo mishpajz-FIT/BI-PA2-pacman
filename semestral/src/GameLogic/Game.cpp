@@ -10,6 +10,8 @@ void Game::detectCollisions() {
             score += 10;
         } else if (playerTile == Board::Tile::Type::frighten) {
             toggleFrighten(true);
+        } else if (playerTile == Board::Tile::Type::bonus) {
+            score += 100;
         }
 
         board->interactWithTileAt(playerPos);
@@ -72,7 +74,12 @@ void Game::moveEnemy(bool fright) {
 }
 
 void Game::createBonus() {
-    //TODO
+    if (getCoinsRemaining() == 0) {
+        return;
+    }
+
+    needsRedraw = true;
+    board->placeBonusTile();
 }
 
 void Game::toggleScatter() {
@@ -154,6 +161,11 @@ void Game::restart() {
         this->moveEnemy();
         }, true);
 
+    /* Bonus creator */
+    timer.addTrigger(settings.bonusPeriod, [ this ]() {
+        this->createBonus();
+        }, true);
+
     /* Chase and scatter trigger */
     /*
     timer.addTrigger(chaseDuration + scatterDuration, [ this ]() {
@@ -215,6 +227,10 @@ unsigned long Game::getScore() {
 
 unsigned int Game::getLives() {
     return lives;
+}
+
+unsigned int Game::getCoinsRemaining() {
+    return board->getNumberOfCoins();
 }
 
 bool Game::doesNeedRefresh() {

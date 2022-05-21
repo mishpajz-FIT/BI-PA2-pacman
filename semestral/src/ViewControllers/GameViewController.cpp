@@ -176,7 +176,7 @@ void GameViewController::playingUpdate() {
     }
     game->update(playerDir);
 
-    if (game->getLives() == 0) {
+    if (game->getLives() == 0 || game->getCoinsRemaining() == 0) {
         nodelay(stdscr, FALSE);
         keypad(stdscr, false);
         layoutView.setSecondaryView(SettingsView(false));

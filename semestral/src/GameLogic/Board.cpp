@@ -172,4 +172,21 @@ bool Board::interactWithTileAt(const Position & pos) {
     return false;
 }
 
+unsigned int Board::getNumberOfCoins() {
+    return numberOfCoins;
+}
+
+bool Board::placeBonusTile() {
+    for (unsigned int i = 0; i < 5; i++) {
+        size_t randX = arc4random_uniform(getSizeX());
+        size_t randY = arc4random_uniform(getSizeY());
+        Position tilePos(randX, randY);
+        if (tileAt(tilePos) == Tile::defaultType()) {
+            tiles.at(randX, randY) = Tile::Type::bonus;
+            return true;
+        }
+    }
+    return false;
+}
+
 BoardException::BoardException(const std::string & message) : runtime_error(message) { }
