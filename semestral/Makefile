@@ -7,11 +7,13 @@ SOURCE_DIR := src
 BUILD_DIR := build
 
 
-SOURCES := $(wildcard ${SOURCE_DIR}/*.cpp  ${SOURCE_DIR}/*/*.cpp ${SOURCE_DIR}/*/*/*.cpp)
+SOURCES := $(wildcard ${SOURCE_DIR}/*.cpp  ${SOURCE_DIR}/*/*.cpp ${SOURCE_DIR}/*/*/*.cpp ${SOURCE_DIR}/*/*/*/*.cpp)
 OBJECTS := $(patsubst ${SOURCE_DIR}/%.cpp, ${BUILD_DIR}/%.o, ${SOURCES})
 INCLUDE := $(strip $(addprefix -I , $(dir ${SOURCES})))
 
-.PHONY: compile print run clean doc count
+.PHONY: all compile run clean doc
+
+all: compile doc
 
 compile: ${OBJECTS}
 	@${CXX} ${FLAGS} ${INCLUDE} $^ -o ${NAME}
@@ -26,12 +28,8 @@ run: compile
 	./${NAME}
 
 clean:
-	@rm -rf ${BUILD_DIR}
-	@rm -rf ${NAME}
-	@rm -rf doc/generated
-	@echo "Cleaning"
+	rm -rf ${BUILD_DIR}
+	rm -rf ${NAME}
+	rm -rf doc/generated
 
 doc: doxygen Doxyfile
-
-count:
-	@wc -l ${SOURCE_DIR}/*/*.h ${SOURCE_DIR}/*/*/*.h ${SOURCE_DIR}/*.cpp ${SOURCE_DIR}/*/*.cpp ${SOURCE_DIR}/*/*/*.h
