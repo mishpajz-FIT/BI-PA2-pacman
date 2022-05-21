@@ -48,7 +48,7 @@ protected:
 public:
     GameViewController();
 
-    void update() override;
+    AppState update() override;
 
     void draw() override;
 

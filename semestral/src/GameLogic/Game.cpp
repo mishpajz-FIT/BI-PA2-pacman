@@ -146,6 +146,7 @@ void Game::restart() {
     player.reset(new Player(playerSpawn));
 
     Transform enemySpawn(board->getEnemySpawn(), Rotation(Rotation::Direction::left));
+    ghosts.resize(4);
     ghosts[0].reset(new GhostBlinky(enemySpawn, Position(0, board->getSizeX()), enemyIntelligence));
     ghosts[1].reset(new GhostPinky(enemySpawn, Position(0, 0), enemyIntelligence));
     ghosts[2].reset(new GhostInky(enemySpawn, Position(board->getSizeY(), board->getSizeY()), enemyIntelligence));
@@ -167,18 +168,17 @@ void Game::restart() {
         }, true);
 
     /* Chase and scatter trigger */
-    /*
-    timer.addTrigger(chaseDuration + scatterDuration, [ this ]() {
+    timer.addTrigger(settings.chaseDuration + settings.scatterDuration, [ this ]() {
         this->toggleScatter();
         }, true);
-    timer.addTrigger(chaseDuration, [ this ]() {
-        this->timer.addTrigger(chaseDuration + scatterDuration, [ this ]() {
+    timer.addTrigger(settings.chaseDuration, [ this ]() {
+        this->timer.addTrigger(settings.chaseDuration + settings.scatterDuration, [ this ]() {
             this->toggleScatter();
             }, true);
-        }, false);*/
+        }, false);
 
     /* Ghost come out */
-    for (size_t i = 0; i < 1; i++) {
+    for (size_t i = 0; i < ghosts.size(); i++) {
         timer.addTrigger(settings.ghostComeOutPeriod * i, [ this, i ]() {
             this->ghosts[i]->toggleAlive();
             });

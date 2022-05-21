@@ -3,12 +3,16 @@
 
 #include <ncurses.h>
 #include <string>
+#include <AppState.h>
 
 class ViewController {
+protected:
+    AppState nextState;
+
 public:
     ViewController();
 
-    virtual void update() = 0;
+    virtual AppState update() = 0;
 
     virtual void draw() = 0;
 };

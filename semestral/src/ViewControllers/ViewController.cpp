@@ -1,3 +1,4 @@
 #include "ViewController.h"
+#include "StateManager.h"
 
-ViewController::ViewController() { }
+ViewController::ViewController() : nextState(AppState::programContinue) { }

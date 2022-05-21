@@ -1,7 +1,6 @@
-#include "GameViewController.h"
-
 #include <ncurses.h>
 #include <NCColors.h>
+#include "StateManager.h"
 
 int main(void) {
     initscr();
@@ -9,10 +8,9 @@ int main(void) {
     noecho();
     NCColors::initialize();
 
-    GameViewController gameViewController;
+    StateManager stateManager;
+    stateManager.run();
 
-    while (true) {
-        gameViewController.update();
-        gameViewController.draw();
-    }
+    endwin();
+    return 0;
 }

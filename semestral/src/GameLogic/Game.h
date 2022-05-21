@@ -4,14 +4,12 @@
 #include "Timer.h"
 #include "Player.h"
 #include "Ghosts.h"
-#include <array>
+#include <vector>
 #include <memory>
 #include <string>
 #include <ncurses.h>
 #include <optional>
 #include "GameSettings.h"
-
-#define GAME_GHOSTCOUNT 4
 
 class Game {
     friend class GameView;
@@ -27,7 +25,7 @@ private:
     std::unique_ptr<Board> board;
 
     std::unique_ptr<Player> player;
-    std::array<std::unique_ptr<Enemy>, GAME_GHOSTCOUNT> ghosts;
+    std::vector<std::unique_ptr<Enemy>> ghosts;
 
     const unsigned int enemyIntelligence;
 
@@ -60,7 +58,6 @@ public:
     unsigned int getDimensionX();
     unsigned int getDimensionY();
 
-    void begin();
     void togglePause();
     bool isPaused();
 

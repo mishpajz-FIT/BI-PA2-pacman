@@ -37,7 +37,12 @@ std::optional<Rotation> GameViewController::getPlayerRotationFromKey(int c) {
 std::optional<std::string> GameViewController::getInputFromSecondaryView() {
     WINDOW * secondaryWindow = layoutView.getSecondaryWindow();
 
-    if (wgetch(secondaryWindow) != '\n') {
+    int c = wgetch(secondaryWindow);
+
+    if (c != '\n') {
+        if (c == 'q' || c == 'Q') {
+            nextState = AppState::programExit;
+        }
         return { };
     }
 
@@ -72,6 +77,10 @@ void GameViewController::difficultyChoosingUpdate() {
             return;
         case '\n':
             break;
+        case 'q':
+        case 'Q':
+            nextState = AppState::programExit;
+            return;
         default:
             return;
     }
@@ -170,6 +179,11 @@ void GameViewController::playingUpdate() {
         game->togglePause();
     }
 
+    if (game->isPaused() && (c == 'q' || c == 'Q')) {
+        nextState = AppState::programExit;
+        return;
+    }
+
     std::optional<Rotation> playerDir;
     if (c != ERR) {
         playerDir = getPlayerRotationFromKey(c);
@@ -216,29 +230,35 @@ GameViewController::GameViewController() : ViewController(), game(nullptr), phas
     draw();
 }
 
-void GameViewController::update() {
+AppState GameViewController::update() {
     if (!layoutView.isAbleToDisplay()) {
         if (phase == playing && !game->isPaused()) {
             game->togglePause();
         }
         getch();
-        return;
+        return nextState;
     }
 
     switch (phase) {
         case playing:
-            return playingUpdate();
+            playingUpdate();
+            break;
         case endGame:
-            return endGameUpdate();
+            endGameUpdate();
+            break;
         case difficultyChoosing:
-            return difficultyChoosingUpdate();
+            difficultyChoosingUpdate();
+            break;
         case settingsLoading:
-            return settingsLoadingUpdate();
+            settingsLoadingUpdate();
+            break;
         case mapLoading:
-            return mapLoadingUpdate();
+            mapLoadingUpdate();
+            break;
         default:
             break;
     }
+    return nextState;
 }
 
 void GameViewController::draw() {
