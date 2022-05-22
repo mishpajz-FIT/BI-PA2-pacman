@@ -3,11 +3,13 @@
 
 #include <vector>
 #include <string>
+#include <optional>
 
 class OptionMenu {
     friend class OptionMenuView;
 
 protected:
+    bool needsRefresh;
     std::vector<std::string> options;
     unsigned int currentOption;
 
@@ -20,6 +22,10 @@ public:
     void changeSelection(bool up);
 
     unsigned int getCurrentOption() const;
+
+    std::string getCurrentOptionName() const;
+
+    std::optional<unsigned int> handleInput(int c);
 };
 
 #endif /* OPTIONMENU_H */

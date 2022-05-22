@@ -12,7 +12,7 @@ class MainMenuViewController : public ViewController {
 
     std::unique_ptr<OptionMenu> menu;
 
-    void handleMenuSelect();
+    void handleMenuSelect(unsigned int i);
 
 public:
     MainMenuViewController();

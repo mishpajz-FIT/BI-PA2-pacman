@@ -9,6 +9,12 @@
 #include "OptionMenuView.h"
 #include <filesystem>
 
+#define SETTINGSPATH "./examples/Settings/"
+#define SETTINGSEXTENSION ".spac"
+#define MAPSPATH "./examples/Maps/"
+#define MAPSEXTENSION ".mpac"
+
+
 std::optional<Rotation> GameViewController::getPlayerRotationFromKey(int c) {
     switch (c) {
         case KEY_UP:
@@ -34,73 +40,55 @@ std::optional<Rotation> GameViewController::getPlayerRotationFromKey(int c) {
     return { };
 }
 
-std::optional<std::string> GameViewController::getInputFromSecondaryView() {
-    WINDOW * secondaryWindow = layoutView.getSecondaryWindow();
+void GameViewController::createMenuWithFiles(const std::string & filePath, const std::string & extension) {
+    menu.reset(new OptionMenu());
+    layoutView.setSecondaryView(OptionMenuView(menu.get()));
 
-    int c = wgetch(secondaryWindow);
-
-    if (c != '\n') {
-        if (c == 'q' || c == 'Q') {
-            nextState = AppState::mainmenu;
+    for (const auto & file : std::filesystem::directory_iterator(filePath)) {
+        if (file.path().extension() == extension) {
+            menu->addOption(file.path().filename());
         }
-        return { };
     }
 
-    echo();
-    curs_set(1);
-    nocbreak();
-    char bufferStr[256];
-    wattron(secondaryWindow, COLOR_PAIR(NCColors::interactive));
-    wrefresh(secondaryWindow);
-
-    wgetnstr(secondaryWindow, bufferStr, 256);
-    noecho();
-    curs_set(0);
-    cbreak();
-    wattroff(secondaryWindow, COLOR_PAIR(NCColors::interactive));
-    return std::string(bufferStr);
 }
-
 
 
 void GameViewController::difficultyChoosingUpdate() {
     keypad(layoutView.getSecondaryWindow(), TRUE);
     int c = wgetch(layoutView.getSecondaryWindow());
-    switch (c) {
-        case KEY_UP:
-            menu->changeSelection(false);
-            layoutView.getSecondaryView()->setNeedsRefresh();
-            return;
-        case KEY_DOWN:
-            menu->changeSelection(true);
-            layoutView.getSecondaryView()->setNeedsRefresh();
-            return;
-        case '\n':
-            break;
-        case 'q':
-        case 'Q':
-            nextState = AppState::mainmenu;
-            return;
-        default:
-            return;
+    if (c == 'q' || c == 'Q') {
+        nextState = AppState::mainmenu;
+        return;
     }
 
-    loadedDifficulty = menu->getCurrentOption();
+    std::optional<unsigned int> difficulty = menu->handleInput(c);
+    if (!difficulty) {
+        return;
+    }
 
-    keypad(layoutView.getSecondaryWindow(), FALSE);
+    loadedDifficulty = *difficulty;
+
     phase = settingsLoading;
-    layoutView.setSecondaryView(SettingsView());
-    layoutView.getSecondaryView()->setTitle("ENTER PATH TO SETTINGS FILE");
+    createMenuWithFiles(SETTINGSPATH, SETTINGSEXTENSION);
+    layoutView.getSecondaryView()->setTitle("CHOOSE SETTINGS FILE");
     layoutView.getSecondaryView()->setWarning(false);
 }
 
 void GameViewController::settingsLoadingUpdate() {
-    std::optional<std::string> expectedPath = getInputFromSecondaryView();
-    if (!expectedPath) {
+    int c = wgetch(layoutView.getSecondaryWindow());
+    if (c == 'q' || c == 'Q') {
+        nextState = AppState::mainmenu;
         return;
     }
+    if (!menu->handleInput(c)) {
+        return;
+    }
+
+    settingsPath = SETTINGSPATH;
+    settingsPath += menu->getCurrentOptionName();
+
     try {
-        GameSettingsRecordsFileLoader gameSettingsLoader(*expectedPath);
+        GameSettingsRecordsFileLoader gameSettingsLoader(settingsPath);
         unsigned int hp = 0;
         double speedModif = 0.0;
         switch (loadedDifficulty) {
@@ -132,28 +120,34 @@ void GameViewController::settingsLoadingUpdate() {
         return;
     }
 
-    settingsPath = *expectedPath;
-
     phase = mapLoading;
-    layoutView.getSecondaryView()->setTitle("ENTER PATH TO MAP FILE");
+    createMenuWithFiles(MAPSPATH, MAPSEXTENSION);
+    layoutView.getSecondaryView()->setTitle("CHOOSE MAP FILE");
     layoutView.getSecondaryView()->setWarning(false);
 }
 
 void GameViewController::mapLoadingUpdate() {
-    std::optional<std::string> expectedPath = getInputFromSecondaryView();
-    if (!expectedPath) {
+    int c = wgetch(layoutView.getSecondaryWindow());
+    if (c == 'q' || c == 'Q') {
+        nextState = AppState::mainmenu;
         return;
     }
+    if (!menu->handleInput(c)) {
+        return;
+    }
+
+    mapName = menu->getCurrentOptionName();
+    std::string mapPath = MAPSPATH;
+    mapPath += mapName;
+
     try {
-        game->loadMap(*expectedPath);
+        game->loadMap(mapPath);
     }
     catch (FileLoaderException & e) {
         layoutView.getSecondaryView()->setWarning(true, "Couldn't load map file!");
         layoutView.getSecondaryView()->setNeedsRefresh();
         return;
     }
-
-    mapName = std::filesystem::path(*expectedPath).filename();
 
     phase = playing;
     layoutView.setSecondaryView(GameDetailView(game.get()));
@@ -163,7 +157,9 @@ void GameViewController::mapLoadingUpdate() {
     cbreak();
     noecho();
     nodelay(stdscr, TRUE);
-    keypad(stdscr, true);
+    keypad(layoutView.getSecondaryWindow(), FALSE);
+    keypad(stdscr, TRUE);
+
 }
 
 void GameViewController::playingUpdate() {
@@ -188,6 +184,7 @@ void GameViewController::playingUpdate() {
     if (c != ERR) {
         playerDir = getPlayerRotationFromKey(c);
     }
+
     game->update(playerDir);
 
     if (game->getLives() == 0 || game->getCoinsRemaining() == 0) {
@@ -205,6 +202,10 @@ void GameViewController::playingUpdate() {
         catch (FileLoaderException & e) {
             layoutView.getSecondaryView()->setWarning(true, "Couldn't save settings and records");
         }
+
+        nodelay(stdscr, FALSE);
+        keypad(stdscr, FALSE);
+        nocbreak();
 
         phase = endGame;
     }

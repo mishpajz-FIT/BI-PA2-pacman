@@ -37,7 +37,7 @@ protected:
 
     std::optional<Rotation> getPlayerRotationFromKey(int c);
 
-    std::optional<std::string> getInputFromSecondaryView();
+    void createMenuWithFiles(const std::string & filePath, const std::string & extension);
 
     void difficultyChoosingUpdate();
     void settingsLoadingUpdate();
