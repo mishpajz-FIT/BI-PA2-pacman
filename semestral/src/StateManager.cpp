@@ -1,8 +1,22 @@
 #include "StateManager.h"
 #include "GameViewController.h"
+#include "MainMenuViewController.h"
+
+void StateManager::handleState(AppState state) {
+    switch (state) {
+        case AppState::mainmenu:
+            viewController.reset(new MainMenuViewController());
+            break;
+        case AppState::game:
+            viewController.reset(new GameViewController());
+            break;
+        default:
+            break;
+    }
+}
 
 StateManager::StateManager() {
-    viewController.reset(new GameViewController());
+    viewController.reset(new MainMenuViewController());
 }
 
 StateManager::~StateManager() { }
@@ -11,10 +25,13 @@ void StateManager::run() {
     while (true) {
         AppState nextState = viewController->update();
 
-        if (nextState != AppState::programContinue) {
+        if (nextState == AppState::programContinue) {
+            viewController->draw();
+            continue;
+        } else if (nextState == AppState::programExit) {
             return;
+        } else {
+            handleState(nextState);
         }
-
-        viewController->draw();
     }
 }

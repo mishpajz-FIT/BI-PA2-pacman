@@ -41,7 +41,7 @@ std::optional<std::string> GameViewController::getInputFromSecondaryView() {
 
     if (c != '\n') {
         if (c == 'q' || c == 'Q') {
-            nextState = AppState::programExit;
+            nextState = AppState::mainmenu;
         }
         return { };
     }
@@ -79,7 +79,7 @@ void GameViewController::difficultyChoosingUpdate() {
             break;
         case 'q':
         case 'Q':
-            nextState = AppState::programExit;
+            nextState = AppState::mainmenu;
             return;
         default:
             return;
@@ -180,7 +180,7 @@ void GameViewController::playingUpdate() {
     }
 
     if (game->isPaused() && (c == 'q' || c == 'Q')) {
-        nextState = AppState::programExit;
+        nextState = AppState::mainmenu;
         return;
     }
 
@@ -211,7 +211,10 @@ void GameViewController::playingUpdate() {
 }
 
 void GameViewController::endGameUpdate() {
-    //TODO
+    int c = wgetch(layoutView.getSecondaryWindow());
+    if (c == 'q' || c == 'Q') {
+        nextState = AppState::mainmenu;
+    }
 }
 
 

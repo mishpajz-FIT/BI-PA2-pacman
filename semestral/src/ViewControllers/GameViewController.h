@@ -51,8 +51,6 @@ public:
     AppState update() override;
 
     void draw() override;
-
-    void setNeedsRefreshToSubviews();
 };
 
 #endif /* GAMEVIEWCONTROLLER_H */

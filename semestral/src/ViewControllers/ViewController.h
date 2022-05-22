@@ -11,6 +11,7 @@ protected:
 
 public:
     ViewController();
+    virtual ~ViewController();
 
     virtual AppState update() = 0;
 

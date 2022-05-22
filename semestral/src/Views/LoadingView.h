@@ -2,7 +2,6 @@
 #define LOADINGVIEW_H
 
 #include "View.h"
-#include "Timer.h"
 
 #define LOADINGVIEWFRAMES 5
 #define LOADINGVIEWFRAMEHEIGHT 12
