@@ -36,7 +36,7 @@ AppState MainMenuViewController::update() {
 
     std::optional<unsigned int> input = menu->handleInput(c);
     if (!input) {
-        return;
+        return nextState;
     }
     handleMenuSelect(*input);
 

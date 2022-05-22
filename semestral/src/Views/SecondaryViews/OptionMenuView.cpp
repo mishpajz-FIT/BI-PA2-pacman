@@ -19,7 +19,7 @@ OptionMenuView::~OptionMenuView() { }
 void OptionMenuView::draw(WINDOW * intoWindow) {
     getWindowSize(intoWindow);
 
-    if (!needsRefresh) {
+    if (!(needsRefresh || (isAbleToDisplay() && menuToDraw->needsRefresh))) {
         return;
     }
 
