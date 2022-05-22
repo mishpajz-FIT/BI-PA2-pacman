@@ -28,8 +28,15 @@ run: compile
 	./${NAME}
 
 clean:
+	mkdir dontdelete
+	mv doc/images dontdelete/images
+	mv doc/pages dontdelete/pages
 	rm -rf ${BUILD_DIR}
 	rm -rf ${NAME}
 	rm -rf doc/generated
+	mv dontdelete/images doc/images
+	mv dontdelete/pages doc/pages
+	rm -rf dontdelete
 
-doc: doxygen Doxyfile
+doc: 
+	doxygen Doxyfile
