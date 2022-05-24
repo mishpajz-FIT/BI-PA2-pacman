@@ -23,10 +23,10 @@ StateManager::~StateManager() { }
 
 void StateManager::run() {
     while (true) {
+        viewController->draw();
         AppState nextState = viewController->update();
 
         if (nextState == AppState::programContinue) {
-            viewController->draw();
             continue;
         } else if (nextState == AppState::programExit) {
             return;

@@ -12,6 +12,10 @@ void OptionMenuView::drawHint(WINDOW * intoWindow) {
 OptionMenuView::OptionMenuView(OptionMenu * menu) : SecondaryView(), menuToDraw(menu) {
     if (menuToDraw == nullptr) {
         ableToDisplay = false;
+    } else {
+        if (menuToDraw->size() >= 15) {
+            minSizeY = 11 + menuToDraw->size();
+        }
     }
 }
 OptionMenuView::~OptionMenuView() { }
@@ -23,6 +27,10 @@ void OptionMenuView::draw(WINDOW * intoWindow) {
         return;
     }
 
+    if (menuToDraw->options.size() >= 15) {
+        minSizeY = 11 + menuToDraw->size();
+    }
+
     wclear(intoWindow);
     box(intoWindow, 0, 0);
 
@@ -31,9 +39,6 @@ void OptionMenuView::draw(WINDOW * intoWindow) {
     wattroff(intoWindow, A_BOLD);
 
     if (isAbleToDisplay()) {
-        if (menuToDraw->options.size() >= 15) {
-            minSizeX = 11 + menuToDraw->options.size();
-        }
 
         for (size_t i = 0; i < menuToDraw->options.size(); i++) {
             if (i == menuToDraw->getCurrentOption()) {

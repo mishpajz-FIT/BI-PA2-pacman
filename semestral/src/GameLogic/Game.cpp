@@ -214,6 +214,7 @@ unsigned int Game::getDimensionY() {
 }
 
 void Game::togglePause() {
+    needsRedraw = true;
     timer.togglePause();
 }
 

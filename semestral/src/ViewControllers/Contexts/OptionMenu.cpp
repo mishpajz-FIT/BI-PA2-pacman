@@ -10,7 +10,7 @@ void OptionMenu::addOption(const std::string & name) {
 }
 
 void OptionMenu::changeSelection(bool up) {
-    if (up && currentOption + 1 < options.size()) {
+    if (up && currentOption + 1 < size()) {
         currentOption++;
     } else if (!up && currentOption > 0) {
         currentOption--;
@@ -38,9 +38,16 @@ std::optional<unsigned int> OptionMenu::handleInput(int c) {
             needsRefresh = true;
             return { };
         case '\n':
+            if (currentOption >= size()) {
+                return { };
+            }
             return getCurrentOption();
         default:
             break;
     }
     return { };
+}
+
+unsigned int OptionMenu::size() const {
+    return options.size();
 }

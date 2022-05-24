@@ -19,13 +19,15 @@ public:
 
     void addOption(const std::string & name);
 
-    void changeSelection(bool up);
+    void changeSelection(bool up = true);
 
     unsigned int getCurrentOption() const;
 
     std::string getCurrentOptionName() const;
 
     std::optional<unsigned int> handleInput(int c);
+
+    unsigned int size() const;
 };
 
 #endif /* OPTIONMENU_H */

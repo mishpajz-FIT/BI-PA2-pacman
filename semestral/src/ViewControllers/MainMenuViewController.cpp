@@ -27,10 +27,15 @@ MainMenuViewController::MainMenuViewController() : ViewController(), layoutView(
 }
 
 AppState MainMenuViewController::update() {
+    if (!layoutView.isAbleToDisplay()) {
+        nodelay(stdscr, FALSE);
+        getch();
+        return AppState::programContinue;
+    }
+
     keypad(layoutView.getSecondaryWindow(), TRUE);
     int c = wgetch(layoutView.getSecondaryWindow());
-    if (c == 'q' || c == 'Q') {
-        nextState = AppState::programExit;
+    if (handleStateExitKey(c)) {
         return nextState;
     }
 

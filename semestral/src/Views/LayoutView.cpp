@@ -72,10 +72,15 @@ void LayoutView::draw(WINDOW *) {
         }
     }
 
+    if (!isAbleToDisplay()) {
+        return;
+    }
+
     if (needsRefresh) {
         clear();
         recreateWindows();
     }
+    refresh();
 
     if (primaryView) {
         primaryView->draw(primaryWindow);

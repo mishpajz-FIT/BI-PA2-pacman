@@ -30,8 +30,8 @@ void Enemy::calculateNextDirection(const Board & board, const Position & target)
 
         // If intelligence is low, enemy will choose non-ideal path in 1/4 times
         if (intelligence == 0) {
-            unsigned int rng = arc4random_uniform(4);
-            if (rng == 0) {
+            srand(time(0));
+            if ((rand() % 4) == 0) {
                 nextRotation = distances.back().second;
                 return;
             }
@@ -63,19 +63,20 @@ Position Enemy::calculateTarget(const Board & board, const Transform & playerTra
             behindPlayer.moveBy(4, playerTransform.rotation.opposite());
             return behindPlayer;
         } else if (intelligence == 1) {
-            size_t randX = arc4random_uniform(board.getSizeX());
-            size_t randY = arc4random_uniform(board.getSizeY());
+            srand(time(0));
+            size_t randX = rand() % (board.getSizeX());
+            size_t randY = rand() % (board.getSizeY());
             return Position(randX, randY);
         }
 
         Position frightenTarget;
-        if (playerTransform.position.x < board.getSizeX()) {
+        if ((unsigned long)(playerTransform.position.x) < board.getSizeX()) {
             frightenTarget.x = board.getSizeX();
         } else {
             frightenTarget.x = 0;
         }
 
-        if (playerTransform.position.y < board.getSizeY()) {
+        if ((unsigned long)(playerTransform.position.y) < board.getSizeY()) {
             frightenTarget.y = board.getSizeY();
         } else {
             frightenTarget.y = 0;

@@ -40,24 +40,41 @@ std::optional<Rotation> GameViewController::getPlayerRotationFromKey(int c) {
     return { };
 }
 
-void GameViewController::createMenuWithFiles(const std::string & filePath, const std::string & extension) {
-    menu.reset(new OptionMenu());
-    layoutView.setSecondaryView(OptionMenuView(menu.get()));
-
-    for (const auto & file : std::filesystem::directory_iterator(filePath)) {
-        if (file.path().extension() == extension) {
-            menu->addOption(file.path().filename());
-        }
+bool GameViewController::handleStateExitKey(int c) {
+    if (ViewController::handleStateExitKey(c)) {
+        nextState = AppState::mainmenu;
+        return true;
     }
-
+    return false;
 }
 
+void GameViewController::createMenuWithFiles(const std::string & filePath, const std::string & extension) {
+    menu.reset(new OptionMenu());
+
+    try {
+        for (const auto & file : std::filesystem::directory_iterator(filePath)) {
+            if (file.path().extension() == extension) {
+                menu->addOption(file.path().filename());
+            }
+        }
+        layoutView.setSecondaryView(OptionMenuView(menu.get()));
+    }
+    catch (std::filesystem::filesystem_error & e) {
+        layoutView.setSecondaryView(SettingsView(false));
+        layoutView.getSecondaryView()->setWarning(true, "Couldn't open directory!");
+        return;
+    }
+
+    if (menu->size() == 0) {
+        layoutView.setSecondaryView(SettingsView(false));
+        layoutView.getSecondaryView()->setWarning(true, "No file found!");
+    }
+}
 
 void GameViewController::difficultyChoosingUpdate() {
     keypad(layoutView.getSecondaryWindow(), TRUE);
     int c = wgetch(layoutView.getSecondaryWindow());
-    if (c == 'q' || c == 'Q') {
-        nextState = AppState::mainmenu;
+    if (handleStateExitKey(c)) {
         return;
     }
 
@@ -71,13 +88,13 @@ void GameViewController::difficultyChoosingUpdate() {
     phase = settingsLoading;
     createMenuWithFiles(SETTINGSPATH, SETTINGSEXTENSION);
     layoutView.getSecondaryView()->setTitle("CHOOSE SETTINGS FILE");
-    layoutView.getSecondaryView()->setWarning(false);
+    keypad(layoutView.getSecondaryWindow(), FALSE);
 }
 
 void GameViewController::settingsLoadingUpdate() {
+    keypad(layoutView.getSecondaryWindow(), TRUE);
     int c = wgetch(layoutView.getSecondaryWindow());
-    if (c == 'q' || c == 'Q') {
-        nextState = AppState::mainmenu;
+    if (handleStateExitKey(c)) {
         return;
     }
     if (!menu->handleInput(c)) {
@@ -123,13 +140,13 @@ void GameViewController::settingsLoadingUpdate() {
     phase = mapLoading;
     createMenuWithFiles(MAPSPATH, MAPSEXTENSION);
     layoutView.getSecondaryView()->setTitle("CHOOSE MAP FILE");
-    layoutView.getSecondaryView()->setWarning(false);
+    keypad(layoutView.getSecondaryWindow(), FALSE);
 }
 
 void GameViewController::mapLoadingUpdate() {
+    keypad(layoutView.getSecondaryWindow(), TRUE);
     int c = wgetch(layoutView.getSecondaryWindow());
-    if (c == 'q' || c == 'Q') {
-        nextState = AppState::mainmenu;
+    if (handleStateExitKey(c)) {
         return;
     }
     if (!menu->handleInput(c)) {
@@ -154,20 +171,12 @@ void GameViewController::mapLoadingUpdate() {
     layoutView.setPrimaryView(GameView(game.get()));
     game->restart();
 
-    cbreak();
-    noecho();
-    nodelay(stdscr, TRUE);
-    keypad(layoutView.getSecondaryWindow(), FALSE);
-    keypad(stdscr, TRUE);
-
+    keypad(layoutView.getSecondaryWindow(), FALSE);;
 }
 
 void GameViewController::playingUpdate() {
-    if (game->isPaused()) {
-        layoutView.getSecondaryView()->setWarning(true, "paused");
-    } else {
-        layoutView.getSecondaryView()->setWarning(false);
-    }
+    nodelay(stdscr, TRUE);
+    keypad(stdscr, TRUE);
 
     int c = getch();
 
@@ -175,8 +184,13 @@ void GameViewController::playingUpdate() {
         game->togglePause();
     }
 
-    if (game->isPaused() && (c == 'q' || c == 'Q')) {
-        nextState = AppState::mainmenu;
+    if (game->isPaused()) {
+        layoutView.getSecondaryView()->setWarning(true, "paused");
+    } else {
+        layoutView.getSecondaryView()->setWarning(false);
+    }
+
+    if (game->isPaused() && handleStateExitKey(c)) {
         return;
     }
 
@@ -188,8 +202,6 @@ void GameViewController::playingUpdate() {
     game->update(playerDir);
 
     if (game->getLives() == 0 || game->getCoinsRemaining() == 0) {
-        nodelay(stdscr, FALSE);
-        keypad(stdscr, false);
         layoutView.setSecondaryView(SettingsView(false));
         layoutView.getSecondaryView()->setTitle("GAME OVER");
         bool highscore = loadedRecords.addScore(mapName, loadedDifficulty, game->getScore());
@@ -203,19 +215,14 @@ void GameViewController::playingUpdate() {
             layoutView.getSecondaryView()->setWarning(true, "Couldn't save settings and records");
         }
 
-        nodelay(stdscr, FALSE);
-        keypad(stdscr, FALSE);
-        nocbreak();
-
         phase = endGame;
     }
+    nodelay(stdscr, FALSE);
 }
 
 void GameViewController::endGameUpdate() {
-    int c = wgetch(layoutView.getSecondaryWindow());
-    if (c == 'q' || c == 'Q') {
-        nextState = AppState::mainmenu;
-    }
+    int c = getch();
+    handleStateExitKey(c);
 }
 
 
@@ -230,17 +237,16 @@ GameViewController::GameViewController() : ViewController(), game(nullptr), phas
     layoutView.getSecondaryView()->setWarning(false);
 
     layoutView.setPrimaryView(LoadingView());
-
-    draw();
 }
 
 AppState GameViewController::update() {
     if (!layoutView.isAbleToDisplay()) {
+        nodelay(stdscr, FALSE);
         if (phase == playing && !game->isPaused()) {
             game->togglePause();
         }
         getch();
-        return nextState;
+        return AppState::programContinue;
     }
 
     switch (phase) {

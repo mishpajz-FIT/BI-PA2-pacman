@@ -9,6 +9,8 @@ class ViewController {
 protected:
     AppState nextState;
 
+    virtual bool handleStateExitKey(int c);
+
 public:
     ViewController();
     virtual ~ViewController();

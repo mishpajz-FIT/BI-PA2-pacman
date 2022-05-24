@@ -37,6 +37,8 @@ protected:
 
     std::optional<Rotation> getPlayerRotationFromKey(int c);
 
+    bool handleStateExitKey(int c) override;
+
     void createMenuWithFiles(const std::string & filePath, const std::string & extension);
 
     void difficultyChoosingUpdate();

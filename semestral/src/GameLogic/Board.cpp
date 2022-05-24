@@ -130,13 +130,13 @@ bool Board::isTileAllowingMovement(const Position & pos) const {
 Position Board::complementaryEdgePosition(Position forPos) const {
     if (forPos.x == 0) {
         forPos.x = (getSizeX() - 1);
-    } else if (forPos.x >= (getSizeX() - 1)) {
+    } else if ((unsigned long)(forPos.x) >= (getSizeX() - 1)) {
         forPos.x = 0;
     }
 
     if (forPos.y == 0) {
         forPos.y = (getSizeY() - 1);
-    } else if (forPos.y >= (getSizeY() - 1)) {
+    } else if ((unsigned long)(forPos.y) >= (getSizeY() - 1)) {
         forPos.y = 0;
     }
 
@@ -178,8 +178,9 @@ unsigned int Board::getNumberOfCoins() {
 
 bool Board::placeBonusTile() {
     for (unsigned int i = 0; i < 5; i++) {
-        size_t randX = arc4random_uniform(getSizeX());
-        size_t randY = arc4random_uniform(getSizeY());
+        srand(time(0));
+        size_t randX = rand() % (getSizeX());
+        size_t randY = rand() % (getSizeY());
         Position tilePos(randX, randY);
         if (tileAt(tilePos) == Tile::defaultType()) {
             tiles.at(randX, randY) = Tile::Type::bonus;
