@@ -1,15 +1,15 @@
 #ifndef GAME_H
 #define GAME_H
 
-#include "Timer.h"
-#include "Player.h"
-#include "Ghosts.h"
 #include <vector>
 #include <memory>
 #include <string>
-#include <ncurses.h>
 #include <optional>
-#include "GameSettings.h"
+
+#include "Utilities/Timer.h"
+#include "GameLogic/Entities/Player.h"
+#include "GameLogic/Entities/Ghosts/Ghosts.h"
+#include "Utilities/Contexts/GameSettings.h"
 
 class Game {
     friend class GameView;

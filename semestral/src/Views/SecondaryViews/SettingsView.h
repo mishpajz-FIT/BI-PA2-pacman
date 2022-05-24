@@ -1,7 +1,7 @@
 #ifndef SETTINGSVIEW_H
 #define SETTINGSVIEW_H
 
-#include "SecondaryView.h"
+#include "Views/SecondaryViews/SecondaryView.h"
 
 class SettingsView : public SecondaryView {
 protected:

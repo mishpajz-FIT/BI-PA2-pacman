@@ -1,4 +1,4 @@
-#include "NCColors.h"
+#include "Utilities/NCColors.h"
 
 void NCColors::initialize() {
     start_color();

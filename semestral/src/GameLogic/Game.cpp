@@ -1,6 +1,7 @@
-#include "Game.h"
-#include "BoardFileLoader.h"
 #include <iostream>
+
+#include "GameLogic/Game.h"
+#include "Utilities/FileManagers/BoardFileLoader.h"
 
 void Game::detectCollisions() {
     Position playerPos = player->getTransform().position;

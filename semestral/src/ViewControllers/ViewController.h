@@ -3,7 +3,8 @@
 
 #include <ncurses.h>
 #include <string>
-#include <AppState.h>
+
+#include "AppState.h"
 
 class ViewController {
 protected:

@@ -1,13 +1,14 @@
-#include "GameViewController.h"
-#include "GameSettingsRecordsFileLoader.h"
-#include "GameSettingsRecordsFileSaver.h"
-#include "GameDetailView.h"
-#include "GameView.h"
-#include "SettingsView.h"
-#include "LoadingView.h"
-#include "GameOverView.h"
-#include "OptionMenuView.h"
 #include <filesystem>
+
+#include "ViewControllers/GameViewController.h"
+#include "Utilities/FileManagers/GameSettingsRecordsFileLoader.h"
+#include "Utilities/FileManagers/GameSettingsRecordsFileSaver.h"
+#include "Views/SecondaryViews/GameDetailView.h"
+#include "Views/SecondaryViews/OptionMenuView.h"
+#include "Views/SecondaryViews/SettingsView.h"
+#include "Views/GameView.h"
+#include "Views/LoadingView.h"
+#include "Views/GameOverView.h"
 
 #define SETTINGSPATH "./examples/Settings/"
 #define SETTINGSEXTENSION ".spac"

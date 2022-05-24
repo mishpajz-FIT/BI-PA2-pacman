@@ -1,4 +1,4 @@
-#include "GameOverView.h"
+#include "Views/GameOverView.h"
 
 GameOverView::GameOverView(unsigned long reachedScore, unsigned long previousHighscore, bool isRecord) :
     score(reachedScore),

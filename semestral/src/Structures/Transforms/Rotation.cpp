@@ -1,4 +1,4 @@
-#include "Rotation.h"
+#include "Structures/Transforms/Rotation.h"
 
 Rotation::Rotation(Rotation::Direction dir) : direction(dir) { }
 

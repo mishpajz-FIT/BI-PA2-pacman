@@ -1,16 +1,17 @@
 #ifndef GAMEVIEWCONTROLLER_H
 #define GAMEVIEWCONTROLLER_H
 
-#include "ViewController.h"
-#include "Game.h"
-#include <memory>
 #include <ncurses.h>
-#include "LayoutView.h"
-#include "OptionMenu.h"
+#include <memory>
 #include <optional>
 #include <string>
-#include "GameSettings.h"
-#include "GameRecords.h"
+
+#include "ViewControllers/ViewController.h"
+#include "GameLogic/Game.h"
+#include "Views/LayoutView.h"
+#include "Utilities/Contexts/OptionMenu.h"
+#include "Utilities/Contexts/GameSettings.h"
+#include "Utilities/Contexts/GameRecords.h"
 
 class GameViewController : public ViewController {
 protected:

@@ -1,4 +1,4 @@
-#include "BoardFileLoader.h"
+#include "Utilities/FileManagers/BoardFileLoader.h"
 
 bool BoardFileLoader::checkForSpecialCharacter(char c, size_t x, size_t y) {
     switch (c) { //If chars are 'P' or 'E', set spawn positions (or throw is spawn has already been set)

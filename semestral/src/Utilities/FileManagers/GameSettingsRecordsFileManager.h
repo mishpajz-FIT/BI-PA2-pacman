@@ -1,12 +1,13 @@
 #ifndef GAMESETTINGSRECORDSFILEMANAGER_H
 #define GAMESETTINGSRECORDSFILEMANAGER_H
 
-#include "FileManager.h"
 #include <array>
 #include <string>
-#include "GameSettings.h"
-#include "GameRecords.h"
 #include <tuple>
+
+#include "Utilities/FileManagers/FileManager.h"
+#include "Utilities/Contexts/GameSettings.h"
+#include "Utilities/Contexts/GameRecords.h"
 
 class GameSettingsRecordsFileManager : public FileManager {
 protected:

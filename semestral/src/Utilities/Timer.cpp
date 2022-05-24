@@ -1,4 +1,4 @@
-#include "Timer.h"
+#include "Utilities/Timer.h"
 
 // SECTION: TimerObject
 Timer::TimerObject::TimerObject(timepoint initTime, milliseconds perDur, std::function<void()> act, bool repeat) : initializeTime(initTime), periodDuration(perDur), action(act), isRepeatingAction(repeat) {

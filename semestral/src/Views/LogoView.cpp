@@ -1,5 +1,6 @@
-#include "LogoView.h"
 #include <string>
+
+#include "Views/LogoView.h"
 
 const char LogoView::logo[LOGOVIEWLOGOHEIGHT][LOGOVIEWLOGOWIDTH] = {
     "    ____  ____  _________ ___  ____  ____ ",

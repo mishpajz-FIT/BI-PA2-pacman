@@ -1,5 +1,6 @@
-#include "GameView.h"
 #include <typeinfo>
+
+#include "Views/GameView.h"
 
 void GameView::drawGameElement(WINDOW * intoWindow, const Position & at, unsigned int colorPair, char c) {
     wattron(intoWindow, COLOR_PAIR(colorPair));

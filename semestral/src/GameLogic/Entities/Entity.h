@@ -1,9 +1,10 @@
 #ifndef ENTITY_H
 #define ENTITY_H
 
-#include "Transform.h"
-#include "NCColors.h"
 #include <tuple>
+
+#include "Structures/Transforms/Transform.h"
+#include "Utilities/NCColors.h"
 
 class Entity {
 protected:

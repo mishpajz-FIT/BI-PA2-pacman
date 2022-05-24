@@ -1,4 +1,4 @@
-#include "GameSettings.h"
+#include "Utilities/Contexts/GameSettings.h"
 
 GameSettings::GameSettings() :
     playerSpeed(0),

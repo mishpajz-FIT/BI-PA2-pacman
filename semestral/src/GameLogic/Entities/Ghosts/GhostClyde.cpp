@@ -1,4 +1,4 @@
-#include "GhostClyde.h"
+#include "GameLogic/Entities/Ghosts/GhostClyde.h"
 
 GhostClyde::GhostClyde(const Transform & initial, const Position & scatterPos, unsigned int intelligence, bool a) : Enemy(initial, scatterPos, a, intelligence) { }
 GhostClyde::~GhostClyde() { }

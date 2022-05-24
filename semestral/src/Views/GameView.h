@@ -1,11 +1,12 @@
 #ifndef GAMEVIEW_H
 #define GAMEVIEW_H
 
-#include "View.h"
-#include "Game.h"
-#include "Board.h"
-#include "NCColors.h"
 #include <tuple>
+
+#include "Views/View.h"
+#include "GameLogic/Game.h"
+#include "GameLogic/Board.h"
+#include "Utilities/NCColors.h"
 
 class GameView : public View {
 protected:

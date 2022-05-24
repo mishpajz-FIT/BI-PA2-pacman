@@ -1,7 +1,7 @@
 #ifndef GAMESETTINGSRECORDSFILESAVER_H
 #define GAMESETTINGSRECORDSFILESAVER_H
 
-#include "GameSettingsRecordsFileManager.h"
+#include "Utilities/FileManagers/GameSettingsRecordsFileManager.h"
 
 class GameSettingsRecordsFileSaver : public GameSettingsRecordsFileManager {
 public:

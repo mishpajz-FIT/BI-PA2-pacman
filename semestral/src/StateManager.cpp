@@ -1,6 +1,6 @@
 #include "StateManager.h"
-#include "GameViewController.h"
-#include "MainMenuViewController.h"
+#include "ViewControllers/GameViewController.h"
+#include "ViewControllers/MainMenuViewController.h"
 
 void StateManager::handleState(AppState state) {
     switch (state) {

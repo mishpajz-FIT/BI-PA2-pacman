@@ -1,7 +1,7 @@
 #ifndef GHOSTINKY_H
 #define GHOSTINKY_H
 
-#include "Enemy.h"
+#include "GameLogic/Entities/Enemy.h"
 
 class GhostInky : public Enemy {
 public:

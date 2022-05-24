@@ -1,14 +1,15 @@
 #ifndef BOARD_H
 #define BOARD_H
 
-#include "Matrix.h"
-#include "Transform.h"
+#include <tuple>
 #include <string>
 #include <stdexcept>
 #include <list>
 #include <fstream>
-#include "NCColors.h"
-#include <tuple>
+
+#include "Utilities/NCColors.h"
+#include "Structures/Transforms/Transform.h"
+#include "Structures/Matrix.h"
 
 /**
  * @brief Game Board

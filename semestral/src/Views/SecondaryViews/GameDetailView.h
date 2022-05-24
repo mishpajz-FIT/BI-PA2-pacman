@@ -1,9 +1,8 @@
 #ifndef GAMEDETAILVIEW_H
 #define GAMEDETAILVIEW_H
 
-#include "SecondaryView.h"
-#include "Game.h"
-
+#include "Views/SecondaryViews/SecondaryView.h"
+#include "GameLogic/Game.h"
 
 class GameDetailView : public SecondaryView {
 protected:

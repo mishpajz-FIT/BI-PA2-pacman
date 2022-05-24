@@ -1,5 +1,5 @@
-#include "SettingsView.h"
-#include "NCColors.h"
+#include "Views/SecondaryViews/SettingsView.h"
+#include "Utilities/NCColors.h"
 
 void SettingsView::drawHint(WINDOW * intoWindow) {
     wattron(intoWindow, COLOR_PAIR(NCColors::ColorPairs::hint));

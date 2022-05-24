@@ -1,7 +1,7 @@
 #ifndef LOADINGVIEW_H
 #define LOADINGVIEW_H
 
-#include "View.h"
+#include "Views/View.h"
 
 #define LOADINGVIEWFRAMES 5
 #define LOADINGVIEWFRAMEHEIGHT 12

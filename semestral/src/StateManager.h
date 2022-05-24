@@ -1,9 +1,10 @@
 #ifndef STATEMANAGER_H
 #define STATEMANAGER_H
 
-#include "ViewController.h"
-#include "AppState.h"
 #include <memory>
+
+#include "ViewControllers/ViewController.h"
+#include "AppState.h"
 
 class StateManager {
 private:

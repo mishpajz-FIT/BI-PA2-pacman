@@ -1,14 +1,14 @@
 #ifndef ENEMY_H
 #define ENEMY_H
 
-#include "Entity.h"
-#include "Board.h"
 #include <vector>
 #include <tuple>
 #include <algorithm>
 #include <cstdlib>
 #include <ctime>
 
+#include "GameLogic/Entities/Entity.h"
+#include "GameLogic/Board.h"
 
 class Enemy : public Entity {
 protected:

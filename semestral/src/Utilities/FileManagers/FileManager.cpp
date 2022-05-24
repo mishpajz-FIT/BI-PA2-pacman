@@ -1,7 +1,7 @@
-#include "FileManager.h"
-
 #include <iostream>
 #include <filesystem>
+
+#include "Utilities/FileManagers/FileManager.h"
 
 FileManager::FileManager(const std::string & filePath, bool write) : file(filePath, (write) ? (std::ios::out) : (std::ios::in)) {
     if (!file.is_open() || !file.good()) {

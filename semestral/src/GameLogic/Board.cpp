@@ -1,4 +1,4 @@
-#include "Board.h"
+#include "GameLogic/Board.h"
 
 //SECTION: Board::Tile
 Board::Tile::Type Board::Tile::defaultType() {

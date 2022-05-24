@@ -1,4 +1,4 @@
-#include "Enemy.h"
+#include "GameLogic/Entities/Enemy.h"
 
 void Enemy::calculateNextDirection(const Board & board, const Position & target) {
     Position nextTilePos = transform.position.movedBy(1, currentDirection);

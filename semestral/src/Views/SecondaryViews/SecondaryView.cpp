@@ -1,4 +1,4 @@
-#include "SecondaryView.h"
+#include "Views/SecondaryViews/SecondaryView.h"
 
 SecondaryView::SecondaryView() : View() { 
     minSizeY = 25;

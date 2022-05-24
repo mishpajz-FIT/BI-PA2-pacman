@@ -1,5 +1,6 @@
 #include <ncurses.h>
-#include <NCColors.h>
+
+#include "Utilities/NCColors.h"
 #include "StateManager.h"
 
 int main(void) {

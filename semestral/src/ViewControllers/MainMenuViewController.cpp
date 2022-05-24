@@ -1,7 +1,8 @@
-#include "MainMenuViewController.h"
-#include "LogoView.h"
-#include "OptionMenuView.h"
 #include <optional>
+
+#include "ViewControllers/MainMenuViewController.h"
+#include "Views/LogoView.h"
+#include "Views/SecondaryViews/OptionMenuView.h"
 
 void MainMenuViewController::handleMenuSelect(unsigned int i) {
     switch (i) {

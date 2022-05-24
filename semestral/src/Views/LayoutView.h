@@ -1,8 +1,9 @@
 #ifndef LAYOUTVIEW_H
 #define LAYOUTVIEW_H
 
-#include "View.h"
 #include <memory>
+
+#include "Views/View.h"
 
 class LayoutView : public View {
 protected:

@@ -1,7 +1,7 @@
 #ifndef LOGOVIEW_H
 #define LOGOVIEW_H
 
-#include "View.h"
+#include "Views/View.h"
 
 #define LOGOVIEWLOGOWIDTH 44
 #define LOGOVIEWLOGOHEIGHT 5 

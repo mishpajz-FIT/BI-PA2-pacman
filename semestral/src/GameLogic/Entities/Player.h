@@ -1,8 +1,8 @@
 #ifndef PLAYER_H
 #define PLAYER_H
 
-#include "Entity.h"
-#include "Board.h"
+#include "GameLogic/Entities/Entity.h"
+#include "GameLogic/Board.h"
 
 class Player : public Entity {
 private:

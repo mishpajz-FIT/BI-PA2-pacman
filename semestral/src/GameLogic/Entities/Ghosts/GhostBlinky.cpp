@@ -1,4 +1,4 @@
-#include "GhostBlinky.h"
+#include "GameLogic/Entities/Ghosts/GhostBlinky.h"
 
 GhostBlinky::GhostBlinky(const Transform & initial, const Position & scatterPos, unsigned int intelligence, bool a) : Enemy(initial, scatterPos, a, intelligence) { }
 GhostBlinky::~GhostBlinky() { }

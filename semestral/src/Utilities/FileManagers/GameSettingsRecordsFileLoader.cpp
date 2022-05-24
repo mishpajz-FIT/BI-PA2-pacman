@@ -1,6 +1,7 @@
-#include "GameSettingsRecordsFileLoader.h"
 #include <array>
 #include <string>
+
+#include "Utilities/FileManagers/GameSettingsRecordsFileLoader.h"
 
 GameSettingsRecordsFileLoader::GameSettingsRecordsFileLoader(const std::string & filePath) : GameSettingsRecordsFileManager(filePath) { }
 

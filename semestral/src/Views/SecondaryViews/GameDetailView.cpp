@@ -1,5 +1,5 @@
-#include "GameDetailView.h"
-#include "NCColors.h"
+#include "Views/SecondaryViews/GameDetailView.h"
+#include "Utilities/NCColors.h"
 
 void GameDetailView::drawHint(WINDOW * intoWindow) {
     wattron(intoWindow, COLOR_PAIR(NCColors::ColorPairs::hint));

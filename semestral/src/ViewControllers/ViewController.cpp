@@ -1,5 +1,4 @@
-#include "ViewController.h"
-#include "StateManager.h"
+#include "ViewControllers/ViewController.h"
 
 bool ViewController::handleStateExitKey(int c) {
     if (c == 'q' || c == 'Q') {

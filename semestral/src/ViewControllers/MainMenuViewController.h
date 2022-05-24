@@ -1,10 +1,11 @@
 #ifndef MAINMENUVIEWCONTROLLER_H
 #define MAINMENUVIEWCONTROLLER_H
 
-#include "ViewController.h"
-#include "LayoutView.h"
 #include <memory>
-#include "OptionMenu.h"
+
+#include "ViewControllers/ViewController.h"
+#include "Views/LayoutView.h"
+#include "Utilities/Contexts/OptionMenu.h"
 
 class MainMenuViewController : public ViewController {
 

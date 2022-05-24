@@ -1,4 +1,4 @@
-#include "View.h"
+#include "Views/View.h"
 
 void View::getWindowSize(WINDOW * forWindow) {
     unsigned int maxY, maxX;

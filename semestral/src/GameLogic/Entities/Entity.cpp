@@ -1,4 +1,4 @@
-#include "Entity.h"
+#include "GameLogic/Entities/Entity.h"
 
 Entity::Entity(const Transform & initial, bool a) : transform(initial), nextRotation(initial.rotation), alive(a) { }
 

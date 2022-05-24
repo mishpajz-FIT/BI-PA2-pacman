@@ -1,5 +1,5 @@
-#include "LoadingView.h"
-#include "NCColors.h"
+#include "Views/LoadingView.h"
+#include "Utilities/NCColors.h"
 
 const char LoadingView::frames[LOADINGVIEWFRAMES][LOADINGVIEWFRAMEHEIGHT][LOADINGVIEWFRAMEWIDTH + 1] = {
     {

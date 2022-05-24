@@ -1,8 +1,9 @@
 #ifndef POSITION_H
 #define POSITION_H
 
-#include "Rotation.h"
 #include <cmath>
+
+#include "Structures/Transforms/Rotation.h"
 
 struct Position {
 public:

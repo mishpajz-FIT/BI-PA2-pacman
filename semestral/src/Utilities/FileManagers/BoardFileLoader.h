@@ -1,10 +1,10 @@
 #ifndef BOARDFILELOADER_H
 #define BOARDFILELOADER_H
 
-#include "FileManager.h"
-#include "Board.h"
-#include "Transform.h"
-#include "Matrix.h"
+#include "Utilities/FileManagers/FileManager.h"
+#include "GameLogic/Board.h"
+#include "Structures/Transforms/Transform.h"
+#include "Structures/Matrix.h"
 
 class BoardFileLoader : public FileManager {
 private:

@@ -1,4 +1,4 @@
-#include "GhostPinky.h"
+#include "GameLogic/Entities/Ghosts/GhostPinky.h"
 
 GhostPinky::GhostPinky(const Transform & initial, const Position & scatterPos, unsigned int intelligence, bool a) : Enemy(initial, scatterPos, a, intelligence) { }
 GhostPinky::~GhostPinky() { }

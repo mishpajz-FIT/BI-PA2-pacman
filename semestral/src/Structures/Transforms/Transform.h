@@ -1,9 +1,10 @@
 #ifndef TRANSFORM_H
 #define TRANSFORM_H
 
-#include "Position.h"
-#include "Rotation.h"
 #include <cmath>
+
+#include "Structures/Transforms/Position.h"
+#include "Structures/Transforms/Rotation.h"
 
 struct Transform {
 public:

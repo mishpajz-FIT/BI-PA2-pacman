@@ -1,7 +1,7 @@
 #ifndef SECONDARYVIEW_H
 #define SECONDARYVIEW_H
 
-#include "View.h"
+#include "Views/View.h"
 
 class SecondaryView : public View {
 protected:

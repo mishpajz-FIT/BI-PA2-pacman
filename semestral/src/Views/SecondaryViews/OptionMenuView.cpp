@@ -1,5 +1,5 @@
-#include "OptionMenuView.h"
-#include "NCColors.h"
+#include "Views/SecondaryViews/OptionMenuView.h"
+#include "Utilities/NCColors.h"
 
 void OptionMenuView::drawHint(WINDOW * intoWindow) {
     wattron(intoWindow, COLOR_PAIR(NCColors::ColorPairs::hint));

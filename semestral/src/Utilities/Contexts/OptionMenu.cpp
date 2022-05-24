@@ -1,5 +1,6 @@
-#include "OptionMenu.h"
 #include <ncurses.h>
+
+#include "OptionMenu.h"
 
 OptionMenu::OptionMenu() : needsRefresh(true), currentOption(0) { }
 

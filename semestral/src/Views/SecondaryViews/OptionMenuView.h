@@ -1,10 +1,11 @@
 #ifndef MENUVIEW_H
 #define MENUVIEW_H
 
-#include "SecondaryView.h"
-#include "OptionMenu.h"
 #include <string>
 #include <vector>
+
+#include "Views/SecondaryViews/SecondaryView.h"
+#include "Utilities/Contexts/OptionMenu.h"
 
 class OptionMenuView : public SecondaryView {
 protected:

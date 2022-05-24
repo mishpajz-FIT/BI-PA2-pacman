@@ -1,4 +1,4 @@
-#include "Player.h"
+#include "GameLogic/Entities/Player.h"
 
 bool Player::ifPossibleChangeTransform(const Transform & to, const Board & board) {
     if (board.isTileAllowingMovement(to.position)) {

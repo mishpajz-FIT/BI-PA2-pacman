@@ -1,7 +1,7 @@
 #ifndef GAMEOVERVIEW_H
 #define GAMEOVERVIEW_H
 
-#include "View.h"
+#include "Views/View.h"
 
 class GameOverView : public View {
 private:

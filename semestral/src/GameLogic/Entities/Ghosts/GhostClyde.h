@@ -1,7 +1,7 @@
 #ifndef GHOSTCLYDE_H
 #define GHOSTCLYDE_H
 
-#include "Enemy.h"
+#include "GameLogic/Entities/Enemy.h"
 
 class GhostClyde : public Enemy {
 public:

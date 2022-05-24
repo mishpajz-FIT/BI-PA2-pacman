@@ -1,4 +1,4 @@
-#include "LayoutView.h"
+#include "Views/LayoutView.h"
 
 void LayoutView::recreateWindows() {
     clear();
