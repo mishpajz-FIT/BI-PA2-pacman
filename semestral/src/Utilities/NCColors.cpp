@@ -1,6 +1,14 @@
+#include <iostream>
+
 #include "Utilities/NCColors.h"
 
 void NCColors::initialize() {
+    if (has_colors() == FALSE) {
+        endwin();
+        std::cout << "screen doesn't support colors :(";
+        exit(1);
+    }
+
     start_color();
     use_default_colors();
 

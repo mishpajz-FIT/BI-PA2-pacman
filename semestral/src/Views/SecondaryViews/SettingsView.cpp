@@ -45,7 +45,7 @@ void SettingsView::draw(WINDOW * intoWindow) {
         wmove(intoWindow, sizeY - 2, 1);
     }
 
-    wrefresh(intoWindow);
+    wnoutrefresh(intoWindow);
     needsRefresh = false;
 }
 

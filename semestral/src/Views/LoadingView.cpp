@@ -92,8 +92,8 @@ void LoadingView::nextFrame() {
 }
 
 LoadingView::LoadingView() : View(), currentFrame(0), countingUp(true) {
-    minSizeX = LOADINGVIEWFRAMEWIDTH;
-    minSizeY = LOADINGVIEWFRAMEHEIGHT;
+    minSizeX = LOADINGVIEWFRAMEWIDTH + 2;
+    minSizeY = LOADINGVIEWFRAMEHEIGHT + 3;
 }
 
 void LoadingView::draw(WINDOW * intoWindow) {
@@ -113,7 +113,7 @@ void LoadingView::draw(WINDOW * intoWindow) {
     }
     wattroff(intoWindow, COLOR_PAIR(NCColors::pacman));
 
-    wrefresh(intoWindow);
+    wnoutrefresh(intoWindow);
     needsRefresh = false;
 }
 

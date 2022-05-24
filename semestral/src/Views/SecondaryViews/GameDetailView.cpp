@@ -51,7 +51,7 @@ void GameDetailView::draw(WINDOW * intoWindow) {
         wattroff(intoWindow, A_DIM);
     }
 
-    wrefresh(intoWindow);
+    wnoutrefresh(intoWindow);
     needsRefresh = false;
 }
 

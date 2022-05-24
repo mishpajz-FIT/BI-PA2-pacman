@@ -44,6 +44,7 @@ std::optional<Rotation> GameViewController::getPlayerRotationFromKey(int c) {
 bool GameViewController::handleStateExitKey(int c) {
     if (ViewController::handleStateExitKey(c)) {
         nextState = AppState::mainmenu;
+        keypad(stdscr, FALSE);
         return true;
     }
     return false;
@@ -75,6 +76,8 @@ void GameViewController::createMenuWithFiles(const std::string & filePath, const
 void GameViewController::difficultyChoosingUpdate() {
     keypad(layoutView.getSecondaryWindow(), TRUE);
     int c = wgetch(layoutView.getSecondaryWindow());
+    keypad(layoutView.getSecondaryWindow(), FALSE);
+
     if (handleStateExitKey(c)) {
         return;
     }
@@ -89,12 +92,13 @@ void GameViewController::difficultyChoosingUpdate() {
     phase = settingsLoading;
     createMenuWithFiles(SETTINGSPATH, SETTINGSEXTENSION);
     layoutView.getSecondaryView()->setTitle("CHOOSE SETTINGS FILE");
-    keypad(layoutView.getSecondaryWindow(), FALSE);
 }
 
 void GameViewController::settingsLoadingUpdate() {
     keypad(layoutView.getSecondaryWindow(), TRUE);
     int c = wgetch(layoutView.getSecondaryWindow());
+    keypad(layoutView.getSecondaryWindow(), FALSE);
+
     if (handleStateExitKey(c)) {
         return;
     }
@@ -141,12 +145,13 @@ void GameViewController::settingsLoadingUpdate() {
     phase = mapLoading;
     createMenuWithFiles(MAPSPATH, MAPSEXTENSION);
     layoutView.getSecondaryView()->setTitle("CHOOSE MAP FILE");
-    keypad(layoutView.getSecondaryWindow(), FALSE);
 }
 
 void GameViewController::mapLoadingUpdate() {
     keypad(layoutView.getSecondaryWindow(), TRUE);
     int c = wgetch(layoutView.getSecondaryWindow());
+    keypad(layoutView.getSecondaryWindow(), FALSE);
+
     if (handleStateExitKey(c)) {
         return;
     }
@@ -171,13 +176,11 @@ void GameViewController::mapLoadingUpdate() {
     layoutView.setSecondaryView(GameDetailView(game.get()));
     layoutView.setPrimaryView(GameView(game.get()));
     game->restart();
-
-    keypad(layoutView.getSecondaryWindow(), FALSE);;
+    keypad(stdscr, TRUE);
 }
 
 void GameViewController::playingUpdate() {
     nodelay(stdscr, TRUE);
-    keypad(stdscr, TRUE);
 
     int c = getch();
 
@@ -218,6 +221,7 @@ void GameViewController::playingUpdate() {
 
         phase = endGame;
     }
+
     nodelay(stdscr, FALSE);
 }
 
@@ -242,7 +246,6 @@ GameViewController::GameViewController() : ViewController(), game(nullptr), phas
 
 AppState GameViewController::update() {
     if (!layoutView.isAbleToDisplay()) {
-        nodelay(stdscr, FALSE);
         if (phase == playing && !game->isPaused()) {
             game->togglePause();
         }

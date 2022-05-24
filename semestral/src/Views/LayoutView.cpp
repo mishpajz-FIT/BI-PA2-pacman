@@ -1,12 +1,13 @@
 #include "Views/LayoutView.h"
 
 void LayoutView::recreateWindows() {
-    clear();
     if (primaryWindow != nullptr) {
         delwin(primaryWindow);
+        primaryWindow = nullptr;
     }
     if (secondaryWindow != nullptr) {
         delwin(secondaryWindow);
+        secondaryWindow = nullptr;
     }
 
     unsigned int secondaryX = 10;
@@ -16,7 +17,6 @@ void LayoutView::recreateWindows() {
 
     primaryWindow = newwin(sizeY, sizeX - secondaryX - 1, 0, 0);
     secondaryWindow = newwin(sizeY, secondaryX, 0, sizeX - secondaryX);
-    refresh();
 }
 
 LayoutView::LayoutView() : View() { }
@@ -79,8 +79,8 @@ void LayoutView::draw(WINDOW *) {
     if (needsRefresh) {
         clear();
         recreateWindows();
+        refresh();
     }
-    refresh();
 
     if (primaryView) {
         primaryView->draw(primaryWindow);
@@ -90,6 +90,7 @@ void LayoutView::draw(WINDOW *) {
         secondaryView->draw(secondaryWindow);
     }
 
+    doupdate();
     needsRefresh = false;
 }
 

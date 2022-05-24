@@ -63,7 +63,7 @@ void GameView::draw(WINDOW * intoWindow) {
         drawEnemies(intoWindow);
     }
 
-    wrefresh(intoWindow);
+    wnoutrefresh(intoWindow);
     needsRefresh = false;
 }
 

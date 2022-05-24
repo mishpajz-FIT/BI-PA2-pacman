@@ -38,7 +38,7 @@ void LogoView::draw(WINDOW * intoWindow) {
         mvwprintw(intoWindow, yCoord, centeredXInWindow(1), logo[i]);
     }
 
-    wrefresh(intoWindow);
+    wnoutrefresh(intoWindow);
     needsRefresh = false;
 }
 

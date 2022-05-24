@@ -29,13 +29,13 @@ MainMenuViewController::MainMenuViewController() : ViewController(), layoutView(
 
 AppState MainMenuViewController::update() {
     if (!layoutView.isAbleToDisplay()) {
-        nodelay(stdscr, FALSE);
         getch();
         return AppState::programContinue;
     }
 
     keypad(layoutView.getSecondaryWindow(), TRUE);
     int c = wgetch(layoutView.getSecondaryWindow());
+    keypad(layoutView.getSecondaryWindow(), FALSE);
     if (handleStateExitKey(c)) {
         return nextState;
     }
@@ -46,7 +46,6 @@ AppState MainMenuViewController::update() {
     }
     handleMenuSelect(*input);
 
-    keypad(layoutView.getSecondaryWindow(), FALSE);
     return nextState;
 }
 

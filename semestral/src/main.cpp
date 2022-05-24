@@ -1,4 +1,5 @@
 #include <ncurses.h>
+#include <iostream>
 
 #include "Utilities/NCColors.h"
 #include "StateManager.h"

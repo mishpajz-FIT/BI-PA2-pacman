@@ -44,8 +44,8 @@ void GameOverView::draw(WINDOW * intoWindow) {
     mvwprintw(intoWindow, 6, centeredXForText(displayText), displayText.c_str());
     wattroff(intoWindow, A_BOLD);
 
+    wnoutrefresh(intoWindow);
     needsRefresh = false;
-    wrefresh(intoWindow);
 }
 
 GameOverView * GameOverView::clone() const {

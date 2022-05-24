@@ -59,7 +59,7 @@ void OptionMenuView::draw(WINDOW * intoWindow) {
 
     drawHint(intoWindow);
 
-    wrefresh(intoWindow);
+    wnoutrefresh(intoWindow);
     needsRefresh = false;
 }
 
