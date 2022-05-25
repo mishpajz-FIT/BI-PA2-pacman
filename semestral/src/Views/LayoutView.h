@@ -18,11 +18,13 @@ protected:
 public:
     LayoutView();
     LayoutView(const LayoutView & toCopy);
-    virtual ~LayoutView();
+    ~LayoutView();
 
     void draw(WINDOW * intoWindow = stdscr) override;
 
     void setNeedsRefresh() override;
+
+    void removeWindows();
 
     WINDOW * getPrimaryWindow() const;
     WINDOW * getSecondaryWindow() const;

@@ -17,6 +17,7 @@ class MainMenuViewController : public ViewController {
 
 public:
     MainMenuViewController();
+    ~MainMenuViewController();
 
     AppState update() override;
 

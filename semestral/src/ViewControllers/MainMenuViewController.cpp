@@ -27,6 +27,8 @@ MainMenuViewController::MainMenuViewController() : ViewController(), layoutView(
     layoutView.setSecondaryView(OptionMenuView(menu.get()));
 }
 
+MainMenuViewController::~MainMenuViewController() { }
+
 AppState MainMenuViewController::update() {
     if (!layoutView.isAbleToDisplay()) {
         getch();

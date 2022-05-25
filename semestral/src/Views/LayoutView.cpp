@@ -1,14 +1,8 @@
 #include "Views/LayoutView.h"
+#include <iostream>
 
 void LayoutView::recreateWindows() {
-    if (primaryWindow != nullptr) {
-        delwin(primaryWindow);
-        primaryWindow = nullptr;
-    }
-    if (secondaryWindow != nullptr) {
-        delwin(secondaryWindow);
-        secondaryWindow = nullptr;
-    }
+    removeWindows();
 
     unsigned int secondaryX = 10;
     if (secondaryView) {
@@ -19,7 +13,7 @@ void LayoutView::recreateWindows() {
     secondaryWindow = newwin(sizeY, secondaryX, 0, sizeX - secondaryX);
 }
 
-LayoutView::LayoutView() : View() { }
+LayoutView::LayoutView() : View(), primaryWindow(nullptr), secondaryWindow(nullptr) { }
 LayoutView::LayoutView(const LayoutView & toCopy) : View(toCopy), primaryWindow(nullptr), primaryView(nullptr), secondaryWindow(nullptr), secondaryView(nullptr) {
     if (toCopy.primaryView) {
         primaryView.reset(toCopy.getPrimaryView()->clone());
@@ -30,12 +24,7 @@ LayoutView::LayoutView(const LayoutView & toCopy) : View(toCopy), primaryWindow(
 }
 
 LayoutView::~LayoutView() {
-    if (primaryWindow != nullptr) {
-        delwin(primaryWindow);
-    }
-    if (secondaryWindow != nullptr) {
-        delwin(primaryWindow);
-    }
+    removeWindows();
 }
 
 void LayoutView::draw(WINDOW *) {
@@ -101,6 +90,17 @@ void LayoutView::setNeedsRefresh() {
     }
     if (secondaryView) {
         secondaryView->setNeedsRefresh();
+    }
+}
+
+void LayoutView::removeWindows() {
+    if (primaryWindow != nullptr) {
+        delwin(primaryWindow);
+        primaryWindow = nullptr;
+    }
+    if (secondaryWindow != nullptr) {
+        delwin(secondaryWindow);
+        primaryWindow = nullptr;
     }
 }
 
