@@ -16,14 +16,14 @@
 
 
 int main(void) {
-    initscr();
-    curs_set(0);
-    noecho();
-    NCColors::initialize();
+    initscr(); //< Initialize ncurses
+    curs_set(0); //< Hide cursor
+    noecho(); //< Don't show input
+    NCColors::initialize(); //< Initialize colors
 
     StateManager stateManager;
     stateManager.run();
 
-    endwin();
+    endwin(); //< Close ncurses
     return 0;
 }
