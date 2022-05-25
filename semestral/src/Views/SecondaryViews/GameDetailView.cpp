@@ -32,6 +32,7 @@ void GameDetailView::draw(WINDOW * intoWindow) {
     mvwprintw(intoWindow, 1, centeredXForText(titleText), titleText.c_str());
     wattroff(intoWindow, A_BOLD);
 
+
     if (isAbleToDisplay()) {
         std::string displayString = "score: ";
         displayString += std::to_string(gameToDraw->getScore());

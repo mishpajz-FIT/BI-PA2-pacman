@@ -11,9 +11,12 @@ bool Player::ifPossibleChangeTransform(const Transform & to, const Board & board
 Player::Player(const Transform & initial, bool a) : Entity(initial, a) { }
 
 void Player::move(const Board & board) {
+    // Try to move in direction of next rotation
     Transform newTransform = transform;
     newTransform.rotation = nextRotation;
     newTransform.moveBy(1);
+
+    // If not possible, try to move in direction of previous movement
     if (!ifPossibleChangeTransform(newTransform, board)) {
 
         newTransform = transform.movedBy(1);
@@ -23,6 +26,7 @@ void Player::move(const Board & board) {
         }
     }
 
+    // If at edge, teleport to other side of board
     if (board.isTileEdge(transform.position)) {
         transform.position = board.complementaryEdgePosition(transform.position);
     }
@@ -34,6 +38,8 @@ void Player::rotate(const Rotation & to) {
 
 std::pair<char, NCColors::ColorPairs> Player::displayEntity() {
     char c = '0';
+
+    // Display different chars based on direction of movement
     switch (transform.rotation.direction) {
         case Rotation::Direction::up:
             c = 'v';

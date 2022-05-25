@@ -7,6 +7,7 @@ GameSettingsRecordsFileLoader::GameSettingsRecordsFileLoader(const std::string &
     : GameSettingsRecordsFileManager(filePath) { }
 
 std::pair<GameSettings, GameRecords> GameSettingsRecordsFileLoader::loadSettingsAndRecords() {
+    // Load settings
     std::array<unsigned int, 8> values;
 
     unsigned int valueBuffer;
@@ -30,6 +31,7 @@ std::pair<GameSettings, GameRecords> GameSettingsRecordsFileLoader::loadSettings
         values[6],
         values[7]);
 
+    // Load records
     GameRecords loadedRecords;
     std::string bufferMapName;
     unsigned int bufferDifficulty;

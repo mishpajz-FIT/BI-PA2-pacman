@@ -33,7 +33,7 @@ void NCColors::initialize() {
         init_pair(ColorPairs::basic, -1, -1);
         init_pair(ColorPairs::interactive, COLOR_WHITE, Color::grayBlue);
         init_pair(ColorPairs::hint, Color::grayBlue, -1);
-    } else {
+    } else { // 8 colors fallback
 
         init_pair(ColorPairs::wall, COLOR_BLACK, COLOR_BLACK);
         init_pair(ColorPairs::space, COLOR_BLACK, -1);

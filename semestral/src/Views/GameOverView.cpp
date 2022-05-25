@@ -8,6 +8,8 @@ GameOverView::GameOverView(unsigned long reachedScore, unsigned long previousHig
     minSizeX = 2;
 }
 
+GameOverView::~GameOverView() { }
+
 void GameOverView::draw(WINDOW * intoWindow) {
     getWindowSize(intoWindow);
 
@@ -20,6 +22,7 @@ void GameOverView::draw(WINDOW * intoWindow) {
 
     std::string displayText;
 
+    // Display different layout if highscore or not
     if (isHighscore) {
         displayText = "Highscore!";
 

@@ -75,6 +75,7 @@ Board::Board(
         throw std::invalid_argument("Board: Board - invalid enemy or player spawn");
     }
 
+    // Count amount of coins in board
     for (size_t y = 0; y < newTiles.getSizeY(); y++) {
         for (size_t x = 0; x < newTiles.getSizeX(); x++) {
             if (newTiles.at(x, y) == Board::Tile::Type::coin) {
@@ -105,6 +106,8 @@ bool Board::isTileCrossroad(const Position & pos) const {
         return false;
     }
 
+    // Check in each direction around position, if three or more tiles around
+    // tile allow for movement, tile is crossroad
     size_t numberOfPaths = 0;
     for (size_t d = 0; d < 4; d++) {
         if (isTileAllowingMovement(pos.movedBy(1, Rotation(d)))) {
@@ -119,6 +122,7 @@ bool Board::isTileCrossroad(const Position & pos) const {
 }
 
 bool Board::isTileEdge(const Position & pos) const {
+    //Tile needs to have position coordinates as 0 or board size minus one
     if ((size_t)(pos.x) == (getSizeX() - 1) || pos.x == 0
         || (size_t)(pos.y) == (getSizeY() - 1) || pos.y == 0) {
         return true;
@@ -137,6 +141,8 @@ bool Board::isTileAllowingMovement(const Position & pos) const {
 }
 
 Position Board::complementaryEdgePosition(Position forPos) const {
+    // If coordinate is at edge, get change coordinate to opposite
+
     if (forPos.x == 0) {
         forPos.x = (getSizeX() - 1);
     } else if ((unsigned long)(forPos.x) >= (getSizeX() - 1)) {
@@ -171,7 +177,8 @@ Position Board::getPlayerSpawn() const {
 bool Board::interactWithTileAt(const Position & pos) {
 
     if (Board::Tile::typeAllowsInteraction(tileAt(pos))) {
-        if (tileAt(pos) == Board::Tile::Type::coin) {
+        if (tileAt(pos) == Board::Tile::Type::coin) { //< If coin will be removed,
+        // decrease the number of coins
             numberOfCoins--;
         }
         tiles.at(pos.x, pos.y) = Board::Tile::defaultType();
@@ -186,11 +193,15 @@ unsigned int Board::getNumberOfCoins() {
 }
 
 std::optional<Position> Board::placeBonusTile() {
+    // Five tries to place the bonus, else return as unsuccessfull
     for (unsigned int i = 0; i < 5; i++) {
+        // Get random position
         srand(time(0));
         size_t randX = rand() % (getSizeX());
         size_t randY = rand() % (getSizeY());
         Position tilePos(randX, randY);
+
+        // Place bonus only if tile is of type default
         if (tileAt(tilePos) == Tile::defaultType()) {
             tiles.at(randX, randY) = Tile::Type::bonus;
             return tilePos;

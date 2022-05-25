@@ -20,6 +20,7 @@ void MainMenuViewController::handleMenuSelect(unsigned int i) {
 MainMenuViewController::MainMenuViewController() : ViewController(), layoutView() {
     layoutView.setPrimaryView(LogoView());
 
+    // Prepare menu
     menu.reset(new OptionMenu());
     menu->addOption("play");
     menu->addOption("exit");
@@ -39,13 +40,14 @@ AppState MainMenuViewController::update() {
         return nextState;
     }
 
-    keypad(layoutView.getSecondaryWindow(), TRUE);
+    keypad(layoutView.getSecondaryWindow(), TRUE); //< Enable keypad (could be disabled if resized)
     int c = wgetch(layoutView.getSecondaryWindow());
     keypad(layoutView.getSecondaryWindow(), FALSE);
     if (handleStateExitKey(c)) {
         return nextState;
     }
 
+    // Try to handle input as menu selection
     std::optional<unsigned int> input = menu->handleInput(c);
     if (!input) {
         return nextState;

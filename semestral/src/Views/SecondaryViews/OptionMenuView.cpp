@@ -27,6 +27,8 @@ void OptionMenuView::draw(WINDOW * intoWindow) {
         return;
     }
 
+
+    // Update minimal size by option menu size
     if (menuToDraw->options.size() >= 15) {
         minSizeY = 11 + menuToDraw->size();
     }

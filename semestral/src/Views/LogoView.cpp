@@ -33,6 +33,7 @@ void LogoView::draw(WINDOW * intoWindow) {
     mvwprintw(intoWindow, yCoord, centeredXInWindow(1), "dobesmic's");
     wattron(intoWindow, A_BOLD);
 
+    // Draw each line of ascii art
     for (size_t i = 0; i < LOGOVIEWLOGOHEIGHT; i++) {
         yCoord++;
         mvwprintw(intoWindow, yCoord, centeredXInWindow(1), logo[i]);

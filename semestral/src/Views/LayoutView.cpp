@@ -4,6 +4,7 @@
 void LayoutView::recreateWindows() {
     removeWindows();
 
+    // Create windows with fixed secondary view size and flexible primary view size
     unsigned int secondaryX = 10;
     if (secondaryView) {
         secondaryX = secondaryView->getMinSizeX();
@@ -64,6 +65,7 @@ void LayoutView::draw(WINDOW *) {
         minSizeX++;
         minSizeY++;
 
+        // Size is smaller than minimum size
         if ((sizeX < minSizeX) || (sizeY < minSizeY)) {
             ableToDisplay = false;
             clear();
@@ -90,6 +92,7 @@ void LayoutView::draw(WINDOW *) {
         refresh();
     }
 
+    // Draw primary and secondary view
     if (primaryView) {
         primaryView->draw(primaryWindow);
     }
@@ -98,7 +101,7 @@ void LayoutView::draw(WINDOW *) {
         secondaryView->draw(secondaryWindow);
     }
 
-    doupdate();
+    doupdate(); // Display drawn elements to screen
     needsRefresh = false;
 }
 

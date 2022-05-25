@@ -8,6 +8,10 @@ GhostClyde::GhostClyde(
 GhostClyde::~GhostClyde() { }
 
 Position GhostClyde::calculateTarget(const Board & board, const Transform & playerTransform, const Position &) {
+    if (frightened || scatter) {
+        return Enemy::calculateTarget(board, playerTransform);
+    }
+
     if (Position::distanceBetween(playerTransform.position, transform.position) > 8.0) {
         return playerTransform.position;
     }

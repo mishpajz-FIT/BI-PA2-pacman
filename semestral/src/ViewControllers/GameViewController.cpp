@@ -20,7 +20,7 @@
 
 bool GameViewController::handleStateExitKey(int c) {
     if (ViewController::handleStateExitKey(c)) {
-        nextState = AppState::mainmenu;
+        nextState = AppState::mainmenu; //< Return to main menu on exit
         keypad(stdscr, FALSE);
         return true;
     }
@@ -31,6 +31,7 @@ void GameViewController::createMenuWithFiles(const std::string & filePath, const
     menu.reset(new OptionMenu());
 
     try {
+        // Add each file in directory with extension as option in menu
         for (const auto & file : std::filesystem::directory_iterator(filePath)) {
             if (file.path().extension() == extension) {
                 menu->addOption(file.path().filename());
@@ -38,20 +39,20 @@ void GameViewController::createMenuWithFiles(const std::string & filePath, const
         }
         layoutView.setSecondaryView(OptionMenuView(menu.get()));
     }
-    catch (std::filesystem::filesystem_error & e) {
+    catch (std::filesystem::filesystem_error & e) { // If problem with directory, set warning
         layoutView.setSecondaryView(SettingsView(false));
         layoutView.getSecondaryView()->setWarning(true, "Couldn't open directory!");
         return;
     }
 
-    if (menu->size() == 0) {
+    if (menu->size() == 0) { // If directory empty, set warning
         layoutView.setSecondaryView(SettingsView(false));
         layoutView.getSecondaryView()->setWarning(true, "No file found!");
     }
 }
 
 void GameViewController::updateDifficultyChoosing() {
-    keypad(layoutView.getSecondaryWindow(), TRUE);
+    keypad(layoutView.getSecondaryWindow(), TRUE); //< Enable keypad (could be disabled if resized)
     int c = wgetch(layoutView.getSecondaryWindow());
     keypad(layoutView.getSecondaryWindow(), FALSE);
 
@@ -59,6 +60,7 @@ void GameViewController::updateDifficultyChoosing() {
         return;
     }
 
+    // Try to get confirmation from menu, set difficulty from menu selection
     std::optional<unsigned int> difficulty = menu->handleInput(c);
     if (!difficulty) {
         return;
@@ -66,13 +68,14 @@ void GameViewController::updateDifficultyChoosing() {
 
     loadedDifficulty = *difficulty;
 
+    // Prepare next phase
     phase = settingsLoading;
     createMenuWithFiles(SETTINGSPATH, SETTINGSEXTENSION);
     layoutView.getSecondaryView()->setTitle("CHOOSE SETTINGS FILE");
 }
 
 void GameViewController::updateSettingsLoading() {
-    keypad(layoutView.getSecondaryWindow(), TRUE);
+    keypad(layoutView.getSecondaryWindow(), TRUE); //< Enable keypad (could be disabled if resized)
     int c = wgetch(layoutView.getSecondaryWindow());
     keypad(layoutView.getSecondaryWindow(), FALSE);
 
@@ -83,6 +86,7 @@ void GameViewController::updateSettingsLoading() {
         return;
     }
 
+    // Try to load selected file as game settings
     settingsPath = SETTINGSPATH;
     settingsPath += menu->getCurrentOptionName();
 
@@ -90,6 +94,7 @@ void GameViewController::updateSettingsLoading() {
         GameSettingsRecordsFileLoader gameSettingsLoader(settingsPath);
         unsigned int hp = 0;
         double speedModif = 0.0;
+        // Different values based on selected difficulty
         switch (loadedDifficulty) {
             case 0:
                 hp = 5;
@@ -107,6 +112,7 @@ void GameViewController::updateSettingsLoading() {
                 break;
         }
 
+        // Create game from retrieved game settings
         std::pair<GameSettings, GameRecords> loadedSettingsAndRecords = gameSettingsLoader.loadSettingsAndRecords();
         game.reset(new Game(loadedSettingsAndRecords.first, speedModif, hp, loadedDifficulty));
 
@@ -119,13 +125,14 @@ void GameViewController::updateSettingsLoading() {
         return;
     }
 
+    // Prepare next phase
     phase = mapLoading;
     createMenuWithFiles(MAPSPATH, MAPSEXTENSION);
     layoutView.getSecondaryView()->setTitle("CHOOSE MAP FILE");
 }
 
 void GameViewController::updateMapLoading() {
-    keypad(layoutView.getSecondaryWindow(), TRUE);
+    keypad(layoutView.getSecondaryWindow(), TRUE); //< Enable keypad (could be disabled if resized)
     int c = wgetch(layoutView.getSecondaryWindow());
     keypad(layoutView.getSecondaryWindow(), FALSE);
 
@@ -136,13 +143,14 @@ void GameViewController::updateMapLoading() {
         return;
     }
 
+    // Try to load selected file as map settings
     mapName = menu->getCurrentOptionName();
     std::string mapPath = MAPSPATH;
     mapPath += mapName;
 
     try {
         BoardFileLoader mapLoader(mapPath);
-        game->loadMap(mapLoader.loadBoard());
+        game->loadBoard(mapLoader.loadBoard());
     }
     catch (FileLoaderException & e) {
         layoutView.getSecondaryView()->setWarning(true, "Couldn't load map file!");
@@ -150,6 +158,7 @@ void GameViewController::updateMapLoading() {
         return;
     }
 
+    // Prepare next phase
     phase = playing;
     layoutView.setSecondaryView(GameDetailView(game.get()));
     layoutView.setPrimaryView(GameView(game.get()));
@@ -158,14 +167,16 @@ void GameViewController::updateMapLoading() {
 }
 
 void GameViewController::updatePlaying() {
-    nodelay(stdscr, TRUE);
+    nodelay(stdscr, TRUE); //< Set to non-blocking input reading
 
     int c = getch();
 
+    // Toggle pause if pressed pause button and unpaused
     if (!(game->isPaused()) && (c == 'p' || c == 'P')) {
         game->togglePause();
     }
 
+    // Set warning if paused
     if (game->isPaused()) {
         layoutView.getSecondaryView()->setWarning(true, "paused");
     } else {
@@ -176,16 +187,20 @@ void GameViewController::updatePlaying() {
         return;
     }
 
+    // Try to interpret input as player rotation
     std::optional<Rotation> playerDir;
     if (c != ERR) {
         playerDir = GameControl::getPlayerRotationFromKey(c);
     }
 
+    // Pass input and update game
     game->update(playerDir);
 
+    // Check if game ended
     if (game->getLives() == 0 || game->getCoinsRemaining() == 0) {
         layoutView.setSecondaryView(SettingsView(false));
         layoutView.getSecondaryView()->setTitle("GAME OVER");
+        // Check if new highscore
         bool highscore = loadedRecords.addScore(mapName, loadedDifficulty, game->getScore());
         layoutView.setPrimaryView(
             GameOverView(
@@ -195,6 +210,7 @@ void GameViewController::updatePlaying() {
             )
         );
 
+        // Try to save settings together with records back into original file
         try {
             GameSettingsRecordsFileSaver saver(settingsPath);
             saver.writeSettingsAndRecords(std::make_pair(loadedSettings, loadedRecords));
@@ -203,6 +219,7 @@ void GameViewController::updatePlaying() {
             layoutView.getSecondaryView()->setWarning(true, "Couldn't save settings and records");
         }
 
+        // Prepare next phase
         phase = endGame;
     }
 
@@ -210,6 +227,7 @@ void GameViewController::updatePlaying() {
 }
 
 void GameViewController::updateEndGame() {
+    // Wait only for exit key
     int c = getch();
     handleStateExitKey(c);
 }
@@ -222,6 +240,7 @@ GameViewController::GameViewController()
     menu(nullptr),
     layoutView() {
 
+    // Prepare difficultyChoosing phase
     menu.reset(new OptionMenu());
     menu->addOption("easy");
     menu->addOption("medium");
@@ -233,7 +252,11 @@ GameViewController::GameViewController()
     layoutView.setPrimaryView(LoadingView());
 }
 
+GameViewController::~GameViewController() { }
+
+
 AppState GameViewController::update() {
+    // If unable to display pause game
     if (!layoutView.isAbleToDisplay()) {
         if (phase == playing && !game->isPaused()) {
             game->togglePause();
@@ -242,6 +265,7 @@ AppState GameViewController::update() {
         return AppState::programContinue;
     }
 
+    // Call correct update function based on phase
     switch (phase) {
         case playing:
             updatePlaying();

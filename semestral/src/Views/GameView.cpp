@@ -67,11 +67,15 @@ void GameView::draw(WINDOW * intoWindow) {
     if (sizeChanged) {
         wclear(intoWindow);
         box(intoWindow, 0, 0);
-        drawBoard(intoWindow);
+        if (isAbleToDisplay()) { //< Draw whole board only on resize or beggining
+            drawBoard(intoWindow);
+        }
     }
 
+    // Board needs to be drawn before entities
     if (isAbleToDisplay()) {
-        drawDiff(intoWindow);
+        drawDiff(intoWindow); //< Draw only parts of board where changes happened
+        // to make drawing more efficient
         drawPlayer(intoWindow);
         drawEnemies(intoWindow);
     }

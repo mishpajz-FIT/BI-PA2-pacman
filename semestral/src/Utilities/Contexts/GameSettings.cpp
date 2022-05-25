@@ -28,3 +28,5 @@ GameSettings::GameSettings(
     killDuration(killDur),
     bonusPeriod(bonusPer),
     ghostComeOutPeriod(ghostComeOutPer) { }
+
+GameSettings::~GameSettings() { }

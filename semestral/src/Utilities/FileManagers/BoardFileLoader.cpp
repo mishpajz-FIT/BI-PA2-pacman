@@ -1,7 +1,7 @@
 #include "Utilities/FileManagers/BoardFileLoader.h"
 
 bool BoardFileLoader::checkForSpecialCharacter(char c, size_t x, size_t y) {
-    switch (c) { //If chars are 'P' or 'E', set spawn positions (or throw is spawn has already been set)
+    switch (c) { // If chars are 'P' or 'E', set spawn positions (or throw is spawn has already been set)
         case 'P':
             if (playerSpawn.x == -1 && playerSpawn.y == -1) {
                 playerSpawn = Position(x, y);
@@ -51,7 +51,7 @@ BoardFileLoader::TileMatrix BoardFileLoader::createTilesOutOfData(std::list<std:
 }
 
 Board::Tile::Type BoardFileLoader::dataCharToType(char c) {
-    switch (c) { //Map chars to types
+    switch (c) { // Map chars to types
         case '#':
             return Board::Tile::Type::wall;
             break;
@@ -81,7 +81,7 @@ Board BoardFileLoader::loadBoard() {
     std::string buffer;
     size_t lineLength = 0;
 
-    while (std::getline(file, buffer)) { //Read lines from file
+    while (std::getline(file, buffer)) { // Read lines from file
 
         if (lineLength == 0) {
              // If line is first with content set line length, else check if 
