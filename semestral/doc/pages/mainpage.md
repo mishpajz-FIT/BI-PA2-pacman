@@ -1,3 +1,5 @@
+# dobesmic's PacMan
+
 ## About
 
 dobesmic's PacMan is implementation of classic PacMan game. 
@@ -20,14 +22,14 @@ The file must have a `.spac` extension.
 
 The format of the configuration file must be the same as the following example:
 
-> player_periodspeed>	350 
-> ghost_periodspeed>	400 
-> scatter_duration>	7000
-> chase_duration>	20000 
-> frighten_duration>	15000 
-> kill_duration>	8000
-> bonus_period>	20000 
-> ghost_begin_period>	5000
+    player_periodspeed>		350 
+    ghost_periodspeed>		400 
+    scatter_duration>		7000
+    chase_duration>			20000 
+    frighten_duration>		15000 
+    kill_duration>			8000
+    bonus_period>			20000 
+    ghost_begin_period>		5000
 
 With values as integers in milliseconds, where:
 
