@@ -34,8 +34,8 @@ View::View() :
     sizeY(0),
     sizeX(0),
     sizeChanged(true),
-    minSizeX(0),
     minSizeY(0),
+    minSizeX(0),
     warningDisplayed(false),
     warningText(""),
     titleText("") { }

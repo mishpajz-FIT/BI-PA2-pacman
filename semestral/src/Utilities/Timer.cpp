@@ -51,7 +51,7 @@ bool Timer::TimerObject::operator < (const TimerObject & rhs) const {
 
 
 // SECTION: Timer
-Timer::Timer() : paused(true), lastPausedTime(Timer::clock::now()), timeOffset(0) { }
+Timer::Timer() : paused(true), lastPausedTime(Timer::clock::now()) { }
 
 bool Timer::isPaused() {
     return paused;
