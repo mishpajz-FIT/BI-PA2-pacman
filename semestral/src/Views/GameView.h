@@ -17,6 +17,7 @@ protected:
     void drawGameElement(WINDOW * intoWindow, const Position & at, unsigned int colorPair, char c);
 
     void drawBoard(WINDOW * intoWindow);
+    void drawDiff(WINDOW * intoWindow);
     void drawPlayer(WINDOW * intoWindow);
     void drawEnemies(WINDOW * intoWindow);
 

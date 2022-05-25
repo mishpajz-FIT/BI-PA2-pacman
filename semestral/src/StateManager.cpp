@@ -1,6 +1,10 @@
+#include <unistd.h>
+
 #include "StateManager.h"
 #include "ViewControllers/GameViewController.h"
 #include "ViewControllers/MainMenuViewController.h"
+
+#define STATEMANAGERLOOPDELAY 100000
 
 void StateManager::handleState(AppState state) {
     switch (state) {
@@ -33,5 +37,7 @@ void StateManager::run() {
         } else {
             handleState(nextState);
         }
+
+        usleep(100000);
     }
 }

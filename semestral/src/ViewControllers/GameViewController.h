@@ -36,17 +36,15 @@ protected:
     unsigned int loadedDifficulty;
     std::string mapName;
 
-    std::optional<Rotation> getPlayerRotationFromKey(int c);
-
     bool handleStateExitKey(int c) override;
 
     void createMenuWithFiles(const std::string & filePath, const std::string & extension);
 
-    void difficultyChoosingUpdate();
-    void settingsLoadingUpdate();
-    void mapLoadingUpdate();
-    void playingUpdate();
-    void endGameUpdate();
+    void updateDifficultyChoosing();
+    void updateSettingsLoading();
+    void updateMapLoading();
+    void updatePlaying();
+    void updateEndGame();
 
 public:
     GameViewController();

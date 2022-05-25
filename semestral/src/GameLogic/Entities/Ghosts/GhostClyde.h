@@ -5,7 +5,12 @@
 
 class GhostClyde : public Enemy {
 public:
-    GhostClyde(const Transform & initial, const Position & scatterPos, unsigned int intelligence = 1, bool a = false);
+    GhostClyde(
+        const Transform & initial,
+        const Position & scatterPos,
+        unsigned int intelligence = 1,
+        bool a = false);
+
     ~GhostClyde();
 
     Position calculateTarget(const Board & board, const Transform & playerTransform, const Position &) override;

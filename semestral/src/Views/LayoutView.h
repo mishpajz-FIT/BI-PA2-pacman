@@ -20,6 +20,8 @@ public:
     LayoutView(const LayoutView & toCopy);
     ~LayoutView();
 
+    LayoutView & operator = (const LayoutView & toCopy);
+
     void draw(WINDOW * intoWindow = stdscr) override;
 
     void setNeedsRefresh() override;

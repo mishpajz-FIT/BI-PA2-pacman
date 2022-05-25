@@ -1,9 +1,18 @@
 #include "GameLogic/Entities/Ghosts/GhostInky.h"
 
-GhostInky::GhostInky(const Transform & initial, const Position & scatterPos, unsigned int intelligence, bool a) : Enemy(initial, scatterPos, a, intelligence) { }
+GhostInky::GhostInky(
+    const Transform & initial,
+    const Position & scatterPos,
+    unsigned int intelligence,
+    bool a) : Enemy(initial, scatterPos, a, intelligence) { }
+
 GhostInky::~GhostInky() { }
 
-Position GhostInky::calculateTarget(const Board & board, const Transform & playerTransform, const Position & specialPos) {
+Position GhostInky::calculateTarget(
+    const Board & board,
+    const Transform & playerTransform,
+    const Position & specialPos) {
+
     Position newTarget(playerTransform.position);
     newTarget.movedBy(2, playerTransform.rotation);
 

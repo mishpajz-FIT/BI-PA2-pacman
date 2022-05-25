@@ -19,6 +19,7 @@ private:
     GameSettings settings;
 
     bool needsRedraw;
+    std::vector<Position> diffRedraw;
 
     Timer timer;
 
@@ -47,9 +48,13 @@ private:
     void createBonus();
 
 public:
-    Game(const GameSettings & gameSettings, double frightenMultiplier, unsigned int livesAmount, unsigned int enemyLevel = 1);
+    Game(
+        const GameSettings & gameSettings,
+        double frightenMultiplier,
+        unsigned int livesAmount,
+        unsigned int enemyLevel = 1);
 
-    void loadMap(const std::string & filepath);
+    void loadMap(const Board & map);
 
     void restart();
 

@@ -7,12 +7,18 @@ void Game::detectCollisions() {
     Position playerPos = player->getTransform().position;
     Board::Tile::Type playerTile = board->tileAt(playerPos);
     if (Board::Tile::typeAllowsInteraction(playerTile)) {
-        if (playerTile == Board::Tile::Type::coin) {
-            score += 10;
-        } else if (playerTile == Board::Tile::Type::frighten) {
-            toggleFrighten(true);
-        } else if (playerTile == Board::Tile::Type::bonus) {
-            score += 100;
+        switch (playerTile) {
+            case Board::Tile::Type::coin:
+                score += 10;
+                break;
+            case Board::Tile::Type::frighten:
+                toggleFrighten(true);
+                break;
+            case Board::Tile::Type::bonus:
+                score += 100;
+                break;
+            default:
+                break;
         }
 
         board->interactWithTileAt(playerPos);
@@ -26,6 +32,7 @@ void Game::detectCollisions() {
 
         if (playerPos == e->getTransform().position) {
             if (e->isFrightened()) {
+                diffRedraw.push_back(e->getTransform().position);
                 e->toggleAlive();
                 if (e->isFrightened()) {
                     e->toggleFrighten();
@@ -46,8 +53,15 @@ void Game::detectCollisions() {
                 if (!timer.isPaused()) {
                     togglePause();
                 }
+
+                diffRedraw.push_back(playerPos);
+                for (auto & e : ghosts) {
+                    diffRedraw.push_back(e->getTransform().position);
+                }
+
                 restart();
                 lives--;
+                break;
             }
         }
     }
@@ -55,6 +69,7 @@ void Game::detectCollisions() {
 
 void Game::movePlayer() {
     needsRedraw = true;
+    diffRedraw.push_back(player->getTransform().position);
     player->move(*board);
 }
 
@@ -62,6 +77,7 @@ void Game::moveEnemy(bool fright) {
     needsRedraw = true;
 
     for (auto & e : ghosts) {
+        diffRedraw.push_back(e->getTransform().position);
         if ((e->isFrightened() && fright) || (!e->isFrightened() && !fright)) {
             e->move(*board, player->getTransform(), ghosts[0]->getTransform().position);
         }
@@ -80,7 +96,10 @@ void Game::createBonus() {
     }
 
     needsRedraw = true;
-    board->placeBonusTile();
+    std::optional<Position> bonusPos = board->placeBonusTile();
+    if (bonusPos) {
+        diffRedraw.push_back(*bonusPos);
+    }
 }
 
 void Game::toggleScatter() {
@@ -122,7 +141,12 @@ void Game::toggleFrighten(bool on) {
     }
 }
 
-Game::Game(const GameSettings & gameSettings, double frightenMultiplier, unsigned int livesAmount, unsigned int enemyLevel) :
+Game::Game(
+    const GameSettings & gameSettings,
+    double frightenMultiplier,
+    unsigned int livesAmount,
+    unsigned int enemyLevel)
+    :
     settings(gameSettings),
     needsRedraw(false),
     board(nullptr),
@@ -134,12 +158,13 @@ Game::Game(const GameSettings & gameSettings, double frightenMultiplier, unsigne
     frightenActivated(0),
     frightenSpeedMultiplier(frightenMultiplier) { }
 
-void Game::loadMap(const std::string & filepath) {
-    BoardFileLoader fileLoader(filepath);
-    board.reset(new Board(fileLoader.loadBoard()));
+void Game::loadMap(const Board & map) {
+    board.reset(new Board(map));
 }
 
 void Game::restart() {
+    timer = Timer();
+
     killStreak = 0;
     frightenActivated = 0;
 
@@ -148,12 +173,14 @@ void Game::restart() {
 
     Transform enemySpawn(board->getEnemySpawn(), Rotation(Rotation::Direction::left));
     ghosts.resize(4);
-    ghosts[0].reset(new GhostBlinky(enemySpawn, Position(0, board->getSizeX()), enemyIntelligence));
-    ghosts[1].reset(new GhostPinky(enemySpawn, Position(0, 0), enemyIntelligence));
-    ghosts[2].reset(new GhostInky(enemySpawn, Position(board->getSizeY(), board->getSizeY()), enemyIntelligence));
-    ghosts[3].reset(new GhostClyde(enemySpawn, Position(board->getSizeY(), 0), enemyIntelligence));
-
-    timer = Timer();
+    ghosts[0].reset(
+        new GhostBlinky(enemySpawn, Position(0, board->getSizeX()), enemyIntelligence));
+    ghosts[1].reset(
+        new GhostPinky(enemySpawn, Position(0, 0), enemyIntelligence));
+    ghosts[2].reset(
+        new GhostInky(enemySpawn, Position(board->getSizeY(), board->getSizeY()), enemyIntelligence));
+    ghosts[3].reset(
+        new GhostClyde(enemySpawn, Position(board->getSizeY(), 0), enemyIntelligence));
 
     /* Movement trigger */
     timer.addTrigger(settings.playerSpeed, [ this ]() {
@@ -172,7 +199,7 @@ void Game::restart() {
     timer.addTrigger(settings.chaseDuration + settings.scatterDuration, [ this ]() {
         this->toggleScatter();
         }, true);
-    timer.addTrigger(settings.chaseDuration, [ this ]() {
+    timer.addTrigger(settings.scatterDuration, [ this ]() {
         this->timer.addTrigger(settings.chaseDuration + settings.scatterDuration, [ this ]() {
             this->toggleScatter();
             }, true);
@@ -190,6 +217,7 @@ void Game::restart() {
 
 void Game::update(std::optional<Rotation> keyPressDirection) {
     needsRedraw = false;
+    diffRedraw.clear();
 
     if (keyPressDirection) {
         player->rotate(*keyPressDirection);

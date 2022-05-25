@@ -61,7 +61,16 @@ std::pair<char, NCColors::ColorPairs> Board::Tile::typeDisplay(const Type & t) {
 
 Board::Board() : tiles(1, 1), enemySpawn(-1, -1), playerSpawn(-1, -1), numberOfCoins(0) { }
 
-Board::Board(const Matrix<Board::Tile::Type> & newTiles, const Position & newEnemySpawn, const Position & newPlayersSpawn) : tiles(newTiles), enemySpawn(newEnemySpawn), playerSpawn(newPlayersSpawn), numberOfCoins(0) {
+Board::Board(
+    const Matrix<Board::Tile::Type> & newTiles,
+    const Position & newEnemySpawn,
+    const Position & newPlayersSpawn)
+    :
+    tiles(newTiles),
+    enemySpawn(newEnemySpawn),
+    playerSpawn(newPlayersSpawn),
+    numberOfCoins(0) {
+
     if (!isTileCoordinateValid(playerSpawn) || !isTileCoordinateValid(enemySpawn)) {
         throw std::invalid_argument("Board: Board - invalid enemy or player spawn");
     }
@@ -176,7 +185,7 @@ unsigned int Board::getNumberOfCoins() {
     return numberOfCoins;
 }
 
-bool Board::placeBonusTile() {
+std::optional<Position> Board::placeBonusTile() {
     for (unsigned int i = 0; i < 5; i++) {
         srand(time(0));
         size_t randX = rand() % (getSizeX());
@@ -184,10 +193,10 @@ bool Board::placeBonusTile() {
         Position tilePos(randX, randY);
         if (tileAt(tilePos) == Tile::defaultType()) {
             tiles.at(randX, randY) = Tile::Type::bonus;
-            return true;
+            return tilePos;
         }
     }
-    return false;
+    return { };
 }
 
 BoardException::BoardException(const std::string & message) : runtime_error(message) { }

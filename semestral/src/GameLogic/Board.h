@@ -6,6 +6,7 @@
 #include <stdexcept>
 #include <list>
 #include <fstream>
+#include <optional>
 
 #include "Utilities/NCColors.h"
 #include "Structures/Transforms/Transform.h"
@@ -76,7 +77,10 @@ public:
 
     Board();
 
-    Board(const Matrix<Board::Tile::Type> & newTiles, const Position & newEnemySpawn, const Position & newPlayersSpawn);
+    Board(
+        const Matrix<Board::Tile::Type> & newTiles,
+        const Position & newEnemySpawn,
+        const Position & newPlayersSpawn);
 
     /**
      * @brief Get tile in board at position
@@ -177,7 +181,7 @@ public:
 
     unsigned int getNumberOfCoins();
 
-    bool placeBonusTile();
+    std::optional<Position> placeBonusTile();
 };
 
 /**

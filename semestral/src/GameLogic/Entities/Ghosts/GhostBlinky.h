@@ -5,7 +5,12 @@
 
 class GhostBlinky : public Enemy {
 public:
-    GhostBlinky(const Transform & initial, const Position & scatterPos, unsigned int intelligence = 1, bool a = false);
+    GhostBlinky(
+        const Transform & initial,
+        const Position & scatterPos,
+        unsigned int intelligence = 1,
+        bool a = false);
+
     ~GhostBlinky();
 
     Position calculateTarget(const Board & board, const Transform & playerTransform, const Position &) override;

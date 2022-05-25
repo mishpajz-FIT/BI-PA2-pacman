@@ -35,6 +35,10 @@ AppState MainMenuViewController::update() {
         return AppState::programContinue;
     }
 
+    if (layoutView.getSecondaryView() == nullptr) {
+        return nextState;
+    }
+
     keypad(layoutView.getSecondaryWindow(), TRUE);
     int c = wgetch(layoutView.getSecondaryWindow());
     keypad(layoutView.getSecondaryWindow(), FALSE);

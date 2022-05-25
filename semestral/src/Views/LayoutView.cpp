@@ -14,7 +14,8 @@ void LayoutView::recreateWindows() {
 }
 
 LayoutView::LayoutView() : View(), primaryWindow(nullptr), secondaryWindow(nullptr) { }
-LayoutView::LayoutView(const LayoutView & toCopy) : View(toCopy), primaryWindow(nullptr), primaryView(nullptr), secondaryWindow(nullptr), secondaryView(nullptr) {
+
+LayoutView::LayoutView(const LayoutView & toCopy) : View(toCopy), primaryWindow(nullptr), secondaryWindow(nullptr) {
     if (toCopy.primaryView) {
         primaryView.reset(toCopy.getPrimaryView()->clone());
     }
@@ -22,6 +23,24 @@ LayoutView::LayoutView(const LayoutView & toCopy) : View(toCopy), primaryWindow(
         secondaryView.reset(toCopy.getSecondaryView()->clone());
     }
 }
+
+LayoutView & LayoutView::operator = (const LayoutView & toCopy) {
+    removeWindows();
+    if (toCopy.getPrimaryView() != nullptr) {
+        primaryView.reset(toCopy.getPrimaryView()->clone());
+    } else {
+        primaryView.release();
+    }
+
+    if (toCopy.getSecondaryView() != nullptr) {
+        secondaryView.reset(toCopy.getSecondaryView()->clone());
+    } else {
+        secondaryView.release();
+    }
+
+    return *this;
+}
+
 
 LayoutView::~LayoutView() {
     removeWindows();

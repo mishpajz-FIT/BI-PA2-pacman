@@ -23,7 +23,10 @@ protected:
 
     void calculateNextDirection(const Board & board, const Position & target);
 
-    virtual Position calculateTarget(const Board & board, const Transform & playerTransform, const Position & specialPos = Position());
+    virtual Position calculateTarget(
+        const Board & board,
+        const Transform & playerTransform,
+        const Position & specialPos = Position());
 
 public:
 

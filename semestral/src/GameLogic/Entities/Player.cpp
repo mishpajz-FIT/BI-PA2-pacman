@@ -15,8 +15,10 @@ void Player::move(const Board & board) {
     newTransform.rotation = nextRotation;
     newTransform.moveBy(1);
     if (!ifPossibleChangeTransform(newTransform, board)) {
+
         newTransform = transform.movedBy(1);
         if (!ifPossibleChangeTransform(newTransform, board)) {
+            
             rotate(transform.rotation);
         }
     }

@@ -11,6 +11,7 @@ const std::array<std::string, 8> GameSettingsRecordsFileManager::keys = {
     "ghost_begin_period>"
 };
 
-GameSettingsRecordsFileManager::GameSettingsRecordsFileManager(const std::string & filepath, bool write) : FileManager(filepath, write) { }
+GameSettingsRecordsFileManager::GameSettingsRecordsFileManager(const std::string & filepath, bool write)
+    : FileManager(filepath, write) { }
 
 GameSettingsRecordsFileManager::~GameSettingsRecordsFileManager() { }

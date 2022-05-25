@@ -18,9 +18,21 @@ void GameView::drawBoard(WINDOW * intoWindow) {
     }
 }
 
+void GameView::drawDiff(WINDOW * intoWindow) {
+    for (auto & pos : gameToDraw->diffRedraw) {
+        DisplayInformation displayTile = Board::Tile::typeDisplay(gameToDraw->board->tileAt(pos));
+        drawGameElement(intoWindow, pos, displayTile.second, displayTile.first);
+    }
+}
+
 void GameView::drawPlayer(WINDOW * intoWindow) {
     DisplayInformation displayPlayer = gameToDraw->player->displayEntity();
-    drawGameElement(intoWindow, gameToDraw->player->getTransform().position, displayPlayer.second, displayPlayer.first);
+    drawGameElement(
+        intoWindow,
+        gameToDraw->player->getTransform().position,
+        displayPlayer.second,
+        displayPlayer.first
+    );
 }
 
 void GameView::drawEnemies(WINDOW * intoWindow) {
@@ -55,10 +67,11 @@ void GameView::draw(WINDOW * intoWindow) {
     if (sizeChanged) {
         wclear(intoWindow);
         box(intoWindow, 0, 0);
+        drawBoard(intoWindow);
     }
 
     if (isAbleToDisplay()) {
-        drawBoard(intoWindow);
+        drawDiff(intoWindow);
         drawPlayer(intoWindow);
         drawEnemies(intoWindow);
     }

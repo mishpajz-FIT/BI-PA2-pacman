@@ -1,7 +1,15 @@
 #include "Utilities/Timer.h"
 
 // SECTION: TimerObject
-Timer::TimerObject::TimerObject(timepoint initTime, milliseconds perDur, std::function<void()> act, bool repeat) : initializeTime(initTime), periodDuration(perDur), action(act), isRepeatingAction(repeat) {
+Timer::TimerObject::TimerObject(
+    timepoint initTime,
+    milliseconds perDur,
+    std::function<void()> act, bool repeat)
+    :
+    initializeTime(initTime),
+    periodDuration(perDur),
+    action(act),
+    isRepeatingAction(repeat) {
     if (perDur.count() == 0 && repeat) {
         throw std::invalid_argument("Timer::TimerObject: TimerObject - repeating action with 0 period");
     }
@@ -57,7 +65,8 @@ void Timer::togglePause() {
 
         while (!timerQueue.empty()) {
             const TimerObject & originalObject = timerQueue.top();
-            Timer::milliseconds timePassedInObject = std::chrono::duration_cast<Timer::milliseconds>(lastPausedTime - originalObject.getBeginTime());
+            Timer::milliseconds timePassedInObject = std::chrono::duration_cast<Timer::milliseconds>(
+                lastPausedTime - originalObject.getBeginTime());
             Timer::TimerObject newObject(
                 Timer::clock::now() - timePassedInObject,
                 originalObject.getPeriodDuration(),

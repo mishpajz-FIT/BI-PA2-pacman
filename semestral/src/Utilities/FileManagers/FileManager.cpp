@@ -3,7 +3,8 @@
 
 #include "Utilities/FileManagers/FileManager.h"
 
-FileManager::FileManager(const std::string & filePath, bool write) : file(filePath, (write) ? (std::ios::out) : (std::ios::in)) {
+FileManager::FileManager(const std::string & filePath, bool write)
+    : file(filePath, (write) ? (std::ios::out) : (std::ios::in)) {
     if (!file.is_open() || !file.good()) {
         throw FileLoaderException("FileManager: error utilizing file");
     }

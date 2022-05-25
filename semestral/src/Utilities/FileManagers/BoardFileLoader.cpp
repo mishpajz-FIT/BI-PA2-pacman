@@ -29,7 +29,9 @@ BoardFileLoader::TileMatrix BoardFileLoader::createTilesOutOfData(std::list<std:
     size_t y = 0;
     size_t x = 0;
     for (auto & l : lines) {
-        for (auto & c : l) { //For each character in each line, check if is special then replace it by default, else convert it to correct type
+        for (auto & c : l) {
+            // For each character in each line, check if is special then replace 
+            // it by default, else convert it to correct type
             if (checkForSpecialCharacter(c, x, y)) {
                 generatedTiles.at(x++, y) = Board::Tile::defaultType();
             } else {
@@ -67,7 +69,11 @@ Board::Tile::Type BoardFileLoader::dataCharToType(char c) {
     return Board::Tile::Type::space;
 }
 
-BoardFileLoader::BoardFileLoader(const std::string & filePath) : FileManager(filePath), playerSpawn(-1, -1), enemySpawn(-1, -1) { }
+BoardFileLoader::BoardFileLoader(const std::string & filePath)
+    :
+    FileManager(filePath),
+    playerSpawn(-1, -1),
+    enemySpawn(-1, -1) { }
 
 Board BoardFileLoader::loadBoard() {
     std::list<std::string> lines;
@@ -77,7 +83,9 @@ Board BoardFileLoader::loadBoard() {
 
     while (std::getline(file, buffer)) { //Read lines from file
 
-        if (lineLength == 0) { //If line is first with content set line length, else check if loaded line length is correct
+        if (lineLength == 0) {
+             // If line is first with content set line length, else check if 
+             // loaded line length is correct
             lineLength = buffer.length();
         } else if (lineLength != buffer.length()) {
             throw FileLoaderException("BoardFileLoader: loadBoard - wrong format of grid in file");

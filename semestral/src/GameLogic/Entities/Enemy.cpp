@@ -13,7 +13,8 @@ void Enemy::calculateNextDirection(const Board & board, const Position & target)
         for (size_t d = 0; d < 4; d++) {
             Rotation processingRotation(d);
             Position calculatePosition = nextTilePos.movedBy(1, processingRotation);
-            if (!board.isTileAllowingMovement(calculatePosition) || (processingRotation == currentDirection.opposite())) {
+            if (!board.isTileAllowingMovement(calculatePosition)
+                || (processingRotation == currentDirection.opposite())) {
                 continue;
             }
 
@@ -45,7 +46,8 @@ void Enemy::calculateNextDirection(const Board & board, const Position & target)
         Rotation processingRotation(d);
         Position calculatePosition = nextTilePos.movedBy(1, processingRotation);
 
-        if (board.isTileAllowingMovement(calculatePosition) && (processingRotation != currentDirection.opposite())) {
+        if (board.isTileAllowingMovement(calculatePosition)
+            && (processingRotation != currentDirection.opposite())) {
             nextRotation = processingRotation;
             return;
         }
@@ -90,7 +92,17 @@ Position Enemy::calculateTarget(const Board & board, const Transform & playerTra
     return Position();
 }
 
-Enemy::Enemy(const Transform & initial, const Position & scatterPos, bool a, unsigned int intelligenceLevel) : Entity(initial, a), intelligence(intelligenceLevel), frightened(false), scatter(false), currentDirection(initial.rotation), scatterTarget(scatterPos) { }
+Enemy::Enemy(
+    const Transform & initial,
+    const Position & scatterPos,
+    bool a,
+    unsigned int intelligenceLevel)
+    :
+    Entity(initial, a),
+    intelligence(intelligenceLevel),
+    frightened(false), scatter(false),
+    currentDirection(initial.rotation),
+    scatterTarget(scatterPos) { }
 
 Enemy::~Enemy() { }
 

@@ -1,6 +1,10 @@
 #include "GameLogic/Entities/Ghosts/GhostPinky.h"
 
-GhostPinky::GhostPinky(const Transform & initial, const Position & scatterPos, unsigned int intelligence, bool a) : Enemy(initial, scatterPos, a, intelligence) { }
+GhostPinky::GhostPinky(
+    const Transform & initial,
+    const Position & scatterPos,
+    unsigned int intelligence,
+    bool a) : Enemy(initial, scatterPos, a, intelligence) { }
 GhostPinky::~GhostPinky() { }
 
 Position GhostPinky::calculateTarget(const Board & board, const Transform & playerTransform, const Position &) {
