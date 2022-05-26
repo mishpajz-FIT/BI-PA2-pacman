@@ -47,6 +47,26 @@ BoardFileLoader::TileMatrix BoardFileLoader::createTilesOutOfData(std::list<std:
         throw FileLoaderException("BoardFileLoader: createTilesOutOfData - missing spawn point");
     }
 
+    // Check if has minimal size
+    if (generatedTiles.getSizeX() <= 2 || generatedTiles.getSizeY() <= 2) {
+        throw FileLoaderException("BoardFileLoader: createTilesOutOfData - too small");
+    }
+
+    // Check for correct teleport placement
+    for (size_t y = 0; y < generatedTiles.getSizeY(); y++) {
+        if (Board::Tile::typeAllowsMovement(generatedTiles.at(0, y))
+            != Board::Tile::typeAllowsMovement(generatedTiles.at(generatedTiles.getSizeX() - 1, y))) {
+            throw FileLoaderException("BoardFileLoader: createTilesOutOfData - wrong teleport");
+        }
+    }
+
+    for (size_t x = 0; x < generatedTiles.getSizeX(); x++) {
+        if (Board::Tile::typeAllowsMovement(generatedTiles.at(x, 0))
+            != Board::Tile::typeAllowsMovement(generatedTiles.at(x, generatedTiles.getSizeY() - 1))) {
+            throw FileLoaderException("BoardFileLoader: createTilesOutOfData - wrong teleport");
+        }
+    }
+
     return generatedTiles;
 }
 

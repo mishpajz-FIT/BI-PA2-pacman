@@ -50,6 +50,8 @@ private:
      * Also processes special characters using checkForSpecialCharacter
      *
      * @throws FileLoaderException missing player or enemy spawn
+     * @throws FileLoaderException too small
+     * @throws FileLoaderException wrong teleport
      *
      * @param lines lines from file
      * @return TileMatrix
@@ -76,6 +78,9 @@ public:
 
     /**
      * @brief Attempts to load Board from file
+     *
+     * @throw FileLoaderException wrong format
+     * @throw FileLoaderException empty grid
      *
      * @return Board
      */

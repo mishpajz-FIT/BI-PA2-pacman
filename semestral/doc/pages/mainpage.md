@@ -59,7 +59,8 @@ Characters are transferred to the game board after loading as follows:
  - `P` - player spawn
  - `E` - enemy spawn
 
-Where the last two are required and can be placed in map only once.
+Where the last two are required and can be placed in map only once. Enemy spawn 
+also needs to have two tiles to the left that allow for movement.
 
 Teleport is created automatically when moveable tile is placed at the edge of map.
 
