@@ -8,29 +8,67 @@ Implementujte klasickou hru Pacman proti počítači (můžete naimplementovat i
 
 Hra musí splňovat následující funkcionality:
 
-Dodržování základních pravidel, sbírání bonusů, míncí (teček), třešniček, teleporty, atp.
-Je implementováno několik druhů AI duchů. Hra musí umět zároveň zobrazovat různé duchy s různými AI. Zobrazování duchů s různou AI se pro přehlednost může lišit např. barvou nebo znakem.
-Lze načítat mapy ze souboru (bludiště + pozice bonusů a duchů).
-Konfigurovatelná obtížnost hry ze souboru (rychlost duchů, délka trvání jednotlivých módů hry, pravděpodobnost přidání nového bonusu do mapy, ...)
-Škálovatelná obtížnost duchů (více strategií duchů dle obtížnost, dle různého chování)
+1) Dodržování základních pravidel, sbírání bonusů, míncí (teček), třešniček, teleporty, atp.
+2) Je implementováno několik druhů AI duchů. Hra musí umět zároveň zobrazovat různé duchy s různými AI.
+    Zobrazování duchů s různou AI se pro přehlednost může lišit např. barvou nebo znakem.
+3) Lze načítat mapy ze souboru (bludiště + pozice bonusů a duchů).
+4) Konfigurovatelná obtížnost hry ze souboru (rychlost duchů, délka trvání jednotlivých módů hry, pravděpodobnost přidání nového bonusu do mapy, ...)
+5) Škálovatelná obtížnost duchů (více strategií duchů dle obtížnost, dle různého chování)
 
 Upřesnění zadání
 ----------------
-Polymorfismus bude využit pro implementaci duchů. Duchové budou mít stejné chování, jako v původní hře PacMan.
+
+Bude vytvořena klasická hra PacMan.
+
+Hra bude mít 4 druhy nepřátel (duchů): Blinky, Pinky, Inky, Clyde, z nichž každý bude mít 
+vlastní umělou inteligenci, implementovanou stejným způsobem, jako originální hra.
+Dále bude implementována hrací deska spolu s buňkami jako zeď, prostor, mince, 
+bonus a power-up. Hrací deska bude podporovat teleportaci z jednoho na druhý okraj.
+Duchové se budou cyklicky přepínat mezi režimy chase, scatter a třetím režimem
+frighten, který aktivuje hráč sebráním power-upu.
+
+Po spuštění hra nabídne výběr obtížnosti, dále načtení konfigurace ze souboru a
+načtení mapy ze souboru. Následně se spustí hra. Po ukončení hry, ať už sebráním
+všech mincí nebo ztracením všech životů, se nejvyšší dosažené skóre uloží zpět do 
+konfiguračního souboru.
+
+Vykreslení hry bude implementováno pomocí knihovny ncurses. Program bude využívat
+vnitřní architekturu založenou na Model-View-ViewModel systému.
+
+
 Polymorfismus:
-   - Entity
-    \
-    |- Player
-    |- Enemy
-        \
-        |- GhostBlinky
-        |- GhostInky
-        |- GhostPinky
-        |- GhostClyde
-Duchové mají stejný systém pohybu, liší se pouze ve vypočítávání cíle svého pohybu.
 
-Mapa bude načítáná ze samostatného textového souboru. Bude podporovat mapové políčka z originálního PacMana (wall, space, coin, bonus). Dále půjde určit spawnpoint pro hráče i duchy.
+Polymorfismus bude využit pro implementaci duchů, kteří mají stejný systém pohybu,
+ale liší se výpočtem cíle.
 
-Nastavení hry bude načítáno z jiného textového souboru, to bude obsahovat rychlosti pohybu duchů, hráče, dobu módu scatter, chase a frighten. Dále pak čas do objevení bonusu. Do tohoto souboru se uloží po dohrání hry také high-score.
+ - Entity
+  \
+  |- Player
+  |- Enemy
+  \
+   |- GhostBlinky
+   |- GhostPinky
+   |- GhostInky
+   |- GhostClyde
 
-Pro zobrazování bude využita knihovna nCurses, každý duch bude zobrazen jinou barvou.
+Dále bude polymorfismus využit pro ViewControllery ve vnitřní architektuře programu.
+
+- ViewController
+ \
+  |- GameViewController
+  |- MenuViewController
+
+Polymorfismus bude také využit i pro samotné View, starající se o přeposílání dat
+do knihovny ncurses.
+
+- View
+ \
+  |- SecondaryView
+  |\
+  | |- MenuView
+  | |- DetailView
+  | |- SettingsView
+  |
+  |- LayoutView
+  |- GameView
+  |- MainMenuView
