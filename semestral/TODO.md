@@ -1,5 +1,0 @@
-#TODO
-
-[] nCurses
-[] Game
-[] Menu
