@@ -1,7 +1,7 @@
 NAME := dobesmic
 
-CXX := g++-11
-FLAGS := -std=c++17 -O2 -Wall -pedantic -g
+CXX := g++
+FLAGS := -std=c++17 -O2 -Wall -pedantic
 LIBS := -lstdc++fs -lncurses
 
 SOURCE_DIR := src
@@ -17,7 +17,7 @@ INCLUDE := -I ./src
 all: compile doc
 
 compile: ${OBJECTS}
-	${CXX} ${FLAGS} $^ -o ${NAME} ${LIBS}
+	@${CXX} ${FLAGS} $^ -o ${NAME} ${LIBS}
 
 ${BUILD_DIR}/%.o: src/%.cpp
 	@mkdir -p $(dir $@)
@@ -32,7 +32,8 @@ clean:
 	@mv doc/pages dontdelete/pages
 	@rm -rf ${BUILD_DIR}
 	@rm -rf ${NAME}
-	@rm -rf doc/generated
+	@rm -rf doc
+	@mkdir doc
 	@mv dontdelete/images doc/images
 	@mv dontdelete/pages doc/pages
 	@rm -rf dontdelete
