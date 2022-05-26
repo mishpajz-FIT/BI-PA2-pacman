@@ -85,3 +85,7 @@ Example of default map:
     #.########.#.########.#
     #.....................#
     #######################
+
+## Display
+
+The app requires colors in terminal to be able to run correctly. Ideal is 256+ colors, but offers fallback to 8 colors. Game won't start if colors are not supported. 
