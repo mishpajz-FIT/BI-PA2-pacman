@@ -4,7 +4,7 @@
 #include "Utilities/Contexts/GameControl.h"
 #include "Utilities/FileManagers/GameSettingsRecordsFileLoader.h"
 #include "Utilities/FileManagers/GameSettingsRecordsFileSaver.h"
-#include "Utilities/FIleManagers/BoardFileLoader.h"
+#include "Utilities/FileManagers/BoardFileLoader.h"
 #include "Views/SecondaryViews/GameDetailView.h"
 #include "Views/SecondaryViews/OptionMenuView.h"
 #include "Views/SecondaryViews/SettingsView.h"
