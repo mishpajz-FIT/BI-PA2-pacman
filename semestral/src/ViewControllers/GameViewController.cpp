@@ -17,6 +17,14 @@
 #define MAPSPATH "./examples/Maps/"
 #define MAPSEXTENSION ".mpac"
 
+#define EASYDIFFICULTYHP 5
+#define MEDIUMDIFFICULTYHP 3
+#define HARDDIFFICULTYHP 1
+
+#define EASYSPEEDMODIF 2
+#define MEDIUMSPEEDMODIF 1.5
+#define HARDSPEEDMODIF 1.1
+
 
 bool GameViewController::handleStateExitKey(int c) {
     if (ViewController::handleStateExitKey(c)) {
@@ -97,16 +105,16 @@ void GameViewController::updateSettingsLoading() {
         // Different values based on selected difficulty
         switch (loadedDifficulty) {
             case 0:
-                hp = 5;
-                speedModif = 2;
+                hp = EASYDIFFICULTYHP;
+                speedModif = EASYSPEEDMODIF;
                 break;
             case 1:
-                hp = 3;
-                speedModif = 1.5;
+                hp = MEDIUMDIFFICULTYHP;
+                speedModif = MEDIUMSPEEDMODIF;
                 break;
             case 2:
-                hp = 1;
-                speedModif = 1.2;
+                hp = HARDDIFFICULTYHP;
+                speedModif = HARDSPEEDMODIF;
                 break;
             default:
                 break;
