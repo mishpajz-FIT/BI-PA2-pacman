@@ -10,37 +10,6 @@ This repository contains all the code I wrote for this course during the semeste
 
 The repository is structured as a monorepo, containing all individual tasks and semestral work. Homeworks are stored in *tasks*, semestral work is stored in *semestral*.
 
-### Tasks
-
-Homeworks are big tasks, exercises are mini practice tasks.
-
-Each task contains source code and asserts that show the correct functionality of the code.
-
-#### Points earned
-##### Homeworks
-| hw | points/max |
-| --- | --- |
-| hw01 | 7.15/5 |
-| hw02 | 6.60/5 |
-| hw03 | 7.92/5 |
-| hw04 | 6.6/5 |
-| hw05 | 6.25/5 |
-| hw06 | 5.50/5 |
-| hw07 | 6.60/5 |
-
-##### Exercises
-| ex | points |
-| --- | --- |
-| ex03 | 0.1/0.1 |
-| ex04 | 0.15/0.15 |
-| ex05 | 0.15/0.15 |
-| ex06 | 0.15/0.15 |
-| ex07 | 0.15/0.15 |
-| ex08 | 0.15/0.15 |
-| ex09 | 0.15/0.15 |
-
-<sub><sup>Note: Maximum points are quoted without bonuses for early submission/efficiency of solution</sup></sub>
-
 ### Semestral work
 
 The task of my semestral work was to create a classic PacMan game.
@@ -74,6 +43,38 @@ All generated files can be removed from the *semestral* directory using `make cl
 #### Evaluation
 
 The final evaluation of my semestral work is 12/12 (100%) points.
+
+### Tasks
+
+Homeworks are big tasks, exercises are mini practice tasks.
+
+Each task contains source code and asserts that show the correct functionality of the code.
+
+#### Points earned
+
+##### Homeworks
+| hw | points/max |
+| --- | --- |
+| hw01 | 7.15/5 |
+| hw02 | 6.60/5 |
+| hw03 | 7.92/5 |
+| hw04 | 6.6/5 |
+| hw05 | 6.25/5 |
+| hw06 | 5.50/5 |
+| hw07 | 6.60/5 |
+
+##### Exercises
+| ex | points |
+| --- | --- |
+| ex03 | 0.1/0.1 |
+| ex04 | 0.15/0.15 |
+| ex05 | 0.15/0.15 |
+| ex06 | 0.15/0.15 |
+| ex07 | 0.15/0.15 |
+| ex08 | 0.15/0.15 |
+| ex09 | 0.15/0.15 |
+
+<sub><sup>Note: Maximum points are quoted without bonuses for early submission/efficiency of solution</sup></sub>
 
 ## Final results
 
