@@ -1,6 +1,6 @@
 NAME := dobesmic
 
-CXX := g++
+CXX := g++-11
 FLAGS := -std=c++17 -O2 -Wall -pedantic
 LIBS := -lstdc++fs -lncurses
 
