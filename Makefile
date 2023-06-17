@@ -1,8 +1,8 @@
 NAME := dobesmic
 
-CXX := g++-11
+CXX := g++
 FLAGS := -std=c++17 -O2 -Wall -pedantic
-LIBS := -lstdc++fs -lncurses
+LIBS := -lncurses
 
 SOURCE_DIR := src
 BUILD_DIR := build
