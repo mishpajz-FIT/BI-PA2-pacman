@@ -1,6 +1,6 @@
 # Pacman (BI-PA2)
 
-A pacman game clone fully playable in terminal.
+A Pacman game clone fully playable in terminal.
 
 The game was written in C++ and uses ncurses library for drawing content to the terminal.
 
