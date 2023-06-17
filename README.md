@@ -1,10 +1,8 @@
 # BI-PA2
 
-Programming and algorithmization 2 course at FIT CTU.
+This repository was created as a part of my 'Programming and algorithmization 2' course at FIT CTU.
 
-The main focus of this course is object-oriented programming in C++.
-
-This repository contains all the code I wrote for this course during the semester
+The main focus of this course is object-oriented programming in C++, the repository contains all the code I wrote for this course during the semester
 
 ## Structure
 
