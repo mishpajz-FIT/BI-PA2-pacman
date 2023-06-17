@@ -22,13 +22,27 @@ The game rendering is implemented using the ncurses library. The game uses an in
 
 ![In-game](doc/images/semestral_1.png)
 
-#### Compilation and manual
+## Getting started
 
-The source code is in the *src* subdirectory.
+The source code is located in the *src* subdirectory.
 
-The game can compiled from the project root directory using `make compile`, which creates object files and compiles the binary of the game as *dobesmic* binary.
+### Prerequisites
 
-Documentation of the code and polymorphism is generated using Doxygen. The [main documentation page](semestral/doc/pages/mainpage.md) also contains details about the format of the configuration files for the game, the map file for the game, and the controls. The documentation can be generated from the project root directory using `make doc`, and then is to be found as html at *doc/index.html*. 
+- C++ compiler (g++)
+- Make
+- ncurses library
+- (If documentation is needed) Doxygen
+
+### Compiling and running
+
+1. Download or clone the repository
+2. Navigate to the project's root directory
+3. To compile the game run `make compile`, which creates object files and compiles the binary of the game as *dobesmic* binary.
+4. Run the newly created binary
+
+### Documentation
+
+Documentation of the code and polymorphism is generated using Doxygen. The [main documentation page](doc/pages/mainpage.md) also contains details about the format of the configuration files for the game, the map file for the game, and the controls. The documentation can be generated from the project root directory using `make doc`, and then is to be found as html at *doc/index.html*. 
 
 All generated files can be removed from the directory using `make clean`, which will restore the directory to its original state.
 
