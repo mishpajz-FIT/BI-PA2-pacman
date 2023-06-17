@@ -24,7 +24,7 @@ The game rendering is implemented using the ncurses library. The game uses an in
 
 #### Compilation and manual
 
-The source code is in the *src/* subdirectory.
+The source code is in the *src* subdirectory.
 
 The game can compiled from the project root directory using `make compile`, which creates object files and compiles the binary of the game as *dobesmic* binary.
 
